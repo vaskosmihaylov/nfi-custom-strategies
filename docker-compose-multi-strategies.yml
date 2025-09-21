@@ -1,0 +1,197 @@
+---
+# Multi-Strategy FreqTrade Docker Compose Configuration
+# This file sets up multiple FreqTrade containers for different strategies
+
+x-common-settings:
+  &common-settings
+  image: freqtradeorg/freqtrade:stable
+  build:
+    context: .
+    dockerfile: "./docker/Dockerfile.custom"
+  restart: unless-stopped
+  volumes:
+    - "./user_data:/freqtrade/user_data"
+    - "./user_data/data:/freqtrade/user_data/data"
+    - "./configs:/freqtrade/configs"
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080"]
+    interval: 1m30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+    start_interval: 5s
+
+services:
+  # NostalgiaForInfinityX6 Strategy
+  freqtrade-nfi-x6:
+    <<: *common-settings
+    container_name: freqtrade-nfi-x6
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - path: ./env-files/nfi-x6.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/nfi-x6-tradesv3.sqlite
+      --log-file user_data/logs/nfi-x6.log
+      --strategy-path user_data/strategies
+      --strategy NostalgiaForInfinityX6
+
+  # QuickAdapter Strategy
+  freqtrade-quickadapter:
+    <<: *common-settings
+    container_name: freqtrade-quickadapter
+    ports:
+      - "127.0.0.1:8081:8080"
+    env_file:
+      - path: ./env-files/quickadapter.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/quickadapter-tradesv3.sqlite
+      --log-file user_data/logs/quickadapter.log
+      --strategy-path user_data/strategies/quickadapter
+      --strategy QuickAdapterV3
+
+  # BandtasticFiboHyper Strategy
+  freqtrade-bandtastic:
+    <<: *common-settings
+    container_name: freqtrade-bandtastic
+    ports:
+      - "127.0.0.1:8082:8080"
+    env_file:
+      - path: ./env-files/bandtastic.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/bandtastic-tradesv3.sqlite
+      --log-file user_data/logs/bandtastic.log
+      --strategy-path user_data/strategies/BandtasticFiboHyper
+      --strategy BandtasticFiboHyper_opt314
+
+  # TrendFollowing Strategy
+  freqtrade-trendfollowing:
+    <<: *common-settings
+    container_name: freqtrade-trendfollowing
+    ports:
+      - "127.0.0.1:8083:8080"
+    env_file:
+      - path: ./env-files/trendfollowing.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/trendfollowing-tradesv3.sqlite
+      --log-file user_data/logs/trendfollowing.log
+      --strategy-path user_data/strategies/trendfollowing
+      --strategy TrendFollowingStrategy
+
+  # Renko Strategy
+  freqtrade-renko:
+    <<: *common-settings
+    container_name: freqtrade-renko
+    ports:
+      - "127.0.0.1:8084:8080"
+    env_file:
+      - path: ./env-files/renko.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/renko-tradesv3.sqlite
+      --log-file user_data/logs/renko.log
+      --strategy-path user_data/strategies/renko
+      --strategy AdaptiveRenkoStrategy
+
+  # FVGAdvancedStrategy_V2 Strategy
+  freqtrade-fvg:
+    <<: *common-settings
+    container_name: freqtrade-fvg
+    ports:
+      - "127.0.0.1:8085:8080"
+    env_file:
+      - path: ./env-files/fvg.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/fvg-tradesv3.sqlite
+      --log-file user_data/logs/fvg.log
+      --strategy-path user_data/strategies/FVGAdvancedStrategy_V2
+      --strategy FVGAdvancedStrategy_V2
+
+  # PowerTower Strategy
+  freqtrade-powertower:
+    <<: *common-settings
+    container_name: freqtrade-powertower
+    ports:
+      - "127.0.0.1:8086:8080"
+    env_file:
+      - path: ./env-files/powertower.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/powertower-tradesv3.sqlite
+      --log-file user_data/logs/powertower.log
+      --strategy-path user_data/strategies/powertower
+      --strategy PowerTower
+
+  # FastSupertrend Strategy
+  freqtrade-fastsupertrend:
+    <<: *common-settings
+    container_name: freqtrade-fastsupertrend
+    ports:
+      - "127.0.0.1:8087:8080"
+    env_file:
+      - path: ./env-files/fastsupertrend.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/fastsupertrend-tradesv3.sqlite
+      --log-file user_data/logs/fastsupertrend.log
+      --strategy-path user_data/strategies/fastsupertrend
+      --strategy FastSupertrend_optim3_rsi_75lev
+
+  # NoTankAI Strategy
+  freqtrade-notankai:
+    <<: *common-settings
+    container_name: freqtrade-notankai
+    ports:
+      - "127.0.0.1:8088:8080"
+    env_file:
+      - path: ./env-files/notankai.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/notankai-tradesv3.sqlite
+      --log-file user_data/logs/notankai.log
+      --strategy-path user_data/strategies/notankai
+      --strategy NoTankAI_15
+
+  # DTW Strategy
+  freqtrade-dtw:
+    <<: *common-settings
+    container_name: freqtrade-dtw
+    ports:
+      - "127.0.0.1:8089:8080"
+    env_file:
+      - path: ./env-files/dtw.env
+        required: true
+    command: >
+      trade
+      --config configs/recommended_config.json
+      --db-url sqlite:////freqtrade/user_data/dtw-tradesv3.sqlite
+      --log-file user_data/logs/dtw.log
+      --strategy-path user_data/strategies/dtw
+      --strategy DWT_LongShort
+
+networks:
+  default:
+    name: freqtrade-network
