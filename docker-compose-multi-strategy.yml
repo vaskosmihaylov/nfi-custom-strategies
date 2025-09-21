@@ -30,7 +30,7 @@ services:
     ports:
       - "127.0.0.1:8080:${FREQTRADE__API_SERVER__LISTEN_PORT:-8080}"
     env_file:
-      - path: .env
+      - path: ./env-files/nfi.env
         required: false
     volumes:
       - "./user_data:/freqtrade/user_data"

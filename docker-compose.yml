@@ -20,7 +20,7 @@ x-common-settings:
     start_period: 40s
     start_interval: 5s
   env_file:
-    - path: .env
+    - path: ./env-files/nfi.env
       required: false # default true
 
 services:
