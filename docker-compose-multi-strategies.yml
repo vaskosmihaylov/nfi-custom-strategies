@@ -27,16 +27,16 @@ services:
     <<: *common-settings
     container_name: freqtrade-nfi-x6
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8090:8080"
     env_file:
       - path: ./env-files/nfi-x6.env
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/nfi-x6-tradesv3.sqlite
       --log-file user_data/logs/nfi-x6.log
-      --strategy-path user_data/strategies
+      --strategy-path user_data/strategies/nfi
       --strategy NostalgiaForInfinityX6
 
   # QuickAdapter Strategy
@@ -50,7 +50,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/quickadapter-tradesv3.sqlite
       --log-file user_data/logs/quickadapter.log
       --strategy-path user_data/strategies/quickadapter
@@ -67,7 +67,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/bandtastic-tradesv3.sqlite
       --log-file user_data/logs/bandtastic.log
       --strategy-path user_data/strategies/BandtasticFiboHyper
@@ -84,7 +84,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/trendfollowing-tradesv3.sqlite
       --log-file user_data/logs/trendfollowing.log
       --strategy-path user_data/strategies/trendfollowing
@@ -101,7 +101,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/renko-tradesv3.sqlite
       --log-file user_data/logs/renko.log
       --strategy-path user_data/strategies/renko
@@ -118,7 +118,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/fvg-tradesv3.sqlite
       --log-file user_data/logs/fvg.log
       --strategy-path user_data/strategies/FVGAdvancedStrategy_V2
@@ -135,7 +135,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/powertower-tradesv3.sqlite
       --log-file user_data/logs/powertower.log
       --strategy-path user_data/strategies/powertower
@@ -152,7 +152,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/fastsupertrend-tradesv3.sqlite
       --log-file user_data/logs/fastsupertrend.log
       --strategy-path user_data/strategies/fastsupertrend
@@ -169,7 +169,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/notankai-tradesv3.sqlite
       --log-file user_data/logs/notankai.log
       --strategy-path user_data/strategies/notankai
@@ -186,7 +186,7 @@ services:
         required: true
     command: >
       trade
-      --config configs/recommended_config.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/dtw-tradesv3.sqlite
       --log-file user_data/logs/dtw.log
       --strategy-path user_data/strategies/dtw

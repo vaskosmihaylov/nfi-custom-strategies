@@ -78,10 +78,10 @@ start_strategies() {
     
     if [ -n "$strategy" ]; then
         print_status "Starting $strategy strategy..."
-        docker-compose -f docker-compose-multi-strategies.yml up -d freqtrade-$strategy
+        docker compose -f docker-compose-multi-strategies.yml up -d freqtrade-$strategy
     else
         print_status "Starting all strategies..."
-        docker-compose -f docker-compose-multi-strategies.yml up -d
+        docker compose -f docker-compose-multi-strategies.yml up -d
     fi
     
     print_success "Started strategies"
@@ -95,10 +95,10 @@ stop_strategies() {
     
     if [ -n "$strategy" ]; then
         print_status "Stopping $strategy strategy..."
-        docker-compose -f docker-compose-multi-strategies.yml stop freqtrade-$strategy
+        docker compose -f docker-compose-multi-strategies.yml stop freqtrade-$strategy
     else
         print_status "Stopping all strategies..."
-        docker-compose -f docker-compose-multi-strategies.yml down
+        docker compose -f docker-compose-multi-strategies.yml down
     fi
     
     print_success "Stopped strategies"
@@ -110,10 +110,10 @@ restart_strategies() {
     
     if [ -n "$strategy" ]; then
         print_status "Restarting $strategy strategy..."
-        docker-compose -f docker-compose-multi-strategies.yml restart freqtrade-$strategy
+        docker compose -f docker-compose-multi-strategies.yml restart freqtrade-$strategy
     else
         print_status "Restarting all strategies..."
-        docker-compose -f docker-compose-multi-strategies.yml restart
+        docker compose -f docker-compose-multi-strategies.yml restart
     fi
     
     print_success "Restarted strategies"
@@ -124,7 +124,7 @@ restart_strategies() {
 # Function to show status
 show_status() {
     print_status "Checking status of all strategies..."
-    docker-compose -f docker-compose-multi-strategies.yml ps
+    docker compose -f docker-compose-multi-strategies.yml ps
 }
 
 # Function to show logs
@@ -133,10 +133,10 @@ show_logs() {
     
     if [ -n "$strategy" ]; then
         print_status "Showing logs for $strategy strategy..."
-        docker-compose -f docker-compose-multi-strategies.yml logs -f freqtrade-$strategy
+        docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-$strategy
     else
         print_status "Showing logs for all strategies..."
-        docker-compose -f docker-compose-multi-strategies.yml logs -f
+        docker compose -f docker-compose-multi-strategies.yml logs -f
     fi
 }
 
