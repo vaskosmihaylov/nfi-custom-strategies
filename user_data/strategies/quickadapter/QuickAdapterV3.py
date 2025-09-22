@@ -219,10 +219,8 @@ class QuickAdapterV3(IStrategy):
         
         if not self.pairs:
             raise ValueError(
-                "QuickAdapterV3 FreqAI strategy needs trading pairs. Please ensure your config has either:
-"
-                "1. exchange.pair_whitelist defined (for StaticPairList), or
-"
+                "QuickAdapterV3 FreqAI strategy needs trading pairs. Please ensure your config has either:"
+                "1. exchange.pair_whitelist defined (for StaticPairList), or"
                 "2. Proper pairlists configuration with available pairs"
             )
         if (
