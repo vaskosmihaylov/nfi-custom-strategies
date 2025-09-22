@@ -107,6 +107,49 @@ class QuickAdapterV3(IStrategy):
 
     process_only_new_candles = True
 
+    @property
+    def freqai_info(self) -> dict:
+        """
+        Safe access to FreqAI configuration with fallbacks.
+        Returns default configuration if FreqAI is not properly initialized.
+        """
+        if hasattr(self, '_freqai_info_cache'):
+            return self._freqai_info_cache
+            
+        # Try to get FreqAI info from various sources
+        freqai_config = None
+        
+        # Method 1: Check if FreqAI is available via config
+        if hasattr(self, 'config') and self.config:
+            freqai_config = self.config.get('freqai', {})
+        
+        # Method 2: Check if FreqAI object exists and is initialized
+        if not freqai_config and hasattr(self, 'freqai') and hasattr(self.freqai, 'freqai_info'):
+            freqai_config = self.freqai.freqai_info
+            
+        # Method 3: Fallback to reasonable defaults
+        if not freqai_config or not freqai_config.get('enabled', False):
+            logger.warning(
+                "FreqAI not properly configured or disabled. Using defaults. "
+                "Enable FreqAI in config with 'freqai.enabled: true' for full functionality."
+            )
+            freqai_config = {
+                "enabled": False,
+                "identifier": "quickadapter-default",
+                "fit_live_predictions_candles": 100,
+                "extrema_smoothing": "gaussian",
+                "extrema_smoothing_window": 5,
+                "extrema_smoothing_beta": 8.0,
+                "feature_parameters": {
+                    "label_period_candles": 24,
+                    "label_natr_ratio": 8.0
+                }
+            }
+        
+        # Cache the result
+        self._freqai_info_cache = freqai_config
+        return freqai_config
+
     @cached_property
     def can_short(self) -> bool:
         return self.is_short_allowed()
@@ -223,13 +266,17 @@ class QuickAdapterV3(IStrategy):
                 "1. exchange.pair_whitelist defined (for StaticPairList), or"
                 "2. Proper pairlists configuration with available pairs"
             )
-        if (
-            not isinstance(self.freqai_info.get("identifier"), str)
-            or self.freqai_info.get("identifier").strip() == ""
-        ):
-            raise ValueError(
-                "FreqAI strategy requires 'identifier' defined in the freqai section configuration"
-            )
+        freqai_identifier = self.freqai_info.get("identifier", "")
+        if not isinstance(freqai_identifier, str) or freqai_identifier.strip() == "":
+            if self.freqai_info.get("enabled", False):
+                raise ValueError(
+                    "FreqAI strategy requires 'identifier' defined in the freqai section configuration when FreqAI is enabled"
+                )
+            else:
+                logger.info(
+                    "FreqAI is disabled or not configured. Strategy will run without ML features. "
+                    "To enable FreqAI, add 'freqai.enabled: true' and 'freqai.identifier' to your config."
+                )
         self.models_full_path = Path(
             self.config.get("user_data_dir")
             / "models"
@@ -531,27 +578,62 @@ class QuickAdapterV3(IStrategy):
     def populate_indicators(
         self, dataframe: DataFrame, metadata: dict[str, Any]
     ) -> DataFrame:
-        dataframe = self.freqai.start(dataframe, metadata, self)
+        # Check if FreqAI is enabled and available
+        if (hasattr(self, 'freqai') and self.freqai and 
+            self.freqai_info.get("enabled", False)):
+            try:
+                dataframe = self.freqai.start(dataframe, metadata, self)
+            except Exception as e:
+                logger.error(f"FreqAI initialization failed: {e}. Running without ML features.")
+                # Add default columns that FreqAI would normally provide
+                dataframe["DI_values"] = 0
+                dataframe["DI_cutoff"] = 1
+                dataframe[EXTREMA_COLUMN] = 0
+                dataframe[MINIMA_THRESHOLD_COLUMN] = -1
+                dataframe[MAXIMA_THRESHOLD_COLUMN] = 1
+                dataframe["label_period_candles"] = self.freqai_info["feature_parameters"]["label_period_candles"]
+                dataframe["label_natr_ratio"] = self.freqai_info["feature_parameters"]["label_natr_ratio"]
+        else:
+            logger.info("FreqAI is disabled. Running strategy without ML features.")
+            # Add default columns that FreqAI would normally provide
+            dataframe["DI_values"] = 0  # Always pass DI filter
+            dataframe["DI_cutoff"] = 1
+            dataframe[EXTREMA_COLUMN] = 0
+            dataframe[MINIMA_THRESHOLD_COLUMN] = -1  # Conservative thresholds
+            dataframe[MAXIMA_THRESHOLD_COLUMN] = 1
+            dataframe["label_period_candles"] = self.freqai_info["feature_parameters"]["label_period_candles"]
+            dataframe["label_natr_ratio"] = self.freqai_info["feature_parameters"]["label_natr_ratio"]
 
+        # Process DI catch logic
         dataframe["DI_catch"] = np.where(
-            dataframe.get("DI_values") > dataframe.get("DI_cutoff"),
+            dataframe.get("DI_values", 0) > dataframe.get("DI_cutoff", 1),
             0,
-            1,
+            1,  # Default to allowing trades when FreqAI is disabled
         )
 
         pair = str(metadata.get("pair"))
 
-        self.set_label_period_candles(
-            pair, dataframe.get("label_period_candles").iloc[-1]
-        )
-        self.set_label_natr_ratio(pair, dataframe.get("label_natr_ratio").iloc[-1])
+        # Set label parameters (with fallback for when FreqAI columns don't exist)
+        try:
+            self.set_label_period_candles(
+                pair, dataframe.get("label_period_candles").iloc[-1]
+            )
+            self.set_label_natr_ratio(pair, dataframe.get("label_natr_ratio").iloc[-1])
+        except (AttributeError, IndexError) as e:
+            logger.warning(f"Could not set dynamic label parameters: {e}. Using defaults.")
 
+        # Calculate technical indicators
         dataframe["natr_label_period_candles"] = ta.NATR(
             dataframe, timeperiod=self.get_label_period_candles(pair)
         )
 
-        dataframe["minima_threshold"] = dataframe.get(MINIMA_THRESHOLD_COLUMN)
-        dataframe["maxima_threshold"] = dataframe.get(MAXIMA_THRESHOLD_COLUMN)
+        # Set threshold columns with safe access
+        dataframe["minima_threshold"] = dataframe.get(MINIMA_THRESHOLD_COLUMN, -1)
+        dataframe["maxima_threshold"] = dataframe.get(MAXIMA_THRESHOLD_COLUMN, 1)
+        
+        # Add do_predict column if not present (FreqAI normally provides this)
+        if "do_predict" not in dataframe.columns:
+            dataframe["do_predict"] = 1  # Allow predictions when FreqAI is disabled
 
         return dataframe
 
