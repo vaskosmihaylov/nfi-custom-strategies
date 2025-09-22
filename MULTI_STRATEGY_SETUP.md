@@ -6,10 +6,11 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 - **10 different trading strategies** running in separate Docker containers
-- **NGINX reverse proxy** for unified access
+- **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
 - **Health monitoring** and deployment scripts
+- **Proper CORS configuration** for cross-origin requests
 
 ## 🏗️ Architecture
 
@@ -34,8 +35,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `deploy-multi-strategies.sh` - Deployment and management script
 
 ### NGINX Configuration
-- `nginx-freqtrade-multi.conf` - Main NGINX configuration with path routing
-- `freqtrade-proxy-headers.conf` - Reusable proxy headers
+- `nginx-freqtrade-corrected.conf` - Corrected NGINX configuration with proper path routing
+- `freqtrade-proxy-common.conf` - Reusable proxy headers
 
 ### Environment Files (in `env-files/`)
 - `nfi-x6.env` - NostalgiaForInfinityX6 strategy
@@ -73,7 +74,7 @@ Before starting, update the API credentials in each environment file:
 
 # Or start individual strategies
 ./deploy-multi-strategies.sh start nfi-x6
-./deploy-multi-strategies.sh start quickadapter
+./deploy-multi-strategies.sh start bandtastic
 ```
 
 ### Step 3: Setup NGINX (requires sudo)
@@ -111,25 +112,30 @@ The `deploy-multi-strategies.sh` script provides comprehensive management:
 
 ## 🔧 Adding Bots to FreqUI
 
-Based on your screenshot, you'll add multiple bots to FreqUI. Each bot will have:
+### ⚠️ IMPORTANT: Corrected URL Format
 
-### Bot Configuration Format:
-1. **Bot Name**: Descriptive name (e.g., "NFI-X6", "QuickAdapter")
-2. **API URL**: Use strategy-specific endpoints:
-   - NFI-X6: `http://freq.gaiaderma.com/api/v1/nfi-x6`
-   - QuickAdapter: `http://freq.gaiaderma.com/api/v1/quickadapter`
-   - BandtasticFibo: `http://freq.gaiaderma.com/api/v1/bandtastic`
-   - TrendFollowing: `http://freq.gaiaderma.com/api/v1/trendfollowing`
-   - Renko: `http://freq.gaiaderma.com/api/v1/renko`
-   - FVG: `http://freq.gaiaderma.com/api/v1/fvg`
-   - PowerTower: `http://freq.gaiaderma.com/api/v1/powertower`
-   - FastSupertrend: `http://freq.gaiaderma.com/api/v1/fastsupertrend`
-   - NoTankAI: `http://freq.gaiaderma.com/api/v1/notankai`
-   - DTW: `http://freq.gaiaderma.com/api/v1/dtw`
+FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** include `/api/v1/` in the middle of URLs.
 
-3. **Username/Password**: Use the credentials from each strategy's env file:
-   - Username: `{strategy}_user` (e.g., `nfi_x6_user`, `quickadapter_user`)
-   - Password: `{strategy}_secure_password`
+### Bot Configuration (Corrected URLs):
+
+| Strategy | Bot Name | API URL | Username | Password |
+|----------|----------|---------|----------|----------|
+| **NFI-X6** | `Vasko_NFI_X6` | `http://freq.gaiaderma.com/nfi-x6` | `nfi_x6_user` | `nfi_x6_secure_password` |
+| **Bandtastic** | `Vasko_Bandtastic` | `http://freq.gaiaderma.com/bandtastic` | `bandtastic_user` | `bandtastic_secure_password` |
+| **QuickAdapter** | `Vasko_QuickAdapter` | `http://freq.gaiaderma.com/quickadapter` | `quickadapter_user` | `quickadapter_secure_password` |
+| **TrendFollowing** | `Vasko_TrendFollowing` | `http://freq.gaiaderma.com/trendfollowing` | `trendfollowing_user` | `trendfollowing_secure_password` |
+| **Renko** | `Vasko_Renko` | `http://freq.gaiaderma.com/renko` | `renko_user` | `renko_secure_password` |
+| **FVG** | `Vasko_FVG` | `http://freq.gaiaderma.com/fvg` | `fvg_user` | `fvg_secure_password` |
+| **PowerTower** | `Vasko_PowerTower` | `http://freq.gaiaderma.com/powertower` | `powertower_user` | `powertower_secure_password` |
+| **FastSupertrend** | `Vasko_FastSupertrend` | `http://freq.gaiaderma.com/fastsupertrend` | `fastsupertrend_user` | `fastsupertrend_secure_password` |
+| **NoTankAI** | `Vasko_NoTankAI` | `http://freq.gaiaderma.com/notankai` | `notankai_user` | `notankai_secure_password` |
+| **DTW** | `Vasko_DTW` | `http://freq.gaiaderma.com/dtw` | `dtw_user` | `dtw_secure_password` |
+
+### ✅ URL Flow Example:
+1. **FreqUI configured with**: `http://freq.gaiaderma.com/bandtastic`
+2. **FreqUI automatically appends**: `/api/v1/token/login`
+3. **Final request**: `http://freq.gaiaderma.com/bandtastic/api/v1/token/login`
+4. **NGINX proxies to**: `http://127.0.0.1:8082/api/v1/token/login`
 
 ## 🔒 Security Considerations
 
@@ -147,6 +153,14 @@ Based on your screenshot, you'll add multiple bots to FreqUI. Each bot will have
 - All strategies bind to `127.0.0.1` (localhost only)
 - Only NGINX is exposed to external traffic
 
+### CORS Configuration
+Each environment file includes proper CORS configuration:
+```bash
+# Correct format for environment variables (comma-separated)
+FREQTRADE__API_SERVER__CORS_ORIGINS=https://freq.gaiaderma.com,http://freq.gaiaderma.com
+FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
+```
+
 ## 📊 Monitoring and Logs
 
 ### Health Monitoring
@@ -156,7 +170,11 @@ Based on your screenshot, you'll add multiple bots to FreqUI. Each bot will have
 
 # Individual health checks
 curl http://127.0.0.1:8080/api/v1/ping  # NFI-X6
-curl http://127.0.0.1:8081/api/v1/ping  # QuickAdapter
+curl http://127.0.0.1:8082/api/v1/ping  # Bandtastic
+
+# Test through NGINX
+curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 ```
 
 ### Log Management
@@ -168,7 +186,7 @@ curl http://127.0.0.1:8081/api/v1/ping  # QuickAdapter
 ./deploy-multi-strategies.sh logs nfi-x6
 
 # Live log following
-docker-compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x6
+docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x6
 ```
 
 ### File-based Logs
@@ -201,11 +219,26 @@ Each strategy uses its own SQLite database:
 - `quickadapter-tradesv3.sqlite`
 - etc.
 
+### NGINX Path Routing
+The NGINX configuration uses simple base paths without complex rewrites:
+```nginx
+# Strategy-specific paths (FreqUI appends /api/v1/* to these)
+location /bandtastic/ {
+    proxy_pass http://127.0.0.1:8082/;
+}
+```
+
 ## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Port Conflicts**
+1. **CORS/Double-Path Issues**
+   
+   **Problem**: Browser console shows `POST http://freq.gaiaderma.com/api/v1/bandtastic/api/v1/token/login 405 (Method Not Allowed)`
+   
+   **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/bandtastic` instead of `http://freq.gaiaderma.com/api/v1/bandtastic`
+
+2. **Port Conflicts**
    ```bash
    # Check if ports are in use
    netstat -tulpn | grep :808[0-9]
@@ -214,7 +247,7 @@ Each strategy uses its own SQLite database:
    ./deploy-multi-strategies.sh stop
    ```
 
-2. **NGINX Configuration Errors**
+3. **NGINX Configuration Errors**
    ```bash
    # Test NGINX configuration
    sudo nginx -t
@@ -223,23 +256,33 @@ Each strategy uses its own SQLite database:
    sudo tail -f /var/log/nginx/freqtrade_error.log
    ```
 
-3. **Strategy Not Starting**
+4. **Strategy Not Starting**
    ```bash
    # Check strategy logs
    ./deploy-multi-strategies.sh logs strategy-name
    
    # Check Docker container status
-   docker-compose -f docker-compose-multi-strategies.yml ps
+   docker compose -f docker-compose-multi-strategies.yml ps
    ```
 
-4. **API Connection Issues**
+5. **API Connection Issues**
    ```bash
    # Test direct API access
    curl http://127.0.0.1:8080/api/v1/ping
    
+   # Test through NGINX
+   curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+   
    # Check strategy configuration
    cat env-files/strategy-name.env
    ```
+
+### CORS Troubleshooting
+If CORS issues persist:
+1. **Check environment variable format**: Must be comma-separated, not JSON array
+2. **Verify CORS headers**: Use browser Developer Tools → Network tab
+3. **Check NGINX configuration**: Ensure proxy headers are set correctly
+4. **Restart containers**: After changing environment files
 
 ### Performance Optimization
 
@@ -264,8 +307,31 @@ To add new strategies or modify existing ones:
 3. **Backup Strategy**: Implement database backup automation
 4. **Scaling**: Consider Kubernetes for larger deployments
 
+## 🔍 Validation Tests
+
+After setup, verify everything works:
+
+```bash
+# Test all endpoints
+curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
+curl http://freq.gaiaderma.com/quickadapter/api/v1/ping
+
+# Test health endpoints
+curl http://freq.gaiaderma.com/health/nfi-x6
+curl http://freq.gaiaderma.com/health/bandtastic
+
+# Check container status
+./deploy-multi-strategies.sh status
+./deploy-multi-strategies.sh health-check
+```
+
+All endpoints should return `{"status":"pong"}`.
+
 ---
 
 **Happy Trading! 🚀**
 
 For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stable/
+
+**Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/bandtastic` instead of `http://freq.gaiaderma.com/api/v1/bandtastic`.

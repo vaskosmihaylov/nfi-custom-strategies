@@ -10,3 +10,5 @@ docxtpl
 pytest-md
 pytest-pretty
 numba
+arrow
+matplotlib

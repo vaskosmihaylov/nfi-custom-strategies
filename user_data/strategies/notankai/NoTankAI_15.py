@@ -37,7 +37,7 @@ warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 logger = logging.getLogger(__name__)
 
 
-class NOTankAi_15_Cleaned_v2(IStrategy):
+class NoTankAI_15(IStrategy):
     exit_profit_only = False
     trailing_stop = False
     position_adjustment_enable = False

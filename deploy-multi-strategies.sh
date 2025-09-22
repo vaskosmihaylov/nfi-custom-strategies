@@ -65,11 +65,17 @@ show_help() {
     echo "  fvg, powertower, fastsupertrend, notankai, dtw"
     echo ""
     echo "Examples:"
-    echo "  $0 start                    # Start all strategies"
-    echo "  $0 start nfi-x6            # Start only NFI-X6 strategy"
-    echo "  $0 status                  # Show status of all strategies"
-    echo "  $0 logs quickadapter       # Show logs for QuickAdapter strategy"
-    echo "  $0 setup-nginx             # Copy NGINX configuration"
+    echo "  \$0 start                    # Start all strategies"
+    echo "  \$0 start nfi-x6            # Start only NFI-X6 strategy"
+    echo "  \$0 status                  # Show status of all strategies"
+    echo "  \$0 logs quickadapter       # Show logs for QuickAdapter strategy"
+    echo "  \$0 setup-nginx             # Copy NGINX configuration"
+    echo ""
+    echo "FreqUI Bot URLs (use these in FreqUI):"
+    echo "  NFI-X6:       http://freq.gaiaderma.com/nfi-x6"
+    echo "  Bandtastic:   http://freq.gaiaderma.com/bandtastic"
+    echo "  QuickAdapter: http://freq.gaiaderma.com/quickadapter"
+    echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
 # Function to start strategies
@@ -150,21 +156,27 @@ setup_nginx() {
         return 1
     fi
     
-    # Copy main NGINX configuration
-    if [ -f "nginx-freqtrade-multi.conf" ]; then
+    # Copy main NGINX configuration (use corrected version if available)
+    if [ -f "nginx-freqtrade-corrected.conf" ]; then
+        cp nginx-freqtrade-corrected.conf /etc/nginx/sites-available/freqtrade-multi
+        print_success "Copied corrected NGINX configuration"
+    elif [ -f "nginx-freqtrade-multi.conf" ]; then
         cp nginx-freqtrade-multi.conf /etc/nginx/sites-available/freqtrade-multi
         print_success "Copied main NGINX configuration"
     else
-        print_error "nginx-freqtrade-multi.conf not found"
+        print_error "No NGINX configuration file found (looking for nginx-freqtrade-corrected.conf or nginx-freqtrade-multi.conf)"
         return 1
     fi
     
-    # Copy proxy headers configuration
-    if [ -f "freqtrade-proxy-headers.conf" ]; then
+    # Copy proxy headers configuration (use common version if available)
+    if [ -f "freqtrade-proxy-common.conf" ]; then
+        cp freqtrade-proxy-common.conf /etc/nginx/conf.d/
+        print_success "Copied proxy common configuration"
+    elif [ -f "freqtrade-proxy-headers.conf" ]; then
         cp freqtrade-proxy-headers.conf /etc/nginx/conf.d/
         print_success "Copied proxy headers configuration"
     else
-        print_error "freqtrade-proxy-headers.conf not found"
+        print_error "No proxy configuration file found (looking for freqtrade-proxy-common.conf or freqtrade-proxy-headers.conf)"
         return 1
     fi
     
@@ -226,12 +238,16 @@ health_check() {
 update_config() {
     print_warning "This function will help you update API credentials in environment files"
     print_warning "Make sure to update the following in each env file:"
-    echo "  - FREQTRADE__EXCHANGE__KEY"
-    echo "  - FREQTRADE__EXCHANGE__SECRET"
-    echo "  - FREQTRADE__DRY_RUN (set to false for live trading)"
+    echo "  - FREQTRADE__EXCHANGE__KEY=Your_Real_API_Key"
+    echo "  - FREQTRADE__EXCHANGE__SECRET=Your_Real_API_Secret"
+    echo "  - FREQTRADE__DRY_RUN=false (for live trading)"
+    echo ""
+    print_status "CORS configuration should be (comma-separated format):"
+    echo "  FREQTRADE__API_SERVER__CORS_ORIGINS=https://freq.gaiaderma.com,http://freq.gaiaderma.com"
+    echo '  FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"'
     echo ""
     print_status "Environment files are located in: env-files/"
-    ls -la env-files/*.env
+    ls -la env-files/*.env 2>/dev/null || echo "No environment files found"
 }
 
 # Main script logic
