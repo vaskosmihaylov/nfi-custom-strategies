@@ -102,6 +102,16 @@ class renko:
     def evaluate(self, method = 'simple'):
         balance = 0
         sign_changes = 0
+        
+        # Guard against division by zero - ultra-efficient error prevention
+        if len(self.renko_prices) == 0:
+            return {
+                'balance': 0,
+                'directions_n': 0,
+                'score': 0,
+                'price_ratio': 0
+            }
+        
         price_ratio = len(self.source_prices) / len(self.renko_prices)
 
         if method == 'simple':

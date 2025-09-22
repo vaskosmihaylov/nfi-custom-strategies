@@ -27,7 +27,7 @@ services:
     <<: *common-settings
     container_name: freqtrade-nfi-x6
     ports:
-      - "127.0.0.1:8090:8080"
+      - "127.0.0.1:8080:8080"
     env_file:
       - path: ./env-files/nfi-x6.env
         required: true

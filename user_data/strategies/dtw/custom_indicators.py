@@ -62,7 +62,8 @@ def RMI(dataframe, *, length=20, mom=5):
     df['maxup'] = (df['close'] - df['close'].shift(mom)).clip(lower=0)
     df['maxdown'] = (df['close'].shift(mom) - df['close']).clip(lower=0)
 
-    df.fillna(0, inplace=True)
+    # Fill only the specific numeric columns we created - prevents dtype compatibility issues
+    df[['maxup', 'maxdown']] = df[['maxup', 'maxdown']].fillna(0)
 
     df["emaInc"] = ta.EMA(df, price='maxup', timeperiod=length)
     df["emaDec"] = ta.EMA(df, price='maxdown', timeperiod=length)
@@ -131,7 +132,7 @@ def SSLChannels(dataframe, length=10, mode='sma'):
         df['smaLow'] = df['low'].rolling(length).mean()
 
     df['hlv'] = np.where(df['close'] > df['smaHigh'], 1,
-                         np.where(df['close'] < df['smaLow'], -1, np.NAN))
+                         np.where(df['close'] < df['smaLow'], -1, np.nan))
     df['hlv'] = df['hlv'].ffill()
 
     df['sslDown'] = np.where(df['hlv'] < 0, df['smaHigh'], df['smaLow'])
@@ -149,7 +150,7 @@ def SSLChannels_ATR(dataframe, length=7):
     df['ATR'] = ta.ATR(df, timeperiod=14)
     df['smaHigh'] = df['high'].rolling(length).mean() + df['ATR']
     df['smaLow'] = df['low'].rolling(length).mean() - df['ATR']
-    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.NAN))
+    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.nan))
     df['hlv'] = df['hlv'].ffill()
     df['sslDown'] = np.where(df['hlv'] < 0, df['smaHigh'], df['smaLow'])
     df['sslUp'] = np.where(df['hlv'] < 0, df['smaLow'], df['smaHigh'])
