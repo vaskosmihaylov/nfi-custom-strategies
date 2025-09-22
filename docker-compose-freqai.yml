@@ -1,0 +1,55 @@
+---
+# FreqAI Docker Compose - Separate FreqAI service for ML strategies
+# Usage: docker-compose -f docker-compose-freqai.yml up -d
+
+x-freqai-settings:
+  &freqai-settings
+  image: freqtradeorg/freqtrade:stable_freqai
+  build:
+    context: .
+    dockerfile: "./docker/Dockerfile.custom"
+    target: freqai  # Custom target if you need custom packages
+  restart: unless-stopped
+  volumes:
+    - "./user_data:/freqtrade/user_data"
+    - "./user_data/data:/freqtrade/user_data/data"
+    - "./configs:/freqtrade/configs"
+    - "./user_data/strategies:/freqtrade/user_data/strategies"
+    - "./user_data/models:/freqtrade/user_data/models"  # FreqAI models
+    - "./user_data/notebooks:/freqtrade/user_data/notebooks"  # FreqAI analysis
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:${FREQTRADE__API_SERVER__LISTEN_PORT:-8081}"]
+    interval: 2m
+    timeout: 15s
+    retries: 3
+    start_period: 60s
+    start_interval: 10s
+  env_file:
+    - path: ./env-files/freqai-base.env
+      required: true
+
+services:
+  quickadapter-freqai:
+    <<: *freqai-settings
+    container_name: ${FREQTRADE__BOT_NAME:-QuickAdapter}_FreqAI_${FREQTRADE__EXCHANGE__NAME:-bybit}
+    ports:
+      - "${FREQTRADE__API_SERVER__LISTEN_PORT:-8081}:${FREQTRADE__API_SERVER__LISTEN_PORT:-8081}"
+    environment:
+      - FREQTRADE__STRATEGY=QuickAdapterV3
+      - FREQTRADE__FREQAI__ENABLED=true
+      - FREQTRADE__FREQAIMODEL=XGBoostRegressor
+      - FREQTRADE__FREQAI__IDENTIFIER=quickadapter-xgboost
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config configs/freqai-addon.json
+      --db-url sqlite:////freqtrade/user_data/${FREQTRADE__BOT_NAME:-QuickAdapter}_FreqAI_tradesv3.sqlite
+      --log-file user_data/logs/${FREQTRADE__BOT_NAME:-QuickAdapter}-FreqAI-${FREQTRADE__EXCHANGE__NAME:-bybit}.log
+      --strategy-path user_data/strategies
+
+  # Add more FreqAI strategies here as needed
+  # other-freqai-strategy:
+  #   <<: *freqai-settings
+  #   container_name: OtherStrategy_FreqAI
+  #   environment:
+  #     - FREQTRADE__STRATEGY=OtherFreqAIStrategy
