@@ -12,3 +12,5 @@ pytest-pretty
 numba
 arrow
 matplotlib
+scipy
+pywt

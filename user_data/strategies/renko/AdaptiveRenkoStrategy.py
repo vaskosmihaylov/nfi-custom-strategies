@@ -44,11 +44,23 @@ class AdaptiveRenkoStrategy(IStrategy):
     
     INTERFACE_VERSION = 3
 
+    # Required freqtrade strategy properties
     timeframe = '3m'
     timeframe_minutes = timeframe_to_minutes(timeframe)
     can_short: bool = True
     trailing_stop = False
     startup_candle_count: int = 7*2
+    
+    # Mandatory strategy parameters - directly embedded for portability
+    stoploss = -0.30  # 30% stop loss (aggressive but suitable for crypto)
+    
+    # ROI table optimized for Renko-based trend following
+    minimal_roi = {
+        "0": 0.08,   # 8% initial target
+        "40": 0.04,  # 4% after 40 minutes  
+        "100": 0.02, # 2% after 100 minutes
+        "240": 0.01  # 1% after 4 hours (final exit)
+    }
     use_exit_signal = True
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
@@ -138,6 +150,10 @@ class AdaptiveRenkoStrategy(IStrategy):
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # Initialize exit columns
+        dataframe['exit_long'] = 0
+        dataframe['exit_short'] = 0
+        
         if metadata['pair'] not in self.custom_renkodict:
             return dataframe
         
