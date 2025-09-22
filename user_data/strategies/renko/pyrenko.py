@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import talib
 import pandas as pd
+import numpy as np
 
 class renko:      
     def __init__(self):
         self.source_prices = []
-        self.renko_prices = []
-        self.renko_directions = []
+        # Initialize as pandas Series for concatenation compatibility
+        self.renko_prices = pd.Series([], dtype='float64')
+        self.renko_directions = pd.Series([], dtype='int64')
     
     # Setting brick size. Auto mode is preferred, it uses history
     def set_brick_size(self, HLC_history = None, auto = True, brick_size = 10.0):
@@ -38,20 +40,20 @@ class renko:
                 num_new_bars -= np.sign(gap_div)
                 start_brick = 2
                 is_new_brick = True
-                #self.renko_prices.append(self.renko_prices[-1] + 2 * self.brick_size * np.sign(gap_div))
-                self.renko_prices = pd.concat([self.renko_prices, self.renko_prices[-1] + 2 * self.brick_size * np.sign(gap_div)])
-                #self.renko_directions.append(np.sign(gap_div))
-                self.renko_directions = pd.concat([self.renko_directions, np.sign(gap_div)])
+                # Ultra-efficient pandas concatenation for new brick price
+                new_price = self.renko_prices.iloc[-1] + 2 * self.brick_size * np.sign(gap_div)
+                self.renko_prices = pd.concat([self.renko_prices, pd.Series([new_price])], ignore_index=True)
+                self.renko_directions = pd.concat([self.renko_directions, pd.Series([np.sign(gap_div)])], ignore_index=True)
             #else:
                 #num_new_bars = 0
 
             if is_new_brick:
                 # Add each brick
                 for d in range(start_brick, np.abs(gap_div)):
-                    #self.renko_prices.append(self.renko_prices[-1] + self.brick_size * np.sign(gap_div))
-                    self.renko_prices = pd.concat([self.renko_prices, self.renko_prices[-1] + self.brick_size * np.sign(gap_div)])
-                    #self.renko_directions.append(np.sign(gap_div))
-                    self.renko_directions = pd.concat([self.renko_directions, np.sign(gap_div)])
+                    # Aggressive brick-by-brick concatenation
+                    new_price = self.renko_prices.iloc[-1] + self.brick_size * np.sign(gap_div)
+                    self.renko_prices = pd.concat([self.renko_prices, pd.Series([new_price])], ignore_index=True)
+                    self.renko_directions = pd.concat([self.renko_directions, pd.Series([np.sign(gap_div)])], ignore_index=True)
         
         return num_new_bars
                 
@@ -60,10 +62,9 @@ class renko:
         if len(prices) > 0:
             # Init by start values
             self.source_prices = prices
-            #self.renko_prices.append(prices.iloc[0])
-            self.renko_prices = pd.concat([self.renko_prices, prices.iloc[0]])
-            #self.renko_directions.append(0)
-            self.renko_directions = pd.concat([self.renko_directions, 0])
+            # Ultra-efficient pandas concatenation with proper type handling
+            self.renko_prices = pd.concat([self.renko_prices, pd.Series([prices.iloc[0]])], ignore_index=True)
+            self.renko_directions = pd.concat([self.renko_directions, pd.Series([0])], ignore_index=True)
         
             # For each price in history
             for p in self.source_prices[1:]:
@@ -74,16 +75,14 @@ class renko:
     # Getting next renko value for last price
     def do_next(self, last_price):
         if len(self.renko_prices) == 0:
-            #self.source_prices.append(last_price)
-            self.source_prices = pd.concat([self.source_prices, last_price])
-            #self.renko_prices.append(last_price)
-            self.renko_prices = pd.concat([self.renko_prices, last_price])
-            #self.renko_directions.append(0)
-            self.renko_directions = pd.concat([self.renko_directions, 0])
+            # Initialize empty renko structure with first price
+            self.source_prices.append(last_price)  # Keep as list for source_prices
+            self.renko_prices = pd.concat([self.renko_prices, pd.Series([last_price])], ignore_index=True)
+            self.renko_directions = pd.concat([self.renko_directions, pd.Series([0])], ignore_index=True)
             return 1
         else:
-            #self.source_prices.append(last_price)
-            self.source_prices = pd.concat([self.source_prices, last_price])
+            # Append to source prices and apply renko rule
+            self.source_prices.append(last_price)  # Keep as list for source_prices
             return self.__renko_rule(last_price)
     
     # Simple method to get optimal brick size based on ATR
