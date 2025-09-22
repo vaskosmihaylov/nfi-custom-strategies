@@ -11,6 +11,8 @@ class renko:
         # Initialize as pandas Series for concatenation compatibility
         self.renko_prices = pd.Series([], dtype='float64')
         self.renko_directions = pd.Series([], dtype='int64')
+        # Ultra-efficient brick_size initialization - prevents AttributeError
+        self.brick_size = 0.0
     
     # Setting brick size. Auto mode is preferred, it uses history
     def set_brick_size(self, HLC_history = None, auto = True, brick_size = 10.0):

@@ -119,7 +119,9 @@ class AdaptiveRenkoStrategy(IStrategy):
 
         # Evaluate the Renko bars and update the score and directions dictionaries
         renko_eval = renko_obj.evaluate()
-        logger.info(f'Evaluated the Renko bars for pair {metadata["pair"]}, values: {renko_eval}, brick size: {renko_obj.brick_size}')
+        # Defensive logging with brick_size safety check
+        brick_size_info = getattr(renko_obj, 'brick_size', 'Not Set')
+        logger.info(f'Evaluated the Renko bars for pair {metadata["pair"]}, values: {renko_eval}, brick size: {brick_size_info}')
         self.score = {metadata['pair']: renko_eval['score']}
         self.directions = {metadata['pair']: directions}
         return dataframe
