@@ -13,4 +13,4 @@ numba
 arrow
 matplotlib
 scipy
-pywt
+PyWavelets
