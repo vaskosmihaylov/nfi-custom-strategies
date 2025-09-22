@@ -156,7 +156,7 @@ services:
       --db-url sqlite:////freqtrade/user_data/fastsupertrend-tradesv3.sqlite
       --log-file user_data/logs/fastsupertrend.log
       --strategy-path user_data/strategies/fastsupertrend
-      --strategy FastSupertrend_optim3_rsi_75lev
+      --strategy FastSupertrend_ts_origstop_fix
 
   # NoTankAI Strategy
   freqtrade-notankai:

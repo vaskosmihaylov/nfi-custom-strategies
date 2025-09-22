@@ -191,10 +191,39 @@ class QuickAdapterV3(IStrategy):
             return max_open_trades
 
     def bot_start(self, **kwargs) -> None:
-        self.pairs: list[str] = self.config.get("exchange", {}).get("pair_whitelist")
+        # Get pairs from various possible sources (flexible configuration)
+        self.pairs: list[str] = None
+        
+        # Try exchange.pair_whitelist first (StaticPairList)
+        exchange_pairs = self.config.get("exchange", {}).get("pair_whitelist")
+        if exchange_pairs and isinstance(exchange_pairs, list):
+            self.pairs = exchange_pairs
+        else:
+            # For dynamic pairlists, get pairs from dp.current_whitelist()
+            try:
+                if hasattr(self, 'dp') and self.dp:
+                    current_pairs = self.dp.current_whitelist()
+                    if current_pairs:
+                        self.pairs = current_pairs
+            except Exception as e:
+                log.warning(f"Could not retrieve pairs from dataprovider: {e}")
+        
+        # Fallback: try to get from pairlists config
+        if not self.pairs:
+            pairlists = self.config.get("pairlists", [])
+            if pairlists and len(pairlists) > 0:
+                # For volume-based pairlists, we'll get pairs dynamically
+                # Set a reasonable default for initialization
+                self.pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]  # Minimal default
+                log.info(f"Using default pairs for FreqAI initialization: {self.pairs}")
+        
         if not self.pairs:
             raise ValueError(
-                "FreqAI strategy requires StaticPairList method defined in pairlists configuration and 'pair_whitelist' defined in exchange section configuration"
+                "QuickAdapterV3 FreqAI strategy needs trading pairs. Please ensure your config has either:
+"
+                "1. exchange.pair_whitelist defined (for StaticPairList), or
+"
+                "2. Proper pairlists configuration with available pairs"
             )
         if (
             not isinstance(self.freqai_info.get("identifier"), str)
