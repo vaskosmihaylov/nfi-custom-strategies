@@ -32,7 +32,7 @@ class FVGAdvancedStrategy_V2(IStrategy):
     ignore_roi_if_entry_signal = False
 
     # 杠杆参数
-    max_leverage = 5.0
+    max_leverage = 3.0
     min_leverage = 1.0
     default_leverage = 2.0
     

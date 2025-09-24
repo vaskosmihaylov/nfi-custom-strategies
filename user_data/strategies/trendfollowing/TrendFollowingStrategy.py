@@ -138,4 +138,4 @@ class TrendFollowingStrategy(IStrategy):
                 proposed_leverage: float, max_leverage: float, entry_tag: Optional[str],
                 side: str, **kwargs) -> float:
         """使用5倍杠杆"""
-        return 5.0
+        return 3.0

@@ -132,7 +132,7 @@ class renko:
             else:
                 score = -1.0
 
-            return {'balance': balance, 'sign_changes:': sign_changes, 
+            return {'balance': balance, 'directions_n': sign_changes, 
                     'price_ratio': price_ratio, 'score': score}
     
     def get_renko_prices(self):

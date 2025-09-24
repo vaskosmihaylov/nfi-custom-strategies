@@ -40,6 +40,7 @@ class AdaptiveRenkoStrategy(IStrategy):
     https://towardsdatascience.com/bayesian-optimization-in-trading-77202ffed530
 
     Author: Mr Robot (@heymrrobot)
+    Updated: PyVortexX - Fixed direction tracking and bounds checking
     """    
     
     INTERFACE_VERSION = 3
@@ -66,8 +67,10 @@ class AdaptiveRenkoStrategy(IStrategy):
     ignore_roi_if_entry_signal = False
     process_only_new_candles = True
     
-    # Initialize renko_obj_obs as a dictionary
+    # Initialize persistent dictionaries for all pairs
     custom_renkodict = {}
+    directions = {}  # Persistent directions for all pairs
+    score = {}       # Persistent scores for all pairs
                        
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
@@ -100,8 +103,15 @@ class AdaptiveRenkoStrategy(IStrategy):
         logger.info(f'Got the list of renko prices for pair {metadata["pair"]}')
         # Get the list of renko directions from the renko object
         directions = renko_obj.get_renko_directions()
-        self.prev_brick_direction = directions[-2] if len(directions) >= 2 else None
-        self.last_brick_direction = directions[-1] if len(directions) >= 1 else None
+        
+        # Safe bounds checking for direction access
+        prev_brick_direction = None
+        last_brick_direction = None
+        if len(directions) >= 2:
+            prev_brick_direction = directions[-2]
+            last_brick_direction = directions[-1]
+        elif len(directions) >= 1:
+            last_brick_direction = directions[-1]
     
         # Check if there are any prices in the prices list
         if len(prices) > 0:
@@ -111,19 +121,22 @@ class AdaptiveRenkoStrategy(IStrategy):
             # If new bars were created
             if num_created_bars != 0:
                 # If the previous brick direction is not the same as the last brick direction
-                if self.prev_brick_direction != self.last_brick_direction:
+                if prev_brick_direction is not None and prev_brick_direction != last_brick_direction:
                     opt_bs = opt.fminbound(lambda x: -evaluate_renko(brick=x, history=dataframe.close, column_name='score'), np.min(dataframe['atr_15m']), np.max(dataframe['atr_15m']), disp=0)
                     if opt_bs != renko_obj.brick_size:
                         renko_obj.set_brick_size(brick_size=opt_bs, auto=False)
                         self.opt_bs = opt_bs
 
-        # Evaluate the Renko bars and update the score and directions dictionaries
+        # Evaluate the Renko bars and update the persistent score and directions dictionaries
         renko_eval = renko_obj.evaluate()
         # Defensive logging with brick_size safety check
         brick_size_info = getattr(renko_obj, 'brick_size', 'Not Set')
         logger.info(f'Evaluated the Renko bars for pair {metadata["pair"]}, values: {renko_eval}, brick size: {brick_size_info}')
-        self.score = {metadata['pair']: renko_eval['score']}
-        self.directions = {metadata['pair']: directions}
+        
+        # Update persistent dictionaries (don't overwrite, just update for this pair)
+        self.score[metadata['pair']] = renko_eval['score']
+        self.directions[metadata['pair']] = directions
+        
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
@@ -133,12 +146,20 @@ class AdaptiveRenkoStrategy(IStrategy):
 
         # Check if the current pair is not in the custom_renkodict, or if the score for the pair is less than 4, or if the length of the directions list for the pair is less than 2.
         # If any of these conditions is true, return the original DataFrame without making any changes.
-        if metadata['pair'] not in self.custom_renkodict or self.score.get(metadata['pair'], -1) < 4 or len(self.directions[metadata['pair']]) < 2:
+        if (metadata['pair'] not in self.custom_renkodict or 
+            self.score.get(metadata['pair'], -1) < 4 or 
+            metadata['pair'] not in self.directions or
+            len(self.directions[metadata['pair']]) < 2):
             return dataframe
 
         # Get the direction of the last brick and the direction of the second-to-last brick for the current pair from the directions list.
-        last_brick_direction = self.directions[metadata['pair']][-1]
-        prev_brick_direction = self.directions[metadata['pair']][-2]
+        # Safe bounds checking to prevent KeyError: -1
+        directions_list = self.directions[metadata['pair']]
+        if len(directions_list) < 2:
+            return dataframe  # Not enough data for trend analysis
+            
+        last_brick_direction = directions_list[-1]
+        prev_brick_direction = directions_list[-2]
         
         # If the direction of the last brick is up (1) and the direction of the previous brick is down (-1), 
         # set the value of enter_long to 1 and enter_tag to 'buy_direction' for all rows in the enter_long and enter_tag columns vice versa.
@@ -156,11 +177,19 @@ class AdaptiveRenkoStrategy(IStrategy):
         dataframe['exit_long'] = 0
         dataframe['exit_short'] = 0
         
-        if metadata['pair'] not in self.custom_renkodict:
+        # Comprehensive safety checks with proper bounds validation
+        if (metadata['pair'] not in self.custom_renkodict or 
+            metadata['pair'] not in self.directions or
+            len(self.directions[metadata['pair']]) < 2):
             return dataframe
         
-        last_brick_direction = self.directions[metadata['pair']][-1]
-        prev_brick_direction = self.directions[metadata['pair']][-2]
+        # Safe bounds checking to prevent KeyError: -1
+        directions_list = self.directions[metadata['pair']]
+        if len(directions_list) < 2:
+            return dataframe  # Not enough data for exit analysis
+            
+        last_brick_direction = directions_list[-1]
+        prev_brick_direction = directions_list[-2]
 
         if last_brick_direction == -1 and prev_brick_direction == 1:
             dataframe.loc[:, ['exit_long', 'enter_tag']] = (1, 'direction_long_exit')
