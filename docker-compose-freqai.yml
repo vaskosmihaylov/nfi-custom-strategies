@@ -45,7 +45,7 @@ services:
       --config configs/freqai-addon.json
       --db-url sqlite:////freqtrade/user_data/${FREQTRADE__BOT_NAME:-QuickAdapter}_FreqAI_tradesv3.sqlite
       --log-file user_data/logs/${FREQTRADE__BOT_NAME:-QuickAdapter}-FreqAI-${FREQTRADE__EXCHANGE__NAME:-bybit}.log
-      --strategy-path user_data/strategies
+      --strategy-path user_data/strategies/quickadapter
 
   # Add more FreqAI strategies here as needed
   # other-freqai-strategy:
