@@ -8,7 +8,8 @@ x-freqai-settings:
   build:
     context: .
     dockerfile: "./docker/Dockerfile.custom"
-    target: freqai  # Custom target if you need custom packages
+    args:
+      sourcetag: stable_freqai
   restart: unless-stopped
   volumes:
     - "./user_data:/freqtrade/user_data"
