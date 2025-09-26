@@ -72,12 +72,10 @@ update_all_env_files() {
         "env-files/quickadapter.env"
         "env-files/bandtastic.env"
         "env-files/trendfollowing.env"
-        "env-files/renko.env"
         "env-files/fvg.env"
         "env-files/powertower.env"
         "env-files/fastsupertrend.env"
         "env-files/notankai.env"
-        "env-files/dtw.env"
     )
     
     for env_file in "${env_files[@]}"; do

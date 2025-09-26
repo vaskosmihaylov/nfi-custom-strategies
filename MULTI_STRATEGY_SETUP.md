@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **10 different trading strategies** running in separate Docker containers
+- **8 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -20,12 +20,10 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── QuickAdapter (Port 8081)
                            ├── BandtasticFiboHyper (Port 8082)
                            ├── TrendFollowing (Port 8083)
-                           ├── Renko (Port 8084)
                            ├── FVG (Port 8085)
                            ├── PowerTower (Port 8086)
                            ├── FastSupertrend (Port 8087)
-                           ├── NoTankAI (Port 8088)
-                           └── DTW (Port 8089)
+                           └── NoTankAI (Port 8088)
 ```
 
 ## 📁 Files Created
@@ -43,12 +41,10 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `quickadapter.env` - QuickAdapter strategy
 - `bandtastic.env` - BandtasticFiboHyper strategy
 - `trendfollowing.env` - TrendFollowing strategy
-- `renko.env` - Renko strategy
 - `fvg.env` - FVG Advanced Strategy
 - `powertower.env` - PowerTower strategy
 - `fastsupertrend.env` - FastSupertrend strategy
 - `notankai.env` - NoTankAI strategy
-- `dtw.env` - DTW strategy
 
 ## 🚀 Quick Start
 
@@ -124,12 +120,10 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Bandtastic** | `Vasko_Bandtastic` | `http://freq.gaiaderma.com/bandtastic` | `bandtastic_user` | `bandtastic_secure_password` |
 | **QuickAdapter** | `Vasko_QuickAdapter` | `http://freq.gaiaderma.com/quickadapter` | `quickadapter_user` | `quickadapter_secure_password` |
 | **TrendFollowing** | `Vasko_TrendFollowing` | `http://freq.gaiaderma.com/trendfollowing` | `trendfollowing_user` | `trendfollowing_secure_password` |
-| **Renko** | `Vasko_Renko` | `http://freq.gaiaderma.com/renko` | `renko_user` | `renko_secure_password` |
 | **FVG** | `Vasko_FVG` | `http://freq.gaiaderma.com/fvg` | `fvg_user` | `fvg_secure_password` |
 | **PowerTower** | `Vasko_PowerTower` | `http://freq.gaiaderma.com/powertower` | `powertower_user` | `powertower_secure_password` |
 | **FastSupertrend** | `Vasko_FastSupertrend` | `http://freq.gaiaderma.com/fastsupertrend` | `fastsupertrend_user` | `fastsupertrend_secure_password` |
 | **NoTankAI** | `Vasko_NoTankAI` | `http://freq.gaiaderma.com/notankai` | `notankai_user` | `notankai_secure_password` |
-| **DTW** | `Vasko_DTW` | `http://freq.gaiaderma.com/dtw` | `dtw_user` | `dtw_secure_password` |
 
 ### ✅ URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/bandtastic`
@@ -206,12 +200,10 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - QuickAdapter: 8081
 - BandtasticFiboHyper: 8082
 - TrendFollowing: 8083
-- Renko: 8084
 - FVG: 8085
 - PowerTower: 8086
 - FastSupertrend: 8087
 - NoTankAI: 8088
-- DTW: 8089
 
 ### Database Separation
 Each strategy uses its own SQLite database:

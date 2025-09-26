@@ -61,8 +61,8 @@ show_help() {
     echo "  help                Show this help message"
     echo ""
     echo "Available strategies:"
-    echo "  nfi-x6, quickadapter, bandtastic, trendfollowing, renko,"
-    echo "  fvg, powertower, fastsupertrend, notankai, dtw"
+    echo "  nfi-x6, quickadapter, bandtastic, trendfollowing,"
+    echo "  fvg, powertower, fastsupertrend, notankai"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -204,12 +204,10 @@ health_check() {
         "quickadapter:8081"
         "bandtastic:8082"
         "trendfollowing:8083"
-        "renko:8084"
         "fvg:8085"
         "powertower:8086"
         "fastsupertrend:8087"
         "notankai:8088"
-        "dtw:8089"
     )
     
     local healthy=0

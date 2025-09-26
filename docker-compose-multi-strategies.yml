@@ -90,23 +90,6 @@ services:
       --strategy-path user_data/strategies/trendfollowing
       --strategy TrendFollowingStrategy
 
-  # Renko Strategy
-  freqtrade-renko:
-    <<: *common-settings
-    container_name: freqtrade-renko
-    ports:
-      - "127.0.0.1:8084:8080"
-    env_file:
-      - path: ./env-files/renko.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/renko-tradesv3.sqlite
-      --log-file user_data/logs/renko.log
-      --strategy-path user_data/strategies/renko
-      --strategy AdaptiveRenkoStrategy
-
   # FVGAdvancedStrategy_V2 Strategy
   freqtrade-fvg:
     <<: *common-settings
@@ -174,23 +157,6 @@ services:
       --log-file user_data/logs/notankai.log
       --strategy-path user_data/strategies/notankai
       --strategy NoTankAI_15
-
-  # DTW Strategy
-  freqtrade-dtw:
-    <<: *common-settings
-    container_name: freqtrade-dtw
-    ports:
-      - "127.0.0.1:8089:8080"
-    env_file:
-      - path: ./env-files/dtw.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/dtw-tradesv3.sqlite
-      --log-file user_data/logs/dtw.log
-      --strategy-path user_data/strategies/dtw
-      --strategy DWT_LongShort
 
 networks:
   default:
