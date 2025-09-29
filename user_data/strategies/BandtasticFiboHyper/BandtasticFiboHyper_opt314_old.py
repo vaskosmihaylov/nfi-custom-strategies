@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from functools import reduce
 from pandas import DataFrame
-from datetime import datetime
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 from freqtrade.strategy import (
     IStrategy,
@@ -12,16 +11,25 @@ from freqtrade.strategy import (
     IntParameter,
     RealParameter
 )
-from freqtrade.persistence import Trade
-
-# OPTIMIZED VERSION - Enhanced Stop Loss Management
-# Focus: Tighter stops for shorts, dynamic ATR-based risk management
+# strategy_BandtasticFiboHyper_2025-07-06_08-52-09.fthypt
+# 314/500:    159 trades. 106/35/18 Wins/Draws/Losses. 
+# Avg profit   1.07%. 
+# Median profit   0.40%. 
+# Total profit 3315.24095096 USDT ( 331.52%). 
+# Long / Short                  │ 8 / 151                        │
+# Total profit Long %           │ 90.02%                         │
+# Total profit Short %          │ 241.50%                        │
+# Absolute profit Long          │ 900.232 USDT                   │
+# Absolute profit Short         │ 2415.009 USDT                  |
+# Avg duration 4:23:00 min. 
+# Objective: -10.20620
+# max_open_trades = 1
 class BandtasticFiboHyper_opt314(IStrategy):
     INTERFACE_VERSION = 3
     can_short = True
     timeframe = '5m'
 
-    # ROI table (from hyperspace) - Keep original
+    # ROI table (from hyperspace)
     minimal_roi = {
         "0": 0.195,
         "21": 0.074,
@@ -29,45 +37,24 @@ class BandtasticFiboHyper_opt314(IStrategy):
         "109": 0
     }
 
-    # ============= OPTIMIZED STOP LOSS CONFIGURATION =============
-    # Reduced from -0.299 (30%) to more reasonable initial stop
-    stoploss = -0.15  # 15% initial stop (will be dynamically adjusted)
-    
+    stoploss = -0.299
     startup_candle_count = 999
 
-    # ============= OPTIMIZED TRAILING STOP =============
     trailing_stop = True
-    trailing_stop_positive = 0.01  # Start trailing at just 1% profit (was 17.4%!)
-    trailing_stop_positive_offset = 0.015  # Activate at 1.5% profit (was 22.8%!)
+    trailing_stop_positive = 0.174
+    trailing_stop_positive_offset = 0.228
     trailing_only_offset_is_reached = True
 
     # Max open trades
     max_open_trades = 1
 
-    # ========= LEVERAGE PARAMETERS =========
+    # ========= 杠杆参数 =========
     max_leverage = DecimalParameter(1.0, 5.0, default=2.295, space='protection', optimize=True)
     max_short_leverage = DecimalParameter(1.0, 3.0, default=2.953, space='protection', optimize=True)
     atr_threshold_low = DecimalParameter(0.005, 0.03, default=0.019, space='protection', optimize=True)
     atr_threshold_high = DecimalParameter(0.02, 0.08, default=0.026, space='protection', optimize=True)
 
-    # ========= DYNAMIC STOP LOSS PARAMETERS =========
-    # ATR multipliers for stop loss calculation
-    atr_stop_multiplier_long = DecimalParameter(1.5, 4.0, default=2.5, space='protection', optimize=True)
-    atr_stop_multiplier_short = DecimalParameter(1.0, 3.0, default=1.8, space='protection', optimize=True)
-    
-    # Minimum stop loss (safety floor)
-    min_stop_loss_long = DecimalParameter(0.03, 0.08, default=0.05, space='protection', optimize=True)
-    min_stop_loss_short = DecimalParameter(0.02, 0.06, default=0.035, space='protection', optimize=True)
-    
-    # Maximum stop loss (safety ceiling)
-    max_stop_loss_long = DecimalParameter(0.10, 0.20, default=0.15, space='protection', optimize=True)
-    max_stop_loss_short = DecimalParameter(0.06, 0.12, default=0.08, space='protection', optimize=True)
-    
-    # Time-based stop tightening for shorts
-    short_stop_time_hours = IntParameter(2, 8, default=4, space='protection', optimize=True)
-    short_stop_tighten_factor = DecimalParameter(0.5, 0.9, default=0.7, space='protection', optimize=True)
-
-    # ========= LONG PARAMETERS =========
+    # ========= long 参数 =========
     buy_fastema = IntParameter(1, 236, default=191, space='buy', optimize=True)
     buy_slowema = IntParameter(1, 250, default=128, space='buy', optimize=True)
     buy_rsi = IntParameter(15, 70, default=56, space='buy', optimize=True)
@@ -79,17 +66,17 @@ class BandtasticFiboHyper_opt314(IStrategy):
     buy_fib_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
     buy_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_382', space='buy', optimize=True)
 
-    # ====== SHORT PARAMETERS ==========
+    # ====== Short 参数 ==========
     short_fastema = IntParameter(1, 250, default=53, space='sell', optimize=True)
     short_slowema = IntParameter(1, 250, default=168, space='sell', optimize=True)
     short_rsi = IntParameter(30, 100, default=88, space='sell', optimize=True)
     short_mfi = IntParameter(30, 100, default=58, space='sell', optimize=True)
-    short_rsi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=True)  # CHANGED: Enable RSI filter
+    short_rsi_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=True)
     short_mfi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=True)
     short_ema_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=True)
-    short_trigger = CategoricalParameter(['bb_upper1', 'bb_upper2', 'bb_upper3', 'bb_upper4'], default='bb_upper2', space='sell', optimize=True)  # CHANGED: Use bb_upper2 for tighter entry
+    short_trigger = CategoricalParameter(['bb_upper1', 'bb_upper2', 'bb_upper3', 'bb_upper4'], default='bb_upper1', space='sell', optimize=True)
 
-    # ========= SELL PARAMETERS =========
+    # ========= Sell 参数 =========
     sell_fastema = IntParameter(1, 365, default=222, space='sell', optimize=True)
     sell_slowema = IntParameter(1, 365, default=192, space='sell', optimize=True)
     sell_rsi = IntParameter(30, 100, default=47, space='sell', optimize=True)
@@ -110,15 +97,14 @@ class BandtasticFiboHyper_opt314(IStrategy):
     cover_fib_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
     cover_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_382', space='buy', optimize=True)
 
-    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+    def leverage(self, pair: str, current_time: 'datetime', current_rate: float,
                 proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
         """
-        Dynamic leverage based on normalized ATR volatility.
-        Lower volatility = higher leverage, higher volatility = lower leverage.
+        使用 ATR/价格 标准化波动率动态调整杠杆。
         """
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         if dataframe is None or len(dataframe) < 20:
-            return 2.0  # Fallback default
+            return 2.0  # fallback 默认值
 
         close = dataframe['close'].iloc[-1]
         atr = ta.ATR(dataframe, timeperiod=14).iloc[-1]
@@ -131,80 +117,23 @@ class BandtasticFiboHyper_opt314(IStrategy):
         else:
             lev = 1.5
 
-        # Apply leverage limits
         if side == 'short':
             lev = min(lev, self.max_short_leverage.value)
 
         return min(lev, float(self.max_leverage.value))
 
-    def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime,
-                       current_rate: float, current_profit: float, **kwargs) -> float:
-        """
-        CRITICAL: Dynamic stop loss based on ATR and trade direction.
-        
-        Key Strategy:
-        - Shorts get TIGHTER stops (they're causing the 27% drawdown!)
-        - Longs get normal stops (they're performing well)
-        - Both use ATR-based dynamic adjustment
-        - Time-based tightening for underwater shorts
-        """
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        if dataframe is None or len(dataframe) < 20:
-            return self.stoploss
-
-        # Get current ATR and calculate normalized ATR
-        last_candle = dataframe.iloc[-1]
-        atr = last_candle['atr'] if 'atr' in last_candle else 0
-        normalized_atr = last_candle['normalized_atr'] if 'normalized_atr' in last_candle else 0.02
-        
-        # Determine if this is a long or short trade
-        is_short = trade.is_short
-        
-        # ========= CALCULATE ATR-BASED STOP LOSS =========
-        if is_short:
-            # SHORTS: Use tighter multiplier
-            atr_stop = normalized_atr * float(self.atr_stop_multiplier_short.value)
-            min_stop = float(self.min_stop_loss_short.value)
-            max_stop = float(self.max_stop_loss_short.value)
-            
-            # Time-based tightening for shorts that aren't profitable
-            if current_profit < 0:
-                trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600  # hours
-                if trade_duration > float(self.short_stop_time_hours.value):
-                    # Tighten the stop as time passes
-                    time_factor = float(self.short_stop_tighten_factor.value)
-                    atr_stop = atr_stop * time_factor
-                    min_stop = min_stop * time_factor
-        else:
-            # LONGS: Use normal multiplier (they're doing great!)
-            atr_stop = normalized_atr * float(self.atr_stop_multiplier_long.value)
-            min_stop = float(self.min_stop_loss_long.value)
-            max_stop = float(self.max_stop_loss_long.value)
-        
-        # Clamp the stop loss between min and max
-        dynamic_stop = max(min_stop, min(atr_stop, max_stop))
-        
-        # Return negative value (stop loss is always negative)
-        return -dynamic_stop
-
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """Calculate all technical indicators."""
-        # RSI and MFI
         dataframe['rsi'] = ta.RSI(dataframe)
         dataframe['mfi'] = ta.MFI(dataframe)
-        
-        # ATR and normalized ATR (critical for dynamic stops)
         dataframe['atr'] = ta.ATR(dataframe, timeperiod=14)
         dataframe['normalized_atr'] = dataframe['atr'] / dataframe['close']
 
-        # Bollinger Bands (multiple standard deviations)
         for std in range(1, 5):
             bb = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=std)
             dataframe[f'bb_lowerband{std}'] = bb['lower']
             dataframe[f'bb_middleband{std}'] = bb['mid']
             dataframe[f'bb_upperband{std}'] = bb['upper']
 
-        # EMAs (collect all unique periods)
         ema_periods = set([
             int(self.buy_fastema.value), int(self.buy_slowema.value),
             int(self.sell_fastema.value), int(self.sell_slowema.value),
@@ -215,7 +144,7 @@ class BandtasticFiboHyper_opt314(IStrategy):
             if period > 0 and len(dataframe) >= period:
                 dataframe[f'EMA_{period}'] = ta.EMA(dataframe, timeperiod=period)
 
-        # Fibonacci Retracement Levels
+        # Fibonacci Levels
         lookback = 50
         if len(dataframe) >= lookback:
             recent_max = dataframe['high'].rolling(lookback).max()
@@ -230,9 +159,7 @@ class BandtasticFiboHyper_opt314(IStrategy):
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """Define entry conditions for long and short positions."""
-        
-        # ============= LONG ENTRY CONDITIONS =============
+        # -------- 做多逻辑 ----------
         long_conditions = []
 
         if self.buy_rsi_enabled.value:
@@ -261,10 +188,9 @@ class BandtasticFiboHyper_opt314(IStrategy):
         if long_conditions:
             dataframe.loc[reduce(lambda x, y: x & y, long_conditions), 'enter_long'] = 1
 
-        # ============= SHORT ENTRY CONDITIONS (OPTIMIZED) =============
+        # -------- 做空逻辑 ----------
         short_conditions = []
 
-        # CRITICAL: RSI filter now ENABLED by default to be more selective
         if self.short_rsi_enabled.value:
             short_conditions.append(dataframe['rsi'] > self.short_rsi.value)
 
@@ -277,7 +203,6 @@ class BandtasticFiboHyper_opt314(IStrategy):
             if fast_col in dataframe and slow_col in dataframe:
                 short_conditions.append(dataframe[fast_col] < dataframe[slow_col])
 
-        # Using tighter trigger (bb_upper2 instead of bb_upper1)
         if self.short_trigger.value.startswith('bb_upper'):
             bb_col = f'bb_upperband{self.short_trigger.value[-1]}'
             short_conditions.append(dataframe['close'] > dataframe[bb_col])
@@ -289,10 +214,9 @@ class BandtasticFiboHyper_opt314(IStrategy):
         
         return dataframe
 
+
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """Define exit conditions for long and short positions."""
-        
-        # ============= LONG EXIT CONDITIONS =============
+        # -------- 做多平仓 ----------
         long_exit = []
 
         if self.sell_rsi_enabled.value:
@@ -316,7 +240,7 @@ class BandtasticFiboHyper_opt314(IStrategy):
         if long_exit:
             dataframe.loc[reduce(lambda x, y: x & y, long_exit), 'exit_long'] = 1
 
-        # ============= SHORT EXIT CONDITIONS =============
+        # -------- 做空平仓逻辑 ----------
         short_exit = []
 
         if self.cover_rsi_enabled.value:

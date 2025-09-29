@@ -1,337 +1,348 @@
-from freqtrade.strategy import IStrategy, IntParameter, DecimalParameter, informative
-from pandas import DataFrame
+from freqtrade.strategy import (
+    IStrategy,
+    IntParameter,
+    DecimalParameter,
+    informative,
+    merge_informative_pair,
+)
+from pandas import DataFrame, Series
 import talib.abstract as ta
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional
-from datetime import datetime, timezone
+from typing import Optional
+from datetime import datetime
 from freqtrade.persistence import Trade
-from pandas import Series
 import logging
-from functools import reduce
 
 logger = logging.getLogger(__name__)
 
 class FVGAdvancedStrategy_V2(IStrategy):
     """
-    高级FVG策略 - 支持多空双向交易、DCA、动态杠杆和趋势跟踪
+    Advanced FVG strategy – dual sided trading with refined signal, market regime, and risk control logic.
     """
-    INTERFACE_VERSION = 3
-    
-    # 启用做空
-    can_short = False
 
-    # 基础策略参数
+    INTERFACE_VERSION = 3
+
+    timeframe = "5m"
+    informative_timeframe = "1h"
+
+    # Enable shorting explicitly.
+    can_short = True
+
+    # Base risk parameters calibrated for futures dry-run.
     minimal_roi = {
-        "0": 0.3
+        "0": 0.06,
+        "60": 0.04,
+        "180": 0.02,
+        "360": 0
     }
-    stoploss = -0.3
-    timeframe = '5m'
+    stoploss = -0.09
+
     use_exit_signal = True
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
 
-    # 杠杆参数
+    # Leverage parameters.
     max_leverage = 3.0
     min_leverage = 1.0
     default_leverage = 2.0
-    
-    # DCA参数
-    max_dca_orders = 2
-    max_dca_multiplier = 2.0
-    minimal_dca_profit = -0.05
-    max_dca_profit = -0.1
 
-    # 分批减仓参数
+    # DCA / scale-out parameters.
+    max_dca_orders = 1
+    max_dca_multiplier = 1.5
+    minimal_dca_profit = -0.04
+    max_dca_profit = -0.12
+
     position_adjustment_enable = True
     max_entry_position_adjustment = -1
     max_exit_position_adjustment = 3
-    exit_portion_size = 0.3
+    exit_portion_size = 0.25
 
-    # 指标参数
-    filter_width = DecimalParameter(0.0, 5.0, default=0.3, space='buy')
-    tp_mult = DecimalParameter(1.0, 10.0, default=4.0, space='sell')
-    sl_mult = DecimalParameter(1.0, 5.0, default=2.0, space='sell')
+    # Tunable indicator parameters.
+    filter_width = DecimalParameter(0.1, 2.0, default=0.6, space="buy")  # Gap size threshold in ATR multiples.
+    tp_mult = DecimalParameter(0.8, 3.0, default=1.6, space="sell")      # ATR based profit buffer.
+    sl_mult = DecimalParameter(0.5, 2.0, default=0.9, space="sell")      # ATR based protective buffer.
+    fvg_confirmation_bars = IntParameter(1, 3, default=2, space="buy")
 
-    # 市场状态评估参数
-    rsi_period = 14
+    # Core indicator lookbacks.
+    atr_period = 14
+    ema_fast_period = 21
+    ema_slow_period = 55
+    ema_long_period = 200
     bb_period = 20
     bb_std = 2
     adx_period = 14
+    rsi_period = 14
     volatility_period = 100
+    market_score_window = 240
+    volume_window = 40
 
-    # 趋势判断参数
-    trend_ema_period = 20
-    trend_rsi_period = 14
-    trend_adx_period = 14
-    trend_adx_threshold = 30
+    # Market score thresholds for directional bias.
+    market_score_long = 65
+    market_score_short = 35
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
-        logger.info("FVG Advanced Strategy Initialized")
+        logger.info("FVG Advanced Strategy V2 initialised with bidirectional support")
 
-    @informative('1h')
+    @staticmethod
+    def _minmax(series: Series, window: int) -> Series:
+        """Normalise a rolling window to 0-1 while guarding against zero division."""
+        rolling_min = series.rolling(window).min()
+        rolling_max = series.rolling(window).max()
+        normalised = (series - rolling_min) / (rolling_max - rolling_min + 1e-9)
+        return normalised.clip(lower=0.0, upper=1.0)
+
+    def informative_pairs(self):
+        pairs = getattr(self.dp, "current_whitelist", lambda: [])()
+        return [(pair, self.informative_timeframe) for pair in pairs]
+
+    @informative("1h")
     def populate_indicators_1h(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """
-        1小时趋势判断指标
-        """
-        # EMA趋势
-        dataframe['ema'] = ta.EMA(dataframe, timeperiod=self.trend_ema_period)
-        
-        # RSI
-        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=self.trend_rsi_period)
-        
-        # ADX
-        dataframe['adx'] = ta.ADX(dataframe, timeperiod=self.trend_adx_period)
-        
-        # 趋势判断
-        dataframe['uptrend'] = (
-            (dataframe['close'] > dataframe['ema']) &  # 价格在EMA上方
-            (dataframe['rsi'] > 50) &                  # RSI大于50
-            (dataframe['adx'] > self.trend_adx_threshold)  # ADX大于阈值
+        """Indicators on the higher timeframe used for confirmation and leverage control."""
+        dataframe["ema"] = ta.EMA(dataframe, timeperiod=self.ema_fast_period)
+        dataframe["ema_slow"] = ta.EMA(dataframe, timeperiod=self.ema_slow_period)
+        dataframe["rsi"] = ta.RSI(dataframe, timeperiod=self.rsi_period)
+        dataframe["adx"] = ta.ADX(dataframe, timeperiod=self.adx_period)
+        dataframe["atr"] = ta.ATR(dataframe, timeperiod=self.atr_period)
+
+        dataframe["uptrend"] = (
+            (dataframe["close"] > dataframe["ema"]) &
+            (dataframe["ema"] > dataframe["ema_slow"]) &
+            (dataframe["rsi"] > 50) &
+            (dataframe["adx"] > 20)
         )
-        
-        dataframe['downtrend'] = (
-            (dataframe['close'] < dataframe['ema']) &  # 价格在EMA下方
-            (dataframe['rsi'] < 50) &                  # RSI小于50
-            (dataframe['adx'] > self.trend_adx_threshold)  # ADX大于阈值
+
+        dataframe["downtrend"] = (
+            (dataframe["close"] < dataframe["ema"]) &
+            (dataframe["ema"] < dataframe["ema_slow"]) &
+            (dataframe["rsi"] < 50) &
+            (dataframe["adx"] > 20)
         )
-        
+
         return dataframe
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # ATR计算
-        dataframe['atr'] = ta.ATR(dataframe, timeperiod=200)
-        
-        # FVG计算所需的移位数据
-        dataframe['low_3'] = dataframe['low'].shift(3)
-        dataframe['high_1'] = dataframe['high'].shift(1)
-        dataframe['close_2'] = dataframe['close'].shift(2)
-        dataframe['high_3'] = dataframe['high'].shift(3)
-        dataframe['low_1'] = dataframe['low'].shift(1)
+        dataframe["atr"] = ta.ATR(dataframe, timeperiod=self.atr_period)
+        dataframe["atr_pct"] = (dataframe["atr"] / dataframe["close"]).replace([np.inf, -np.inf], np.nan)
 
-        # 计算bullish FVG
-        dataframe['bull_fvg'] = (
-            (dataframe['low_3'] > dataframe['high_1']) &
-            (dataframe['close_2'] < dataframe['low_3']) &
-            (dataframe['close'] > dataframe['low_3']) &
-            ((dataframe['low_3'] - dataframe['high_1']) > dataframe['atr'] * self.filter_width.value)
-        )
+        dataframe["ema_fast"] = ta.EMA(dataframe, timeperiod=self.ema_fast_period)
+        dataframe["ema_slow"] = ta.EMA(dataframe, timeperiod=self.ema_slow_period)
+        dataframe["ema_long"] = ta.EMA(dataframe, timeperiod=self.ema_long_period)
 
-        # 计算bearish FVG
-        dataframe['bear_fvg'] = (
-            (dataframe['low_1'] > dataframe['high_3']) &
-            (dataframe['close_2'] > dataframe['high_3']) &
-            (dataframe['close'] < dataframe['high_3']) &
-            ((dataframe['low_1'] - dataframe['high_3']) > dataframe['atr'] * self.filter_width.value)
-        )
+        dataframe["trend_up"] = dataframe["ema_fast"] > dataframe["ema_slow"]
+        dataframe["trend_down"] = dataframe["ema_fast"] < dataframe["ema_slow"]
 
-        # 计算FVG平均值
-        dataframe['bull_avg'] = (dataframe['low_3'] + dataframe['high_1']) / 2
-        dataframe['bear_avg'] = (dataframe['low_1'] + dataframe['high_3']) / 2
+        dataframe["volume_mean"] = dataframe["volume"].rolling(self.volume_window).mean()
+        dataframe["volume_ratio"] = (dataframe["volume"] / dataframe["volume_mean"]).replace([np.inf, -np.inf], np.nan)
 
-        # 市场状态指标
-        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=self.rsi_period)
-        
-        bollinger = ta.BBANDS(dataframe)
-        dataframe['bb_upper'] = bollinger['upperband']
-        dataframe['bb_middle'] = bollinger['middleband']
-        dataframe['bb_lower'] = bollinger['lowerband']
-        dataframe['bb_width'] = (dataframe['bb_upper'] - dataframe['bb_lower']) / dataframe['bb_middle']
-        
-        dataframe['adx'] = ta.ADX(dataframe, timeperiod=self.adx_period)
-        dataframe['volatility'] = dataframe['close'].rolling(window=self.volatility_period).std()
-        
-        # 计算市场状态得分
-        dataframe['market_score'] = self.calculate_market_score(dataframe)
+        bollinger = ta.BBANDS(dataframe, timeperiod=self.bb_period, nbdevup=self.bb_std, nbdevdn=self.bb_std)
+        dataframe["bb_upper"] = bollinger["upperband"]
+        dataframe["bb_middle"] = bollinger["middleband"]
+        dataframe["bb_lower"] = bollinger["lowerband"]
+        dataframe["bb_width"] = (dataframe["bb_upper"] - dataframe["bb_lower"]) / dataframe["bb_middle"].replace(0, np.nan)
+
+        dataframe["rsi"] = ta.RSI(dataframe, timeperiod=self.rsi_period)
+        dataframe["adx"] = ta.ADX(dataframe, timeperiod=self.adx_period)
+        dataframe["volatility"] = dataframe["close"].pct_change().rolling(self.volatility_period).std()
+
+        prev2_high = dataframe["high"].shift(2)
+        prev_high = dataframe["high"].shift(1)
+        prev2_low = dataframe["low"].shift(2)
+        prev_low = dataframe["low"].shift(1)
+
+        gap_min = dataframe["atr"] * self.filter_width.value
+
+        bull_gap = (prev2_high < prev_low) & (prev_low < dataframe["low"]) & (dataframe["low"] - prev2_high > gap_min)
+        bear_gap = (prev2_low > prev_high) & (prev_high > dataframe["high"]) & (prev2_low - dataframe["high"] > gap_min)
+
+        confirm_window = int(self.fvg_confirmation_bars.value)
+        dataframe["bull_fvg"] = bull_gap.rolling(confirm_window).max().fillna(False)
+        dataframe["bear_fvg"] = bear_gap.rolling(confirm_window).max().fillna(False)
+
+        dataframe["bull_mid"] = (prev2_high + dataframe["low"]) / 2
+        dataframe["bear_mid"] = (prev2_low + dataframe["high"]) / 2
+
+        dataframe["atr_pct_rank"] = self._minmax(dataframe["atr_pct"], self.market_score_window)
+        dataframe["bb_width_rank"] = self._minmax(dataframe["bb_width"], self.market_score_window)
+        dataframe["volume_ratio"] = dataframe["volume_ratio"].fillna(0)
+
+        dataframe["market_score"] = self.calculate_market_score(dataframe)
+
+        informative = self.dp.get_pair_dataframe(metadata["pair"], self.informative_timeframe)
+        if informative is not None and not informative.empty:
+            dataframe = merge_informative_pair(
+                dataframe,
+                informative,
+                self.timeframe,
+                self.informative_timeframe,
+                ffill=True
+            )
+
+        for column in ["uptrend_1h", "downtrend_1h"]:
+            if column in dataframe:
+                dataframe[column] = dataframe[column].fillna(False).astype(bool)
+            else:
+                dataframe[column] = False
+
+        dataframe["trend_up"] = dataframe["trend_up"].fillna(False)
+        dataframe["trend_down"] = dataframe["trend_down"].fillna(False)
+        dataframe["volume_ratio"] = dataframe["volume_ratio"].clip(lower=0)
 
         return dataframe
 
     def calculate_market_score(self, dataframe: DataFrame) -> Series:
-        """
-        计算市场状态得分
-        """
-        score = pd.Series(index=dataframe.index, data=0.0)
+        """Combine trend, momentum, and volatility signals into a bounded 0-100 regime score."""
+        adx_component = np.clip(dataframe["adx"] / 50.0, 0.0, 1.0)
+        rsi_component = 1.0 - np.clip(np.abs(dataframe["rsi"] - 50.0) / 50.0, 0.0, 1.0)
+        volatility_component = 1.0 - self._minmax(dataframe["atr_pct"].fillna(method="ffill"), self.market_score_window)
+        bb_component = 1.0 - dataframe["bb_width_rank"].fillna(0.5)
+        momentum_component = np.where(dataframe["trend_up"], 1.0, np.where(dataframe["trend_down"], 0.0, 0.5))
 
-        # ADX评分 (0-25)
-        adx_score = dataframe['adx'] / 100 * 25
-        score += adx_score
-
-        # 波动性评分 (0-25)
-        vol_normalized = (dataframe['volatility'] - dataframe['volatility'].min()) / \
-                        (dataframe['volatility'].max() - dataframe['volatility'].min())
-        volatility_score = (1 - vol_normalized) * 25
-        score += volatility_score
-
-        # RSI评分 (0-25)
-        rsi_score = (1 - abs(dataframe['rsi'] - 50) / 50) * 25
-        score += rsi_score
-
-        # 布林带宽度评分 (0-25)
-        bb_score = (1 - dataframe['bb_width']) * 25
-        score += bb_score
-
-        return score
+        composite = (adx_component + rsi_component + volatility_component + bb_component + momentum_component) / 5.0
+        return Series(composite * 100.0, index=dataframe.index).clip(lower=0.0, upper=100.0)
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe['enter_long'] = 0
-        dataframe['enter_short'] = 0
+        dataframe["enter_long"] = 0
+        dataframe["enter_short"] = 0
 
-        # 获取1小时数据的趋势信息
-        informative = self.dp.get_pair_dataframe(metadata['pair'], '1h')
+        long_conditions = (
+            dataframe["bull_fvg"] &
+            dataframe["trend_up"] &
+            dataframe["uptrend_1h"] &
+            (dataframe["market_score"] > self.market_score_long) &
+            (dataframe["volume_ratio"] > 1.05) &
+            (dataframe["atr_pct_rank"] < 0.85) &
+            (dataframe["close"] > dataframe["ema_long"])
+        )
 
-        # 多头入场信号
-        dataframe.loc[
-            (
-                dataframe['bull_fvg']
-                & dataframe['uptrend_1h']
-                & (dataframe['market_score'] > 60)
-            ),
-            'enter_long'] = 1
+        short_conditions = (
+            dataframe["bear_fvg"] &
+            dataframe["trend_down"] &
+            dataframe["downtrend_1h"] &
+            (dataframe["market_score"] < self.market_score_short) &
+            (dataframe["volume_ratio"] > 1.05) &
+            (dataframe["atr_pct_rank"] < 0.85) &
+            (dataframe["close"] < dataframe["ema_long"])
+        )
 
-        # 空头入场信号
-        dataframe.loc[
-            (
-                dataframe['bear_fvg']
-                & dataframe['downtrend_1h']
-                & (dataframe['market_score'] < 40)
-            ),
-            'enter_short'] = 1
+        dataframe.loc[long_conditions, "enter_long"] = 1
+        dataframe.loc[short_conditions, "enter_short"] = 1
 
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe['exit_long'] = 0
-        dataframe['exit_short'] = 0
+        dataframe["exit_long"] = 0
+        dataframe["exit_short"] = 0
 
-        # 获取1小时数据的趋势信息
-        informative = self.dp.get_pair_dataframe(metadata['pair'], '1h')
+        long_exit_conditions = (
+            dataframe["bear_fvg"] |
+            (~dataframe["trend_up"]) |
+            (dataframe["market_score"] < self.market_score_long - 15) |
+            (dataframe["close"] < dataframe["ema_fast"]) |
+            (dataframe["volume_ratio"] < 0.8)
+        )
 
-        # 多头退出信号
-        dataframe.loc[
-            (
-                # (dataframe['close'] > dataframe['bull_avg'] + dataframe['atr'] * self.tp_mult.value) |
-                # (dataframe['close'] < dataframe['bull_avg'] - dataframe['atr'] * self.sl_mult.value) |
-                # dataframe['downtrend_1h'] |
-                dataframe['bear_fvg']
-            ),
-            'exit_long'] = 1
+        short_exit_conditions = (
+            dataframe["bull_fvg"] |
+            (~dataframe["trend_down"]) |
+            (dataframe["market_score"] > self.market_score_short + 15) |
+            (dataframe["close"] > dataframe["ema_fast"]) |
+            (dataframe["volume_ratio"] < 0.8)
+        )
 
-        # 空头退出信号
-        dataframe.loc[
-            (
-                # (dataframe['close'] < dataframe['bear_avg'] - dataframe['atr'] * self.tp_mult.value) |
-                # (dataframe['close'] > dataframe['bear_avg'] + dataframe['atr'] * self.sl_mult.value) |
-                # dataframe['uptrend_1h'] |
-                dataframe['bull_fvg']
-            ),
-            'exit_short'] = 1
+        dataframe.loc[long_exit_conditions, "exit_long"] = 1
+        dataframe.loc[short_exit_conditions, "exit_short"] = 1
 
         return dataframe
 
-    def adjust_trade_position(self, trade: Trade, current_time: datetime,
-                            current_rate: float, current_profit: float,
-                            min_stake: float, max_stake: float,
-                            **kwargs) -> float:
-        """
-        处理DCA和分批减仓
-        """
-        if current_profit <= self.minimal_dca_profit and current_profit >= self.max_dca_profit:
-            filled_entries = trade.select_filled_orders('enter_short' if trade.is_short else 'enter_long')
-            count_entries = len(filled_entries)
-            
-            if count_entries < self.max_dca_orders:
-                stake_amount = trade.stake_amount * self.max_dca_multiplier
-                return stake_amount
+    def adjust_trade_position(
+        self,
+        trade: Trade,
+        current_time: datetime,
+        current_rate: float,
+        current_profit: float,
+        min_stake: float,
+        max_stake: float,
+        **kwargs
+    ) -> Optional[float]:
+        """Scale positions in line with drawdown or trim after extended runs."""
+        if not self.position_adjustment_enable:
+            return None
 
-        elif current_profit > 0.05:
-            filled_exits = trade.select_filled_orders('exit_short' if trade.is_short else 'exit_long')
-            count_exits = len(filled_exits)
-            
-            if count_exits < self.max_exit_position_adjustment:
-                return -(trade.amount * self.exit_portion_size)
+        # Scale in on controlled drawdown.
+        if self.max_dca_profit <= current_profit <= self.minimal_dca_profit:
+            if trade.nr_of_successful_entries <= self.max_dca_orders:
+                stake = min(trade.stake_amount * self.max_dca_multiplier, max_stake)
+                return max(stake, min_stake)
+
+        # Scale out partial profits.
+        if current_profit > 0.03:
+            reduction = -abs(trade.amount) * self.exit_portion_size
+            if abs(reduction) * current_rate > min_stake:
+                return reduction
 
         return None
 
-    def leverage(self, pair: str, current_time: datetime, current_rate: float,
-                proposed_leverage: float, max_leverage: float, entry_tag: Optional[str],
-                side: str, **kwargs) -> float:
-        """
-        动态杠杆管理
-        """
+    def leverage(
+        self,
+        pair: str,
+        current_time: datetime,
+        current_rate: float,
+        proposed_leverage: float,
+        max_leverage: float,
+        entry_tag: Optional[str],
+        side: str,
+        **kwargs
+    ) -> float:
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        informative = self.dp.get_pair_dataframe(pair, '1h')
-        
-        if len(dataframe) == 0 or len(informative) == 0:
+        informative = self.dp.get_pair_dataframe(pair, self.informative_timeframe)
+
+        if dataframe is None or dataframe.empty:
             return self.default_leverage
 
-        current_market_score = dataframe['market_score'].iloc[-1]
-        current_rsi = dataframe['rsi'].iloc[-1]
-        trend_adx = dataframe['adx_1h'].iloc[-1]
-        
-        # 基于市场得分和趋势强度调整杠杆
-        if current_market_score >= 80 and trend_adx > 30:
-            leverage = self.max_leverage
-        elif current_market_score >= 60 and trend_adx > 25:
-            leverage = self.max_leverage * 0.8
-        elif current_market_score >= 40:
-            leverage = self.default_leverage
-        elif current_market_score >= 20:
-            leverage = self.min_leverage * 1.5
+        market_score = dataframe["market_score"].iloc[-1]
+        rsi_value = dataframe["rsi"].iloc[-1]
+
+        trend_adx_series = dataframe.get("adx_1h")
+        if trend_adx_series is not None and not trend_adx_series.empty:
+            trend_adx = trend_adx_series.iloc[-1]
         else:
+            trend_adx = dataframe["adx"].iloc[-1]
+
+        uptrend_series = dataframe.get("uptrend_1h")
+        downtrend_series = dataframe.get("downtrend_1h")
+        uptrend_1h = bool(uptrend_series.iloc[-1]) if uptrend_series is not None and not uptrend_series.empty else False
+        downtrend_1h = bool(downtrend_series.iloc[-1]) if downtrend_series is not None and not downtrend_series.empty else False
+
+        leverage = self.default_leverage
+        if market_score >= 75 and trend_adx > 25:
+            leverage = min(self.max_leverage, self.default_leverage * 1.4)
+        elif market_score <= 30 or trend_adx < 15:
             leverage = self.min_leverage
 
-        # 根据RSI和交易方向调整杠杆
         if side == "long":
-            if current_rsi < 30 and dataframe['uptrend_1h'].iloc[-1]:
-                leverage *= 1.2
-            elif current_rsi > 70 or dataframe['downtrend_1h'].iloc[-1]:
-                leverage *= 0.8
-        else:  # side == "short"
-            if current_rsi > 70 and dataframe['downtrend_1h'].iloc[-1]:
-                leverage *= 1.2
-            elif current_rsi < 30 or dataframe['uptrend_1h'].iloc[-1]:
-                leverage *= 0.8
+            if rsi_value < 30 and uptrend_1h:
+                leverage = min(self.max_leverage, leverage * 1.1)
+            elif rsi_value > 70 or downtrend_1h:
+                leverage = max(self.min_leverage, leverage * 0.8)
+        else:
+            if rsi_value > 70 and downtrend_1h:
+                leverage = min(self.max_leverage, leverage * 1.1)
+            elif rsi_value < 30 or uptrend_1h:
+                leverage = max(self.min_leverage, leverage * 0.8)
 
-        return round(min(max(leverage, self.min_leverage), self.max_leverage), 1)
+        return round(np.clip(leverage, self.min_leverage, self.max_leverage), 2)
 
-    # def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
-    #                current_profit: float, **kwargs) -> Optional[str]:
-    #     """
-    #     市场状况恶化或趋势反转时的提前退出机制
-    #     """
-    #     dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-    #     # informative = self.dp.get_pair_dataframe(pair, '1h')
-        
-    #     if len(dataframe) == 0:
-    #         return None
-            
-    #     current_market_score = dataframe['market_score'].iloc[-1]
-        
-    #     # 趋势反转退出
-    #     if not trade.is_short and dataframe['downtrend_1h'].iloc[-1]:
-    #         return "1h_trend_reversal_short"
-    #     elif trade.is_short and dataframe['uptrend_1h'].iloc[-1]:
-    #         return "1h_trend_reversal_long"
-        
-    #     # 市场状况恶化时退出
-    #     if current_market_score < 20 and current_profit > 0:
-    #         return "market_condition_bad"
-            
-    #     # 趋势减弱时退出
-    #     if dataframe['adx_1h'].iloc[-1] < 20 and current_profit > 0.02:
-    #         return "trend_weakening"
-            
-    #     # 波动性突增时退出
-    #     if dataframe['bb_width'].iloc[-1] > dataframe['bb_width'].iloc[-2] * 1.5:
-    #         return "volatility_increasing"
-            
-    #     return None
-
-    def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: float,
-                          proposed_stake: float, min_stake: float, max_stake: float,
-                          entry_tag: str, **kwargs) -> float:
-        """
-        自定义每次交易的资金量
-        """
+    def custom_stake_amount(
+        self,
+        pair: str,
+        current_time: datetime,
+        current_rate: float,
+        proposed_stake: float,
+        min_stake: float,
+        max_stake: float,
+        entry_tag: str,
+        **kwargs
+    ) -> float:
         return proposed_stake
