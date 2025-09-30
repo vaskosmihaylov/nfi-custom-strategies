@@ -16,7 +16,7 @@ from freqtrade.persistence import Trade
 
 # OPTIMIZED VERSION V2 - Enhanced Trend Filtering & Bidirectional Balance
 # Focus: Proper trend filtering, balanced long/short entries, improved risk management
-class BandtasticFiboHyper_opt314_v2(IStrategy):
+class BandtasticFiboHyper_opt314(IStrategy):
   INTERFACE_VERSION = 3
   can_short = True
   timeframe = '5m'

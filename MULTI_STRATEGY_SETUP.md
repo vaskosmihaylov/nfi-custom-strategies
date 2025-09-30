@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **8 different trading strategies** running in separate Docker containers
+- **15 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -23,7 +23,14 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── FVG (Port 8085)
                            ├── PowerTower (Port 8086)
                            ├── FastSupertrend (Port 8087)
-                           └── NoTankAI (Port 8088)
+                           ├── NoTankAI (Port 8088)
+                           ├── MacheteV8b (Port 8089)
+                           ├── ElliotV5_SMA (Port 8090)
+                           ├── BinClucMadV1 (Port 8091)
+                           ├── NASOSv4 (Port 8092)
+                           ├── MartyEMA (Port 8093)
+                           ├── Ichimoku (Port 8094)
+                           └── BigWill (Port 8095)
 ```
 
 ## 📁 Files Created
@@ -45,6 +52,13 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `powertower.env` - PowerTower strategy
 - `fastsupertrend.env` - FastSupertrend strategy
 - `notankai.env` - NoTankAI strategy
+- `machetev8b.env` - MacheteV8b strategy
+- `elliotv5_sma.env` - ElliotV5_SMA strategy
+- `binclucmadv1.env` - BinClucMadV1 strategy
+- `nasosv4.env` - NASOSv4 strategy
+- `martyema.env` - MartyEMA strategy
+- `ichimoku.env` - Ichimoku strategy
+- `bigwill.env` - BigWill strategy
 
 ## 🚀 Quick Start
 
@@ -124,6 +138,13 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **PowerTower** | `Vasko_PowerTower` | `http://freq.gaiaderma.com/powertower` | `powertower_user` | `powertower_secure_password` |
 | **FastSupertrend** | `Vasko_FastSupertrend` | `http://freq.gaiaderma.com/fastsupertrend` | `fastsupertrend_user` | `fastsupertrend_secure_password` |
 | **NoTankAI** | `Vasko_NoTankAI` | `http://freq.gaiaderma.com/notankai` | `notankai_user` | `notankai_secure_password` |
+| **MacheteV8b** | `Vasko_MacheteV8b` | `http://freq.gaiaderma.com/machetev8b` | `machetev8b_user` | `machetev8b_secure_password` |
+| **ElliotV5_SMA** | `Vasko_ElliotV5_SMA` | `http://freq.gaiaderma.com/elliotv5_sma` | `elliotv5_sma_user` | `elliotv5_sma_secure_password` |
+| **BinClucMadV1** | `Vasko_BinClucMadV1` | `http://freq.gaiaderma.com/binclucmadv1` | `binclucmadv1_user` | `binclucmadv1_secure_password` |
+| **NASOSv4** | `Vasko_NASOSv4` | `http://freq.gaiaderma.com/nasosv4` | `nasosv4_user` | `nasosv4_secure_password` |
+| **MartyEMA** | `Vasko_MartyEMA` | `http://freq.gaiaderma.com/martyema` | `martyema_user` | `martyema_secure_password` |
+| **Ichimoku** | `Vasko_Ichimoku` | `http://freq.gaiaderma.com/ichimoku` | `ichimoku_user` | `ichimoku_secure_password` |
+| **BigWill** | `Vasko_BigWill` | `http://freq.gaiaderma.com/bigwill` | `bigwill_user` | `bigwill_secure_password` |
 
 ### ✅ URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/bandtastic`
@@ -204,12 +225,31 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - PowerTower: 8086
 - FastSupertrend: 8087
 - NoTankAI: 8088
+- MacheteV8b: 8089
+- ElliotV5_SMA: 8090
+- BinClucMadV1: 8091
+- NASOSv4: 8092
+- MartyEMA: 8093
+- Ichimoku: 8094
+- BigWill: 8095
 
 ### Database Separation
 Each strategy uses its own SQLite database:
 - `nfi-x6-tradesv3.sqlite`
 - `quickadapter-tradesv3.sqlite`
-- etc.
+- `bandtastic-tradesv3.sqlite`
+- `trendfollowing-tradesv3.sqlite`
+- `fvg-tradesv3.sqlite`
+- `powertower-tradesv3.sqlite`
+- `fastsupertrend-tradesv3.sqlite`
+- `notankai-tradesv3.sqlite`
+- `machetev8b-tradesv3.sqlite`
+- `elliotv5_sma-tradesv3.sqlite`
+- `binclucmadv1-tradesv3.sqlite`
+- `nasosv4-tradesv3.sqlite`
+- `martyema-tradesv3.sqlite`
+- `ichimoku-tradesv3.sqlite`
+- `bigwill-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:

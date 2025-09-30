@@ -158,6 +158,125 @@ services:
       --strategy-path user_data/strategies/notankai
       --strategy NoTankAI_15
 
+  # MacheteV8b Strategy
+  freqtrade-machetev8b:
+    <<: *common-settings
+    container_name: freqtrade-machetev8b
+    ports:
+      - "127.0.0.1:8090:8080"
+    env_file:
+      - path: ./env-files/machetev8b.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/machetev8b-tradesv3.sqlite
+      --log-file user_data/logs/machetev8b.log
+      --strategy-path user_data/strategies/MacheteV8b
+      --strategy MacheteV8b
+
+  # ElliotV5_SMA Strategy
+  freqtrade-elliotv5_sma:
+    <<: *common-settings
+    container_name: freqtrade-elliotv5_sma
+    ports:
+      - "127.0.0.1:8091:8080"
+    env_file:
+      - path: ./env-files/elliotv5_sma.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/elliotv5_sma-tradesv3.sqlite
+      --log-file user_data/logs/elliotv5_sma.log
+      --strategy-path user_data/strategies/ElliotV5_SMA
+      --strategy ElliotV5_SMA
+
+  # BinClucMadV1 Strategy
+  freqtrade-binclucmadv1:
+    <<: *common-settings
+    container_name: freqtrade-binclucmadv1
+    ports:
+      - "127.0.0.1:8092:8080"
+    env_file:
+      - path: ./env-files/binclucmadv1.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/binclucmadv1-tradesv3.sqlite
+      --log-file user_data/logs/binclucmadv1.log
+      --strategy-path user_data/strategies/BinClucMadV1
+      --strategy BinClucMadV1
+
+  # NASOSv4 Strategy
+  freqtrade-nasosv4:
+    <<: *common-settings
+    container_name: freqtrade-nasosv4
+    ports:
+      - "127.0.0.1:8093:8080"
+    env_file:
+      - path: ./env-files/nasosv4.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/nasosv4-tradesv3.sqlite
+      --log-file user_data/logs/nasosv4.log
+      --strategy-path user_data/strategies/NASOSv4
+      --strategy NASOSv4
+
+  # MartyEMA Strategy
+  freqtrade-martyema:
+    <<: *common-settings
+    container_name: freqtrade-martyema
+    ports:
+      - "127.0.0.1:8094:8080"
+    env_file:
+      - path: ./env-files/martyema.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/martyema-tradesv3.sqlite
+      --log-file user_data/logs/martyema.log
+      --strategy-path user_data/strategies/MartyEMA
+      --strategy MartyEMA
+
+  # Ichimoku Strategy
+  freqtrade-ichimoku:
+    <<: *common-settings
+    container_name: freqtrade-ichimoku
+    ports:
+      - "127.0.0.1:8095:8080"
+    env_file:
+      - path: ./env-files/ichimoku.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/ichimoku-tradesv3.sqlite
+      --log-file user_data/logs/ichimoku.log
+      --strategy-path user_data/strategies/Icimoku
+      --strategy Ichimoku
+
+  # BigWill Strategy
+  freqtrade-bigwill:
+    <<: *common-settings
+    container_name: freqtrade-bigwill
+    ports:
+      - "127.0.0.1:8096:8080"
+    env_file:
+      - path: ./env-files/bigwill.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bigwill-tradesv3.sqlite
+      --log-file user_data/logs/bigwill.log
+      --strategy-path user_data/strategies/BigWill
+      --strategy BigWill
+
 networks:
   default:
     name: freqtrade-network
