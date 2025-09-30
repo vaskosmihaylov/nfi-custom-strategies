@@ -70,7 +70,7 @@ class FVGAdvancedStrategy_V2(IStrategy):
     ema_slow_period = 55
     ema_long_period = 200
     bb_period = 20
-    bb_std = 2
+    bb_std = 2.0
     adx_period = 14
     rsi_period = 14
     volatility_period = 100
