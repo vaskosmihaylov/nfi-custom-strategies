@@ -24,7 +24,7 @@ from freqtrade.strategy import (
 # Avg duration 4:23:00 min. 
 # Objective: -10.20620
 # max_open_trades = 1
-class BandtasticFiboHyper_opt314(IStrategy):
+class BandtasticFiboHyper_opt314_old(IStrategy):
     INTERFACE_VERSION = 3
     can_short = True
     timeframe = '5m'
