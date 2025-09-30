@@ -157,8 +157,8 @@ class FVGAdvancedStrategy_V2(IStrategy):
         bear_gap = (prev2_low > prev_high) & (prev_high > dataframe["high"]) & (prev2_low - dataframe["high"] > gap_min)
 
         confirm_window = int(self.fvg_confirmation_bars.value)
-        dataframe["bull_fvg"] = bull_gap.rolling(confirm_window).max().fillna(False)
-        dataframe["bear_fvg"] = bear_gap.rolling(confirm_window).max().fillna(False)
+        dataframe["bull_fvg"] = bull_gap.rolling(confirm_window).max().fillna(0).astype(bool)
+        dataframe["bear_fvg"] = bear_gap.rolling(confirm_window).max().fillna(0).astype(bool)
 
         dataframe["bull_mid"] = (prev2_high + dataframe["low"]) / 2
         dataframe["bear_mid"] = (prev2_low + dataframe["high"]) / 2
