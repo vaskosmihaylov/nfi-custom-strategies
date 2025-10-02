@@ -30,7 +30,8 @@ def SSLChannels(dataframe, length=7):
 
 
 class BinClucMadV1(IStrategy):
-    INTERFACE_VERSION = 2
+
+    INTERFACE_VERSION = 3
 
     # minimal_roi = {
     #     "0": 0.028,  # I feel lucky!
@@ -367,7 +368,7 @@ class BinClucMadV1(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         # START  V6
@@ -682,11 +683,11 @@ class BinClucMadV1(IStrategy):
         # END  V9
 
         if conditions:
-            dataframe.loc[reduce(lambda x, y: x | y, conditions), "buy"] = 1
+            dataframe.loc[reduce(lambda x, y: x | y, conditions), "enter_long"] = 1
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         if self.v9_sell_condition_0_enable.value:
             conditions.append(
@@ -712,6 +713,6 @@ class BinClucMadV1(IStrategy):
             )
 
         if conditions:
-            dataframe.loc[reduce(lambda x, y: x | y, conditions), "sell"] = 1
+            dataframe.loc[reduce(lambda x, y: x | y, conditions), "exit_long"] = 1
 
         return dataframe

@@ -25,6 +25,8 @@ docker-compose run --rm freqtrade hyperopt -c user_data/config-backtesting.json 
 """
 class MacheteV8b(IStrategy):
 
+    INTERFACE_VERSION = 3
+
     buy_params = {
         "buy_should_use_get_buy_signal_quickie": True, #0/0/0
         "buy_should_use_get_buy_signal_scalp": True, #2/0/0
@@ -379,7 +381,7 @@ class MacheteV8b(IStrategy):
 
 
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (self.get_buy_signal_awesome_macd(dataframe) == True)
@@ -406,7 +408,7 @@ class MacheteV8b(IStrategy):
 
 
 
-        ,'buy'] = 1
+        ,'enter_long'] = 1
 
         return dataframe
 
@@ -566,7 +568,7 @@ class MacheteV8b(IStrategy):
 
 
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (qtpylib.crossed_above(dataframe['sslDown_inf'], dataframe['sslUp_inf']))
             & (
@@ -577,7 +579,7 @@ class MacheteV8b(IStrategy):
 
 
 
-        ,'sell'] = 1
+        ,'exit_long'] = 1
 
         return dataframe
 
