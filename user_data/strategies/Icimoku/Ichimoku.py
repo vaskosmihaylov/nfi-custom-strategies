@@ -17,7 +17,7 @@ import pandas_ta as pta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 
-class Ichimoku_improved(IStrategy):
+class Ichimoku(IStrategy):
   """
   Improved Ichimoku Strategy with better exit logic and cloud-based filters.
   

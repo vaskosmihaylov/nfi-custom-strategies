@@ -123,9 +123,9 @@ class MacheteV8b(IStrategy):
     process_only_new_candles = False
 
     use_sell_signal = True
-    sell_profit_only = False
+    exit_profit_only = False
     ignore_roi_if_buy_signal = False
-    startup_candle_count = 500#149
+    startup_candle_count = 500 #149
 
     use_dynamic_roi = True
 
