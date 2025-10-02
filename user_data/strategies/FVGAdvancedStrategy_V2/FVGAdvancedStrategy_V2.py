@@ -181,12 +181,14 @@ class FVGAdvancedStrategy_V2(IStrategy):
 
         for column in ["uptrend_1h", "downtrend_1h"]:
             if column in dataframe:
-                dataframe[column] = dataframe[column].infer_objects(copy=False).fillna(False).astype(bool)
+                # Use .where() to replace NaN with False, avoiding fillna downcasting warning
+                dataframe[column] = dataframe[column].where(dataframe[column].notna(), False).astype(bool)
             else:
                 dataframe[column] = False
 
-        dataframe["trend_up"] = dataframe["trend_up"].fillna(False)
-        dataframe["trend_down"] = dataframe["trend_down"].fillna(False)
+        # Use .where() instead of fillna to avoid downcasting warnings
+        dataframe["trend_up"] = dataframe["trend_up"].where(dataframe["trend_up"].notna(), False).astype(bool)
+        dataframe["trend_down"] = dataframe["trend_down"].where(dataframe["trend_down"].notna(), False).astype(bool)
         dataframe["volume_ratio"] = dataframe["volume_ratio"].clip(lower=0)
 
         return dataframe
