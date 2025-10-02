@@ -54,7 +54,7 @@ class BinClucMadV1(IStrategy):
     use_exit_signal = True
     exit_profit_only = False
     exit_profit_offset = 0.001  # it doesn't meant anything, just to guarantee there is a minimal profit.
-    ignore_roi_if_buy_signal = False
+    ignore_roi_if_entry_signal = False
 
     # Custom stoploss
     use_custom_stoploss = True
