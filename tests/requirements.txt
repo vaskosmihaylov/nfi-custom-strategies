@@ -16,4 +16,4 @@ scipy
 PyWavelets
 torch
 finta
-skopt
+scikit-optimize
