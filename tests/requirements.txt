@@ -16,3 +16,4 @@ scipy
 PyWavelets
 torch
 finta
+skopt
