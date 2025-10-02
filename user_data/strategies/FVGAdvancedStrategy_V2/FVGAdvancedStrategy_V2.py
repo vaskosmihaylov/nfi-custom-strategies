@@ -181,7 +181,7 @@ class FVGAdvancedStrategy_V2(IStrategy):
 
         for column in ["uptrend_1h", "downtrend_1h"]:
             if column in dataframe:
-                dataframe[column] = dataframe[column].fillna(False).astype(bool)
+                dataframe[column] = dataframe[column].infer_objects(copy=False).fillna(False).astype(bool)
             else:
                 dataframe[column] = False
 
@@ -195,7 +195,7 @@ class FVGAdvancedStrategy_V2(IStrategy):
         """Combine trend, momentum, and volatility signals into a bounded 0-100 regime score."""
         adx_component = np.clip(dataframe["adx"] / 50.0, 0.0, 1.0)
         rsi_component = 1.0 - np.clip(np.abs(dataframe["rsi"] - 50.0) / 50.0, 0.0, 1.0)
-        volatility_component = 1.0 - self._minmax(dataframe["atr_pct"].fillna(method="ffill"), self.market_score_window)
+        volatility_component = 1.0 - self._minmax(dataframe["atr_pct"].ffill(), self.market_score_window)
         bb_component = 1.0 - dataframe["bb_width_rank"].fillna(0.5)
         momentum_component = np.where(dataframe["trend_up"], 1.0, np.where(dataframe["trend_down"], 0.0, 0.5))
 

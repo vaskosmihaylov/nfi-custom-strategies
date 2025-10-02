@@ -52,7 +52,7 @@ class BinClucMadV1(IStrategy):
 
     # Sell signal
     use_sell_signal = True
-    sell_profit_only = False
+    exit_profit_only = False
     sell_profit_offset = 0.001  # it doesn't meant anything, just to guarantee there is a minimal profit.
     ignore_roi_if_buy_signal = False
 

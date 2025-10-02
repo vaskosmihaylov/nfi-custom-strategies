@@ -24,7 +24,7 @@ class Ichimoku(IStrategy):
     USE_TALIB = False
 
     # Can this strategy go short?
-    can_short: bool = False
+    can_short: bool = True
 
     minimal_roi = {
         "0": 5000.0

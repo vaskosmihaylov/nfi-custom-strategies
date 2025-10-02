@@ -25,7 +25,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 class BigWill(IStrategy):
 
-    can_short: bool = False
+    can_short: bool = True
     USE_TALIB: bool = False
 
     def custom_stochRSI_TravingView_Style(self, close, length=14, rsi_length=14, k=3, d=3):
@@ -126,40 +126,77 @@ class BigWill(IStrategy):
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
+        Entry logic for both long and short positions.
+        
+        LONG: Bullish momentum with AO >= 0, declining AO, oversold WillR, bullish EMAs
+        SHORT: Bearish momentum with AO <= 0, rising AO (toward bearish), overbought WillR, bearish EMAs
         """
+        
+        # ============= LONG ENTRY CONDITIONS =============
+        long_conditions = []
+        long_conditions.append(dataframe['AO'] >= 0)
+        long_conditions.append(dataframe['AO'] < dataframe['AO'].shift(periods=1))
+        long_conditions.append(dataframe['WillR'] < float(self.willOverSold.value))
+        long_conditions.append(dataframe['EMAf'] > dataframe['EMAs'])
 
-        conditions = []
-        conditions.append(dataframe['AO'] >= 0)
-        conditions.append(dataframe['AO'] < dataframe['AO'].shift(periods=1))
-        conditions.append(dataframe['WillR'] < float(self.willOverSold.value))
-        conditions.append(dataframe['EMAf'] > dataframe['EMAs'])
-
-        if conditions:
+        if long_conditions:
             dataframe.loc[
-                reduce(lambda x, y: x & y, conditions),
+                reduce(lambda x, y: x & y, long_conditions),
                 'enter_long'] = 1
+
+        # ============= SHORT ENTRY CONDITIONS =============
+        # Inverse logic: bearish AO momentum, overbought WillR, bearish EMA alignment
+        short_conditions = []
+        short_conditions.append(dataframe['AO'] <= 0)  # AO in bearish territory
+        short_conditions.append(dataframe['AO'] > dataframe['AO'].shift(periods=1))  # AO rising (getting more negative/bearish)
+        short_conditions.append(dataframe['WillR'] > float(self.willOverBought.value))  # Overbought (> -10)
+        short_conditions.append(dataframe['EMAf'] < dataframe['EMAs'])  # Bearish EMA alignment
+
+        if short_conditions:
+            dataframe.loc[
+                reduce(lambda x, y: x & y, short_conditions),
+                'enter_short'] = 1
 
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
+        Exit logic for both long and short positions.
+        
+        LONG EXIT: AO turns negative OR overbought conditions
+        SHORT EXIT: AO turns positive OR oversold conditions
         """
-        conditions = []
-        conditions.append((dataframe['AO'] < 0) | (dataframe['WillR'] > float(self.willOverBought.value)))
-        conditions.append((dataframe['STOCH_RSI'] > self.stochOverSold.value) | (dataframe['WillR'] > float(self.willOverBought.value)))
+        
+        # ============= LONG EXIT CONDITIONS =============
+        long_exit_conditions = []
+        long_exit_conditions.append((dataframe['AO'] < 0) | (dataframe['WillR'] > float(self.willOverBought.value)))
+        long_exit_conditions.append((dataframe['STOCH_RSI'] > self.stochOverSold.value) | (dataframe['WillR'] > float(self.willOverBought.value)))
 
-        if conditions:
+        if long_exit_conditions:
             dataframe.loc[
-                reduce(lambda x, y: x & y, conditions),
+                reduce(lambda x, y: x & y, long_exit_conditions),
                 'exit_long'] = 1
+
+        # ============= SHORT EXIT CONDITIONS =============
+        # Inverse logic: exit when AO becomes positive or oversold conditions appear
+        short_exit_conditions = []
+        short_exit_conditions.append((dataframe['AO'] > 0) | (dataframe['WillR'] < float(self.willOverSold.value)))
+        short_exit_conditions.append((dataframe['STOCH_RSI'] < self.stochOverBought.value) | (dataframe['WillR'] < float(self.willOverSold.value)))
+
+        if short_exit_conditions:
+            dataframe.loc[
+                reduce(lambda x, y: x & y, short_exit_conditions),
+                'exit_short'] = 1
 
         return dataframe
 
-    # USED FOR HARD TAKE PROFIT
+    # USED FOR HARD TAKE PROFIT (works for both longs and shorts)
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
         """
+        Hard take profit at configured percentage for both long and short positions.
+        When profit exceeds threshold, trigger an immediate exit by returning a very tight stop.
         """
-        if current_profit>self.HARD_TP_PC.value:
-            return -0.0001
-        return -0.75
+        if current_profit > self.HARD_TP_PC.value:
+            return -0.0001  # Triggers immediate exit (take profit)
+        return -0.75  # Default wide stop loss
