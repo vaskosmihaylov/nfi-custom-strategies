@@ -27,16 +27,23 @@ logger = logging.getLogger(__name__)
 
 class Ichimoku(IStrategy):
     """
-    FIXED Ichimoku Strategy
+    FIXED Ichimoku Strategy - October 2025 Complete Fix
     
     Key improvements based on research and trade analysis:
-    1. Minimum trade duration (prevents 17-second trades!)
-    2. Improved exit logic with CONFIRMATION (not just any single condition)
-    3. Partial profit taking at 3%, 5%, 8%
-    4. One DCA option at -3% to -6%
-    5. Better trailing stop with cloud-based placement
-    6. Stop loss placed at cloud boundaries (research-based)
-    7. Maintains long AND short functionality
+    1. ✅ Minimum trade duration (prevents 4-minute/17-second trades!)
+    2. ✅ custom_stoploss respects minimum duration (CRITICAL FIX!)
+    3. ✅ Cloud-based stop protection for shorts (prevents instant stops)
+    4. ✅ Improved exit logic with CONFIRMATION (not just any single condition)
+    5. ✅ Partial profit taking at 3%, 5%, 8%
+    6. ✅ One DCA option at -3% to -6%
+    7. ✅ Better trailing stop with cloud-based placement
+    8. ✅ Stop loss placed at cloud boundaries (research-based)
+    9. ✅ Maintains long AND short functionality
+    
+    Critical Fix (Oct 2025):
+    - custom_stoploss now checks minimum trade duration
+    - Prevents cloud-based stops from being placed above entry for shorts
+    - Minimum 2% safety stop for problematic cloud positions
     
     Research-based stop loss placement:
     - Conservative: below cloud bottom (Senkou Span B for longs)
@@ -136,12 +143,14 @@ class Ichimoku(IStrategy):
     def __init__(self, config: dict) -> None:
         super().__init__(config)
         logger.info("=" * 80)
-        logger.info("Ichimoku Strategy - FIXED VERSION initialized")
+        logger.info("Ichimoku Strategy - FIXED VERSION v2.0 (Oct 2025 - Stop Loss Fix)")
         logger.info("Key fixes:")
         logger.info(f"  ✓ Minimum trade duration: {self.min_trade_duration_minutes} minutes")
+        logger.info("  ✓ custom_stoploss respects minimum duration (CRITICAL!)")
+        logger.info("  ✓ Cloud stop protection for shorts (prevents instant stops)")
         logger.info("  ✓ Improved exit logic with confirmation")
         logger.info("  ✓ Partial profit taking enabled")
-        logger.info("  ✓ DCA enabled (1 max)")
+        logger.info("  ✓ DCA enabled (1 max at -3% to -6%)")
         logger.info("  ✓ Cloud-based stop loss placement")
         logger.info("  ✓ Long AND short functionality maintained")
         logger.info("=" * 80)
@@ -372,7 +381,15 @@ class Ichimoku(IStrategy):
         3. After higher profit: Tight trail below Tenkan-sen
         
         Stop loss can only move in favorable direction (never widens).
+        
+        CRITICAL FIX: Respects minimum trade duration to prevent early exits!
         """
+        # CRITICAL: Check minimum trade duration (prevents 4-minute stops!)
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 60
+        if trade_duration < self.min_trade_duration_minutes:
+            # Return base stoploss during minimum duration period
+            return self.stoploss
+        
         # Get analyzed dataframe
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
 
@@ -385,29 +402,49 @@ class Ichimoku(IStrategy):
             cloud_bottom = last_candle['cloud_bottom']
             cloud_stop_distance = (trade.open_rate - cloud_bottom) / trade.open_rate
             
+            # Ensure stop is not tighter than base stoploss
+            cloud_stop_distance = max(cloud_stop_distance, self.stoploss)
+            
             # After 3% profit, tighten to below Kijun-sen
             if current_profit >= float(self.trailing_activation.value):
                 kijun = last_candle['kijun']
                 kijun_stop_distance = (trade.open_rate - kijun) / trade.open_rate
+                kijun_stop_distance = max(kijun_stop_distance, self.stoploss)
                 # Use tighter of the two
                 return max(kijun_stop_distance, -float(self.trailing_distance.value))
             
-            # Initial stop at cloud boundary
-            return max(cloud_stop_distance, self.stoploss)
+            # Return cloud-based stop, but not tighter than base stoploss
+            return cloud_stop_distance
         else:
             # For SHORTS: Stop above cloud top (Senkou Span A)
             cloud_top = last_candle['cloud_top']
             cloud_stop_distance = (cloud_top - trade.open_rate) / trade.open_rate
             
+            # CRITICAL FIX: For shorts, cloud_stop_distance can be positive (bad!)
+            # Only use cloud stop if it's properly below entry (negative for shorts means stop above entry)
+            if cloud_stop_distance > 0:
+                # Cloud is above entry - this means stop would trigger immediately
+                # Use minimum safe stop distance of 2% instead
+                cloud_stop_distance = -0.02
+            
+            # Ensure stop is not tighter than base stoploss  
+            cloud_stop_distance = max(cloud_stop_distance, self.stoploss)
+            
             # After 3% profit, tighten to above Kijun-sen
             if current_profit >= float(self.trailing_activation.value):
                 kijun = last_candle['kijun']
                 kijun_stop_distance = (kijun - trade.open_rate) / trade.open_rate
+                
+                # Same check for kijun
+                if kijun_stop_distance > 0:
+                    kijun_stop_distance = -0.015
+                    
+                kijun_stop_distance = max(kijun_stop_distance, self.stoploss)
                 # Use tighter of the two
                 return max(kijun_stop_distance, -float(self.trailing_distance.value))
             
-            # Initial stop at cloud boundary
-            return max(cloud_stop_distance, self.stoploss)
+            # Return cloud-based stop
+            return cloud_stop_distance
 
     def adjust_trade_position(self, trade: Trade, current_time: datetime,
                                current_rate: float, current_profit: float,
