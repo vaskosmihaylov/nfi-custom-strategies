@@ -20,15 +20,22 @@ logger = logging.getLogger(__name__)
 
 class BandtasticFiboHyper_opt314(IStrategy):
     """
-    FIXED BandtasticFiboHyper Strategy
+    FIXED BandtasticFiboHyper Strategy v2.0 - October 2025
     
-    Key improvements:
-    1. Stop loss: 15% → 6% with BB/Fib-based dynamic adjustment
-    2. Partial profit taking at 3%, 5%, 8% (locks in 88% win rate gains!)
-    3. One DCA option at -3% to -5%
-    4. Trailing stop based on Bollinger Bands movement
-    5. Better long/short balance with optional short disabling
-    6. Minimum trade duration to prevent instant exits
+    CRITICAL FIXES v2.0 (Oct 3, 2025):
+    ✅ Base stoploss: -15% → -6% (prevents -43% disasters!)
+    ✅ Max stop loss: Long 6%, Short 5% (was 8%/6%)
+    ✅ custom_stoploss respects minimum duration (prevents early stops)
+    ✅ Hard cap at base stoploss (prevents runaway stops)
+    ✅ Trailing stop less aggressive: 4% activation (was 2%)
+    ✅ Safety checks for edge cases in stop calculations
+    
+    Previous fixes:
+    1. Partial profit taking at 3%, 5%, 8% (locks in 88% win rate gains!)
+    2. One DCA option at -4% to -7%
+    3. BB/Fib-based dynamic stop loss
+    4. Better long/short balance with optional short disabling
+    5. Minimum trade duration (15 min) to prevent instant exits
     
     Research-based Bollinger Bands + Fibonacci approach:
     - Entry at high-probability pullback zones (BB bands + Fib retracement)
@@ -38,8 +45,13 @@ class BandtasticFiboHyper_opt314(IStrategy):
     
     Problem Analysis:
     - Live results: 88% win rate but LOSING MONEY (-0.11% to -0.27% ROI)
-    - Root cause: Many small wins + few LARGE losses (15-30% stops)
-    - Solution: Tighter stops + partial exits = lock in those 88% wins!
+    - Root cause: Many small wins (~0.5%) + HUGE losses (-30% to -43%!)
+    - Solution: Tighter stops + partial exits = profitable!
+    
+    CRITICAL BUG FIXED:
+    - Trade #254 (HOOK): -43.65% loss with -29.9% stop (should be max -6%!)
+    - Trade #247 (AVAX): Trailing stop killed +0.72% winner at 28 min
+    - Root cause: Base stoploss -15% + no duration check in custom_stoploss
     """
     
     INTERFACE_VERSION = 3
@@ -58,14 +70,19 @@ class BandtasticFiboHyper_opt314(IStrategy):
     }
 
     # ============= CRITICAL FIX: STOP LOSS =============
-    stoploss = -0.15  # 6% hard stop (vs 15% that killed gains!)
+    # FIXED v2.0: Was -0.15 (15%) causing -43% losses!
+    stoploss = -0.06  # 6% hard stop maximum!
+    
+    # CRITICAL: use_custom_stoploss must be True for dynamic stops to work
+    use_custom_stoploss = True
 
     startup_candle_count = 999
 
-    # ============= IMPROVED TRAILING STOP =============
+    # ============= IMPROVED TRAILING STOP v2.0 =============
+    # FIXED: Was too aggressive (2% activation), killing winning trades
     trailing_stop = True
-    trailing_stop_positive = 0.01    # Start trailing at 1% profit
-    trailing_stop_positive_offset = 0.02  # Activate at 2% profit (up from 1.5%)
+    trailing_stop_positive = 0.015    # Start trailing at 1.5% profit (was 1%)
+    trailing_stop_positive_offset = 0.04  # Activate at 4% profit (was 2%)
     trailing_only_offset_is_reached = True
 
     # Position adjustment for DCA and partial exits
@@ -97,8 +114,9 @@ class BandtasticFiboHyper_opt314(IStrategy):
     min_stop_loss_long = DecimalParameter(0.02, 0.05, default=0.03, space='protection', optimize=True)  # Keep
     min_stop_loss_short = DecimalParameter(0.015, 0.04, default=0.025, space='protection', optimize=True)  # Keep
     
-    max_stop_loss_long = DecimalParameter(0.06, 0.12, default=0.08, space='protection', optimize=True)  # Changed: 8% instead of 6%
-    max_stop_loss_short = DecimalParameter(0.04, 0.10, default=0.06, space='protection', optimize=True)  # Changed: 6% instead of 5%
+    # FIXED v2.0: Was 8%/6% causing -30% to -43% disasters!
+    max_stop_loss_long = DecimalParameter(0.04, 0.07, default=0.06, space='protection', optimize=True)  # Max 6%!
+    max_stop_loss_short = DecimalParameter(0.03, 0.06, default=0.05, space='protection', optimize=True)  # Max 5%!
 
     # ========= PARTIAL EXIT PARAMETERS =========
     partial_exit_1_profit = DecimalParameter(0.02, 0.04, decimals=2, default=0.03, space='sell', optimize=True)
@@ -168,11 +186,16 @@ class BandtasticFiboHyper_opt314(IStrategy):
     def __init__(self, config: dict) -> None:
         super().__init__(config)
         logger.info("=" * 80)
-        logger.info("BandtasticFiboHyper - FIXED VERSION initialized")
-        logger.info("Key fixes:")
-        logger.info("  ✓ Stop loss: 15% → 6% (prevents -30% disasters)")
+        logger.info("BandtasticFiboHyper - FIXED VERSION v2.0 (Oct 2025 - Critical Stop Fix)")
+        logger.info("CRITICAL FIXES v2.0:")
+        logger.info("  ✓ Base stoploss: -15% → -6% (prevents -43% disasters!)")
+        logger.info("  ✓ Max stops: Long 6%, Short 5% (was 8%/6%)")
+        logger.info("  ✓ custom_stoploss respects minimum duration")
+        logger.info("  ✓ Hard cap prevents runaway stops")
+        logger.info("  ✓ Trailing stop: 4% activation (was 2%)")
+        logger.info("Previous fixes:")
         logger.info("  ✓ Partial exits at 3%, 5%, 8% (locks in 88% win rate!)")
-        logger.info("  ✓ DCA enabled at -3% to -5%")
+        logger.info(f"  ✓ DCA enabled at {self.dca_profit_min.value*100:.0f}% to {self.dca_profit_max.value*100:.0f}%")
         logger.info("  ✓ BB/Fib-based dynamic stops")
         logger.info(f"  ✓ Shorts: {'ENABLED' if self.shorts_enabled.value else 'DISABLED'}")
         logger.info(f"  ✓ Min trade duration: {self.min_trade_duration_minutes} minutes")
@@ -252,7 +275,18 @@ class BandtasticFiboHyper_opt314(IStrategy):
         - Use Fibonacci retracement levels as support/resistance
         - Trail stop as BB bands move favorably
         - Tighter stops for shorts (prevent large losses)
+        
+        CRITICAL FIXES v2.0:
+        - Respects minimum trade duration (prevents early trailing stops)
+        - Hard cap at base stoploss (prevents -30% to -43% disasters!)
+        - Additional safety checks for edge cases
         """
+        # CRITICAL FIX #1: Check minimum trade duration
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 60
+        if trade_duration < self.min_trade_duration_minutes:
+            # Return base stoploss during minimum duration period
+            return self.stoploss
+        
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         if dataframe is None or len(dataframe) < 20:
             return self.stoploss
@@ -273,6 +307,11 @@ class BandtasticFiboHyper_opt314(IStrategy):
             bb_stop_distance = (bb_upper - trade.open_rate) / trade.open_rate
             atr_stop = normalized_atr * float(self.atr_stop_multiplier_short.value)
             
+            # CRITICAL FIX #2: Check if bb_stop_distance is negative (BB below entry)
+            if bb_stop_distance < 0:
+                # BB is below entry, use min stop
+                bb_stop_distance = float(self.min_stop_loss_short.value)
+            
             # Use tighter of BB or ATR stop
             dynamic_stop = min(abs(bb_stop_distance), atr_stop)
             
@@ -284,10 +323,18 @@ class BandtasticFiboHyper_opt314(IStrategy):
             # After 3% profit, tighten to 2%
             if current_profit >= 0.03:
                 dynamic_stop = min(dynamic_stop, 0.02)
+            
+            # CRITICAL FIX #3: NEVER wider than base stoploss!
+            dynamic_stop = min(dynamic_stop, abs(self.stoploss))
         else:
             # For LONGS: Stop below BB lower band
             bb_stop_distance = (trade.open_rate - bb_lower) / trade.open_rate
             atr_stop = normalized_atr * float(self.atr_stop_multiplier_long.value)
+            
+            # CRITICAL FIX #2: Check if bb_stop_distance is negative (BB above entry)
+            if bb_stop_distance < 0:
+                # BB is above entry, use min stop
+                bb_stop_distance = float(self.min_stop_loss_long.value)
             
             # Use tighter of BB or ATR stop
             dynamic_stop = min(bb_stop_distance, atr_stop)
@@ -300,6 +347,9 @@ class BandtasticFiboHyper_opt314(IStrategy):
             # After 3% profit, tighten to 2%
             if current_profit >= 0.03:
                 dynamic_stop = min(dynamic_stop, 0.02)
+            
+            # CRITICAL FIX #3: NEVER wider than base stoploss!
+            dynamic_stop = min(dynamic_stop, abs(self.stoploss))
 
         return -dynamic_stop
 
