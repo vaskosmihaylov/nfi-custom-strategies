@@ -378,8 +378,8 @@ class BandtasticFiboHyper_opt314(IStrategy):
         # ADX for trend strength
         dataframe['adx'] = ta.ADX(dataframe, timeperiod=14)
 
-        # Volume analysis
-        dataframe['volume_mean'] = dataframe['volume'].rolling(window=20).mean()
+        # Volume analysis with early warm-up support
+        dataframe['volume_mean'] = dataframe['volume'].rolling(window=20, min_periods=1).mean()
 
         # Bollinger Bands (multiple standard deviations)
         for std in range(1, 5):
@@ -444,9 +444,6 @@ class BandtasticFiboHyper_opt314(IStrategy):
         if self.buy_1h_trend_enabled.value and 'uptrend_1h' in dataframe.columns:
             long_conditions.append(dataframe['uptrend_1h'] == True)
 
-        # Volume confirmation
-        long_conditions.append(dataframe['volume'] > dataframe['volume_mean'] * self.buy_volume_threshold.value)
-
         if long_conditions:
             dataframe.loc[reduce(lambda x, y: x & y, long_conditions), 'enter_long'] = 1
 
@@ -482,10 +479,7 @@ class BandtasticFiboHyper_opt314(IStrategy):
         if self.short_1h_trend_enabled.value and 'downtrend_1h' in dataframe.columns:
             short_conditions.append(dataframe['downtrend_1h'] == True)
 
-        # Stronger volume confirmation
-        short_conditions.append(dataframe['volume'] > dataframe['volume_mean'] * self.short_volume_threshold.value)
-
-        # ADX strength filter
+        # ADX strength filter keeps shorts to trending moves
         short_conditions.append(dataframe['adx'] > self.short_adx_threshold.value)
 
         if short_conditions:
