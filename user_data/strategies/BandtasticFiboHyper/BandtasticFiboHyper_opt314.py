@@ -18,7 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class BandtasticFiboHyper_hybrid_opt(IStrategy):
+class BandtasticFiboHyper_opt314(IStrategy):
     """
     HYBRID BandtasticFiboHyper Strategy - October 2025
     
