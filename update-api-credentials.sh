@@ -69,13 +69,11 @@ update_all_env_files() {
     # List of all environment files
     local env_files=(
         "env-files/nfi-x6.env"
-        "env-files/quickadapter.env"
         "env-files/bandtastic.env"
         "env-files/trendfollowing.env"
         "env-files/fvg.env"
         "env-files/powertower.env"
         "env-files/fastsupertrend.env"
-        "env-files/notankai.env"
     )
     
     for env_file in "${env_files[@]}"; do

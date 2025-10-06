@@ -39,23 +39,6 @@ services:
       --strategy-path user_data/strategies/nfi
       --strategy NostalgiaForInfinityX6
 
-  # QuickAdapter Strategy
-  freqtrade-quickadapter:
-    <<: *common-settings
-    container_name: freqtrade-quickadapter
-    ports:
-      - "127.0.0.1:8081:8080"
-    env_file:
-      - path: ./env-files/quickadapter.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/quickadapter-tradesv3.sqlite
-      --log-file user_data/logs/quickadapter.log
-      --strategy-path user_data/strategies/quickadapter
-      --strategy QuickAdapterV3
-
   # BandtasticFiboHyper Strategy
   freqtrade-bandtastic:
     <<: *common-settings
@@ -140,23 +123,6 @@ services:
       --log-file user_data/logs/fastsupertrend.log
       --strategy-path user_data/strategies/fastsupertrend
       --strategy FastSupertrend_ts_origstop_fix
-
-  # NoTankAI Strategy
-  freqtrade-notankai:
-    <<: *common-settings
-    container_name: freqtrade-notankai
-    ports:
-      - "127.0.0.1:8088:8080"
-    env_file:
-      - path: ./env-files/notankai.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/notankai-tradesv3.sqlite
-      --log-file user_data/logs/notankai.log
-      --strategy-path user_data/strategies/notankai
-      --strategy NoTankAI_15
 
   # MacheteV8b Strategy
   freqtrade-machetev8b:

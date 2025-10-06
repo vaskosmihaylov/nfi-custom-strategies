@@ -17,13 +17,11 @@ The multi-strategy setup includes:
 ```
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── NFI-X6 (Port 8080)
-                           ├── QuickAdapter (Port 8081)
                            ├── BandtasticFiboHyper (Port 8082)
                            ├── TrendFollowing (Port 8083)
                            ├── FVG (Port 8085)
                            ├── PowerTower (Port 8086)
                            ├── FastSupertrend (Port 8087)
-                           ├── NoTankAI (Port 8088)
                            ├── MacheteV8b (Port 8089)
                            ├── ElliotV5_SMA (Port 8090)
                            ├── BinClucMadV1 (Port 8091)

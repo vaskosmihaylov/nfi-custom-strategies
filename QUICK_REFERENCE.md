@@ -18,25 +18,23 @@ Quick reference for managing all 15 FreqTrade strategies.
 ./deploy-multi-strategies.sh logs
 ```
 
-## 📋 All 15 Strategies
+## 📋 All 13 Strategies
 
 | # | Strategy | URL | Port |
 |---|----------|-----|------|
 | 1 | NFI-X6 | `freq.gaiaderma.com/nfi-x6` | 8080 |
-| 2 | QuickAdapter | `freq.gaiaderma.com/quickadapter` | 8081 |
-| 3 | Bandtastic | `freq.gaiaderma.com/bandtastic` | 8082 |
-| 4 | TrendFollowing | `freq.gaiaderma.com/trendfollowing` | 8083 |
-| 5 | FVG | `freq.gaiaderma.com/fvg` | 8085 |
-| 6 | PowerTower | `freq.gaiaderma.com/powertower` | 8086 |
-| 7 | FastSupertrend | `freq.gaiaderma.com/fastsupertrend` | 8087 |
-| 8 | NoTankAI | `freq.gaiaderma.com/notankai` | 8088 |
-| 9 | MacheteV8b | `freq.gaiaderma.com/machetev8b` | 8089 |
-| 10 | ElliotV5_SMA | `freq.gaiaderma.com/elliotv5_sma` | 8090 |
-| 11 | BinClucMadV1 | `freq.gaiaderma.com/binclucmadv1` | 8091 |
-| 12 | NASOSv4 | `freq.gaiaderma.com/nasosv4` | 8092 |
-| 13 | MartyEMA | `freq.gaiaderma.com/martyema` | 8093 |
-| 14 | Ichimoku | `freq.gaiaderma.com/ichimoku` | 8094 |
-| 15 | BigWill | `freq.gaiaderma.com/bigwill` | 8095 |
+| 2 | Bandtastic | `freq.gaiaderma.com/bandtastic` | 8082 |
+| 3 | TrendFollowing | `freq.gaiaderma.com/trendfollowing` | 8083 |
+| 4 | FVG | `freq.gaiaderma.com/fvg` | 8085 |
+| 5 | PowerTower | `freq.gaiaderma.com/powertower` | 8086 |
+| 6 | FastSupertrend | `freq.gaiaderma.com/fastsupertrend` | 8087 |
+| 7 | MacheteV8b | `freq.gaiaderma.com/machetev8b` | 8089 |
+| 8 | ElliotV5_SMA | `freq.gaiaderma.com/elliotv5_sma` | 8090 |
+| 9 | BinClucMadV1 | `freq.gaiaderma.com/binclucmadv1` | 8091 |
+| 10 | NASOSv4 | `freq.gaiaderma.com/nasosv4` | 8092 |
+| 11 | MartyEMA | `freq.gaiaderma.com/martyema` | 8093 |
+| 12 | Ichimoku | `freq.gaiaderma.com/ichimoku` | 8094 |
+| 13 | BigWill | `freq.gaiaderma.com/bigwill` | 8095 |
 
 ## 🎯 FreqUI Bot URLs (Copy-Paste Ready)
 
@@ -44,13 +42,11 @@ Quick reference for managing all 15 FreqTrade strategies.
 
 ```
 http://freq.gaiaderma.com/nfi-x6
-http://freq.gaiaderma.com/quickadapter
 http://freq.gaiaderma.com/bandtastic
 http://freq.gaiaderma.com/trendfollowing
 http://freq.gaiaderma.com/fvg
 http://freq.gaiaderma.com/powertower
 http://freq.gaiaderma.com/fastsupertrend
-http://freq.gaiaderma.com/notankai
 http://freq.gaiaderma.com/machetev8b
 http://freq.gaiaderma.com/elliotv5_sma
 http://freq.gaiaderma.com/binclucmadv1
@@ -90,9 +86,9 @@ Save as `test-all-strategies.sh`:
 
 ```bash
 #!/bin/bash
-STRATEGIES=(nfi-x6 quickadapter bandtastic trendfollowing fvg powertower fastsupertrend notankai machetev8b elliotv5_sma binclucmadv1 nasosv4 martyema ichimoku bigwill)
+STRATEGIES=(nfi-x6 bandtastic trendfollowing fvg powertower fastsupertrend machetev8b elliotv5_sma binclucmadv1 nasosv4 martyema ichimoku bigwill)
 
-echo "Testing all 15 strategies..."
+echo "Testing all 13 strategies..."
 for strategy in "${STRATEGIES[@]}"; do
   echo -n "$strategy: "
   curl -s http://freq.gaiaderma.com/$strategy/api/v1/ping | grep -q "pong" && echo "✅" || echo "❌"
