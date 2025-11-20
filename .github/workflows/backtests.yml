@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'NostalgiaForInfinityX6.py'
+      - 'NostalgiaForInfinityX7.py'
 
 jobs:
   # Backtest Jobs
@@ -14,6 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         TIMERANGE:
+          - 20251001-20251101
+          - 20250901-20251001
           - 20250801-20250901
           - 20250701-20250801
           - 20250601-20250701
@@ -38,19 +40,18 @@ jobs:
       - uses: actions/checkout@v5
       - name: Pull docker image
         run: |
-          docker pull ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest
+          docker pull ghcr.io/iterativv/ci-strategy-backtesting:latest
 
       - name: Pull Market data and copy to user_data/data
         run: |
-          docker pull ghcr.io/${{ github.actor }}/market-data:kucoin-spot
+          docker pull ghcr.io/iterativv/market-data:kucoin-spot
           mkdir -p user_data/data
-          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/${{ github.actor }}/market-data:kucoin-spot \
+          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/iterativv/market-data:kucoin-spot \
             bash -c "cp -r /data/* /host_data/"
 
       - name: Run Backtests
         run: |
           mkdir -p artifacts && chmod 777 artifacts
-          tree
           export COLUMNS=240
           docker run -v "$PWD:/testing" \
             -v "$PWD/user_data/data:/testing/user_data/data" \
@@ -60,7 +61,7 @@ jobs:
             -e "COLUMNS=240" \
             -t \
             --env-file .github/workflows/scripts/ci-proxy.env \
-            ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest \
+            ghcr.io/iterativv/ci-strategy-backtesting:latest \
             python -m pytest \
             tests/backtests \
             -ra -vv -s \
@@ -68,7 +69,8 @@ jobs:
             --artifacts-path=artifacts/ \
             -p no:cacheprovider \
             -n auto \
-            -k "kucoin and spot and ${{ matrix.TIMERANGE }}"
+            -k "kucoin and spot and ${{ matrix.TIMERANGE }}" \
+            --junitxml="artifacts/kucoin-spot-${{ matrix.TIMERANGE }}-report.xml"
 
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-kucoin-spot-${{ matrix.TIMERANGE }}.txt
@@ -84,6 +86,8 @@ jobs:
       fail-fast: false
       matrix:
         TIMERANGE:
+          - 20251001-20251101
+          - 20250901-20251001
           - 20250801-20250901
           - 20250701-20250801
           - 20250601-20250701
@@ -116,13 +120,13 @@ jobs:
 
       - name: Pull docker image
         run: |
-          docker pull ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest
+          docker pull ghcr.io/iterativv/ci-strategy-backtesting:latest
 
       - name: Pull Market data and copy to user_data/data
         run: |
-          docker pull ghcr.io/${{ github.actor }}/market-data:binance-spot
+          docker pull ghcr.io/iterativv/market-data:binance-spot
           mkdir -p user_data/data
-          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/${{ github.actor }}/market-data:binance-spot \
+          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/iterativv/market-data:binance-spot \
             bash -c "cp -r /data/* /host_data/"
 
       - name: Run Backtests
@@ -137,7 +141,7 @@ jobs:
             -e "COLUMNS=240" \
             -t \
             --env-file .github/workflows/scripts/ci-proxy.env \
-            ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest \
+            ghcr.io/iterativv/ci-strategy-backtesting:latest \
             python -m pytest \
             tests/backtests \
             -ra -vv -s \
@@ -145,7 +149,8 @@ jobs:
             --artifacts-path=artifacts/ \
             -p no:cacheprovider \
             -n auto \
-            -k "binance and spot and ${{ matrix.TIMERANGE }}"
+            -k "binance and spot and ${{ matrix.TIMERANGE }}" \
+            --junitxml="artifacts/binance-spot-${{ matrix.TIMERANGE }}-report.xml"
 
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-binance-spot-${{ matrix.TIMERANGE }}.txt
@@ -161,6 +166,8 @@ jobs:
       fail-fast: false
       matrix:
         TIMERANGE:
+          - 20251001-20251101
+          - 20250901-20251001
           - 20250801-20250901
           - 20250701-20250801
           - 20250601-20250701
@@ -185,7 +192,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Inject Proxy Config
         env:
-          PROXY: ${{ secrets.FREQTRADE_PROXY }}
+          PROXY: ${{ secrets.FREQTRADE_PROXY2 }}
         run: |
           jq --arg proxy "$PROXY" \
             '.exchange.ccxt_config = { http_proxy: $proxy }' \
@@ -193,13 +200,13 @@ jobs:
 
       - name: Pull docker image
         run: |
-          docker pull ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest
+          docker pull ghcr.io/iterativv/ci-strategy-backtesting:latest
 
       - name: Pull Market data and copy to user_data/data
         run: |
-          docker pull ghcr.io/${{ github.actor }}/market-data:binance-futures
+          docker pull ghcr.io/iterativv/market-data:binance-futures
           mkdir -p user_data/data
-          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/${{ github.actor }}/market-data:binance-futures \
+          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/iterativv/market-data:binance-futures \
             bash -c "cp -r /data/* /host_data/"
 
       - name: Run Backtests
@@ -214,7 +221,7 @@ jobs:
             -e "COLUMNS=240" \
             -t \
             --env-file .github/workflows/scripts/ci-proxy.env \
-            ghcr.io/${{ github.actor }}/ci-strategy-backtesting:latest \
+            ghcr.io/iterativv/ci-strategy-backtesting:latest \
             python -m pytest \
             tests/backtests \
             -ra -vv -s \
@@ -222,7 +229,8 @@ jobs:
             --artifacts-path=artifacts/ \
             -p no:cacheprovider \
             -n auto \
-            -k "binance and futures and ${{ matrix.TIMERANGE }}"
+            -k "binance and futures and ${{ matrix.TIMERANGE }}" \
+            --junitxml="artifacts/binance-futures-${{ matrix.TIMERANGE }}-report.xml"
 
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-binance-futures-${{ matrix.TIMERANGE }}.txt
