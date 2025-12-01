@@ -23,7 +23,7 @@ x-common-settings:
 
 services:
   # NostalgiaForInfinityX6 Strategy
-  freqtrade-nfi-x6:
+  freqtrade-nfi-x7:
     <<: *common-settings
     container_name: freqtrade-nfi-x7
     ports:
