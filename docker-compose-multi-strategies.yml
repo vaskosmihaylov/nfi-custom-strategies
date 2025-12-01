@@ -25,19 +25,19 @@ services:
   # NostalgiaForInfinityX6 Strategy
   freqtrade-nfi-x6:
     <<: *common-settings
-    container_name: freqtrade-nfi-x6
+    container_name: freqtrade-nfi-x7
     ports:
       - "127.0.0.1:8080:8080"
     env_file:
-      - path: ./env-files/nfi-x6.env
+      - path: ./env-files/nfi-x7.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/nfi-x6-tradesv3.sqlite
-      --log-file user_data/logs/nfi-x6.log
+      --db-url sqlite:////freqtrade/user_data/nfi-x7-tradesv3.sqlite
+      --log-file user_data/logs/nfi-x7.log
       --strategy-path user_data/strategies/nfi
-      --strategy NostalgiaForInfinityX6
+      --strategy NostalgiaForInfinityX7
 
   # BandtasticFiboHyper Strategy
   freqtrade-bandtastic:
