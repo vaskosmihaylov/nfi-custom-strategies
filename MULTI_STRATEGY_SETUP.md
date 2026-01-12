@@ -16,7 +16,7 @@ The multi-strategy setup includes:
 
 ```
 Internet → NGINX (Port 80) → FreqTrade Strategies
-                           ├── NFI-X6 (Port 8080)
+                           ├── nfi-x7 (Port 8080)
                            ├── BandtasticFiboHyper (Port 8082)
                            ├── TrendFollowing (Port 8083)
                            ├── FVG (Port 8085)
@@ -42,7 +42,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `freqtrade-proxy-common.conf` - Reusable proxy headers
 
 ### Environment Files (in `env-files/`)
-- `nfi-x6.env` - NostalgiaForInfinityX6 strategy
+- `nfi-x7.env` - NostalgiaForInfinityX6 strategy
 - `quickadapter.env` - QuickAdapter strategy
 - `bandtastic.env` - BandtasticFiboHyper strategy
 - `trendfollowing.env` - TrendFollowing strategy
@@ -81,7 +81,7 @@ Before starting, update the API credentials in each environment file:
 ./deploy-multi-strategies.sh start
 
 # Or start individual strategies
-./deploy-multi-strategies.sh start nfi-x6
+./deploy-multi-strategies.sh start nfi-x7
 ./deploy-multi-strategies.sh start bandtastic
 ```
 
@@ -96,7 +96,7 @@ sudo ./deploy-multi-strategies.sh setup-nginx
 
 Open your browser and navigate to:
 - **Main UI**: `http://freq.gaiaderma.com`
-- **Health Check**: `http://freq.gaiaderma.com/health/nfi-x6`
+- **Health Check**: `http://freq.gaiaderma.com/health/nfi-x7`
 
 ## 🎮 Management Commands
 
@@ -128,7 +128,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 
 | Strategy | Bot Name | API URL | Username | Password |
 |----------|----------|---------|----------|----------|
-| **NFI-X6** | `Vasko_NFI_X6` | `http://freq.gaiaderma.com/nfi-x6` | `nfi_x6_user` | `nfi_x6_secure_password` |
+| **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
 | **Bandtastic** | `Vasko_Bandtastic` | `http://freq.gaiaderma.com/bandtastic` | `bandtastic_user` | `bandtastic_secure_password` |
 | **QuickAdapter** | `Vasko_QuickAdapter` | `http://freq.gaiaderma.com/quickadapter` | `quickadapter_user` | `quickadapter_secure_password` |
 | **TrendFollowing** | `Vasko_TrendFollowing` | `http://freq.gaiaderma.com/trendfollowing` | `trendfollowing_user` | `trendfollowing_secure_password` |
@@ -182,11 +182,11 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 ./deploy-multi-strategies.sh health-check
 
 # Individual health checks
-curl http://127.0.0.1:8080/api/v1/ping  # NFI-X6
+curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
 curl http://127.0.0.1:8082/api/v1/ping  # Bandtastic
 
 # Test through NGINX
-curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 ```
 
@@ -196,15 +196,15 @@ curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 ./deploy-multi-strategies.sh logs
 
 # View specific strategy logs
-./deploy-multi-strategies.sh logs nfi-x6
+./deploy-multi-strategies.sh logs nfi-x7
 
 # Live log following
-docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x6
+docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 ```
 
 ### File-based Logs
 Each strategy logs to separate files in `user_data/logs/`:
-- `nfi-x6.log`
+- `nfi-x7.log`
 - `quickadapter.log`
 - `bandtastic.log`
 - etc.
@@ -215,7 +215,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 All strategies use the same base configuration (`configs/recommended_config.json`) but can be customized via environment variables.
 
 ### Port Allocation
-- NFI-X6: 8080
+- nfi-x7: 8080
 - QuickAdapter: 8081
 - BandtasticFiboHyper: 8082
 - TrendFollowing: 8083
@@ -233,7 +233,7 @@ All strategies use the same base configuration (`configs/recommended_config.json
 
 ### Database Separation
 Each strategy uses its own SQLite database:
-- `nfi-x6-tradesv3.sqlite`
+- `nfi-x7-tradesv3.sqlite`
 - `quickadapter-tradesv3.sqlite`
 - `bandtastic-tradesv3.sqlite`
 - `trendfollowing-tradesv3.sqlite`
@@ -301,7 +301,7 @@ location /bandtastic/ {
    curl http://127.0.0.1:8080/api/v1/ping
    
    # Test through NGINX
-   curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+   curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
    
    # Check strategy configuration
    cat env-files/strategy-name.env
@@ -343,12 +343,12 @@ After setup, verify everything works:
 
 ```bash
 # Test all endpoints
-curl http://freq.gaiaderma.com/nfi-x6/api/v1/ping
+curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 curl http://freq.gaiaderma.com/quickadapter/api/v1/ping
 
 # Test health endpoints
-curl http://freq.gaiaderma.com/health/nfi-x6
+curl http://freq.gaiaderma.com/health/nfi-x7
 curl http://freq.gaiaderma.com/health/bandtastic
 
 # Check container status
