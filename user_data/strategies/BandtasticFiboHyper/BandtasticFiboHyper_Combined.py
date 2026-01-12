@@ -19,7 +19,7 @@ Stop Loss Layers:
 4. Doom Stop: -20% absolute maximum loss protection
 
 Author: Combined from BandtasticFiboHyper optimizations
-Version: 1.0.1
+Version: 1.1.0
 """
 
 import talib.abstract as ta
@@ -75,7 +75,14 @@ class BandtasticFiboHyper_Combined(IStrategy):
     trailing_only_offset_is_reached = True
 
     startup_candle_count = 999
-    max_open_trades = 1
+
+    # Allow env to override, but default to 8 (4 long + 4 short enforced via confirm_trade_entry)
+    max_open_trades = 8
+
+    # Separate limits for long and short positions
+    # These are enforced in confirm_trade_entry() callback
+    max_long_trades = 4
+    max_short_trades = 4
 
     # Use custom_stoploss function
     use_custom_stoploss = True
@@ -149,6 +156,47 @@ class BandtasticFiboHyper_Combined(IStrategy):
         ['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'],
         default='fib_382', space='buy', optimize=True
     )
+
+    def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
+                            time_in_force: str, current_time: datetime, entry_tag: Optional[str],
+                            side: str, **kwargs) -> bool:
+        """
+        Enforce separate limits for long and short positions.
+
+        This prevents opening more than max_long_trades longs or max_short_trades shorts
+        simultaneously, even though max_open_trades allows 8 total.
+
+        Returns:
+            bool: True to confirm entry, False to reject
+        """
+        # Count current open trades by direction
+        open_trades = self.dp.current_whitelist() if hasattr(self.dp, 'current_whitelist') else []
+
+        # Get all trades using Trade model if available
+        from freqtrade.persistence import Trade
+        open_trade_count = Trade.get_open_trade_count()
+
+        # Count longs and shorts from open trades
+        long_count = 0
+        short_count = 0
+
+        # Get all open trades
+        trades = Trade.get_trades_proxy(is_open=True)
+        for trade in trades:
+            if trade.is_short:
+                short_count += 1
+            else:
+                long_count += 1
+
+        # Check if we can open this trade based on direction
+        if side == "long":
+            if long_count >= self.max_long_trades:
+                return False  # Already at max long trades
+        elif side == "short":
+            if short_count >= self.max_short_trades:
+                return False  # Already at max short trades
+
+        return True  # Confirm entry
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
                 proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
