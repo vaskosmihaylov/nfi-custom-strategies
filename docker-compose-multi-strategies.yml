@@ -39,7 +39,7 @@ services:
       --strategy-path user_data/strategies/nfi
       --strategy NostalgiaForInfinityX7
 
-  # BandtasticFiboHyper Strategy
+  # BandtasticFiboHyper Strategy (Combined - best of opt314 + opt490)
   freqtrade-bandtastic:
     <<: *common-settings
     container_name: freqtrade-bandtastic
@@ -54,7 +54,7 @@ services:
       --db-url sqlite:////freqtrade/user_data/bandtastic-tradesv3.sqlite
       --log-file user_data/logs/bandtastic.log
       --strategy-path user_data/strategies/BandtasticFiboHyper
-      --strategy BandtasticFiboHyper_opt314
+      --strategy BandtasticFiboHyper_Combined
 
   # TrendFollowing Strategy
   freqtrade-trendfollowing:

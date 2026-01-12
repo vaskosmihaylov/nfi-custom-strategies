@@ -11,91 +11,87 @@ from freqtrade.strategy import (
     IntParameter,
     RealParameter
 ) 
-# strategy_BandtasticFiboHyper_2025-07-07_11-44-49.fthypt 
-# 490/500:    333 trades. 190/75/68 Wins/Draws/Losses. 
-# Avg profit   0.47%. 
-# Median profit   0.01%. 
-# Total profit 3369.56266713 USDT ( 336.96%). 
-# Long / Short                  │ 56 / 277                       │
-# Total profit Long %           │ 17.01%                         │
-# Total profit Short %          │ 319.95%                        │
-# Absolute profit Long          │ 170.064 USDT                   │
-# Absolute profit Short         │ 3199.499 USDT
-# Avg duration 4:51:00 min. 
-# Objective: -15.09011
-# max_open_trades = 1
-class BandtasticFiboHyper_opt490(IStrategy):
+# strategy_BandtasticFiboHyper_opt79_885 超参数硬编码结果
+# 885/1000:    805 trades. 457/87/261 Wins/Draws/Losses.
+# Avg profit   0.45%.
+# Median profit   0.71%.
+# Total profit 827.41331745 USDT (  82.74%).
+# Avg duration 2:20:00 min.5
+# Objective: 0.95259
+# max_open_trades = 5
+
+class BandtasticFiboHyper_opt79_885(IStrategy):
     INTERFACE_VERSION = 3
     can_short = True
     timeframe = '5m'
 
     # ROI table (from hyperspace)
     minimal_roi = {
-        "0": 0.215,
-        "38": 0.034,
-        "90": 0.022,
-        "137": 0
+        "0": 0.222,
+        "11": 0.097,
+        "52": 0.036,
+        "119": 0
     }
 
-    stoploss = -0.314
+    stoploss = -0.301
     startup_candle_count = 999
 
     trailing_stop = True
-    trailing_stop_positive = 0.132
-    trailing_stop_positive_offset = 0.202
+    trailing_stop_positive = 0.345
+    trailing_stop_positive_offset = 0.444
     trailing_only_offset_is_reached = False
 
     # Max open trades
-    max_open_trades = 1
+    max_open_trades = 5
 
     # ========= 杠杆参数 =========
-    max_leverage = DecimalParameter(1.0, 5.0, default=1.134, space='protection', optimize=True)
-    max_short_leverage = DecimalParameter(1.0, 3.0, default=2.604, space='protection', optimize=True)
-    atr_threshold_low = DecimalParameter(0.005, 0.03, default=0.027, space='protection', optimize=True)
-    atr_threshold_high = DecimalParameter(0.02, 0.08, default=0.042, space='protection', optimize=True)
+    max_leverage = DecimalParameter(1.0, 5.0, default=3.67, space='protection', optimize=False)
+    max_short_leverage = DecimalParameter(1.0, 3.0, default=2.859, space='protection', optimize=False)
+    atr_threshold_low = DecimalParameter(0.005, 0.03, default=0.025, space='protection', optimize=False)
+    atr_threshold_high = DecimalParameter(0.02, 0.08, default=0.067, space='protection', optimize=False)
 
     # ========= long 参数 =========
-    buy_fastema = IntParameter(1, 236, default=24, space='buy', optimize=True)
-    buy_slowema = IntParameter(1, 250, default=163, space='buy', optimize=True)
-    buy_rsi = IntParameter(15, 70, default=50, space='buy', optimize=True)
-    buy_mfi = IntParameter(15, 70, default=40, space='buy', optimize=True)
-    buy_rsi_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
-    buy_mfi_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
-    buy_ema_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
-    buy_trigger = CategoricalParameter(['bb_lower1', 'bb_lower2', 'bb_lower3', 'bb_lower4', 'fibonacci'], default='bb_lower4', space='buy', optimize=True)
-    buy_fib_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=True)
-    buy_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_382', space='buy', optimize=True)
+    buy_fastema = IntParameter(1, 236, default=152, space='buy', optimize=False)
+    buy_slowema = IntParameter(1, 250, default=40, space='buy', optimize=False)
+    buy_rsi = IntParameter(15, 70, default=67, space='buy', optimize=False)
+    buy_mfi = IntParameter(15, 70, default=42, space='buy', optimize=False)
+    buy_rsi_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=False)
+    buy_mfi_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=False)
+    buy_ema_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=False)
+    buy_trigger = CategoricalParameter(['bb_lower1', 'bb_lower2', 'bb_lower3', 'bb_lower4', 'fibonacci'], default='bb_lower4', space='buy', optimize=False)
+    buy_fib_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=False)
+    buy_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_618', space='buy', optimize=False)
 
     # ====== Short 参数 ==========
-    short_fastema = IntParameter(1, 250, default=240, space='sell', optimize=True)
-    short_slowema = IntParameter(1, 250, default=31, space='sell', optimize=True)
-    short_rsi = IntParameter(30, 100, default=49, space='sell', optimize=True)
-    short_mfi = IntParameter(30, 100, default=30, space='sell', optimize=True)
-    short_rsi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=True)
-    short_mfi_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=True)
-    short_ema_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=True)
-    short_trigger = CategoricalParameter(['bb_upper1', 'bb_upper2', 'bb_upper3', 'bb_upper4'], default='bb_upper2', space='sell', optimize=True)
+    short_fastema = IntParameter(1, 250, default=35, space='sell', optimize=False)
+    short_slowema = IntParameter(1, 250, default=143, space='sell', optimize=False)
+    short_rsi = IntParameter(30, 100, default=92, space='sell', optimize=False)
+    short_mfi = IntParameter(30, 100, default=68, space='sell', optimize=False)
+    short_rsi_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=False)
+    short_mfi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=False)
+    short_ema_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=False)
+    short_trigger = CategoricalParameter(['bb_upper1', 'bb_upper2', 'bb_upper3', 'bb_upper4'], default='bb_upper4', space='sell', optimize=False)
 
     # ========= Sell 参数 =========
-    sell_fastema = IntParameter(1, 365, default=242, space='sell', optimize=True)
-    sell_slowema = IntParameter(1, 365, default=8, space='sell', optimize=True)
-    sell_rsi = IntParameter(30, 100, default=87, space='sell', optimize=True)
-    sell_mfi = IntParameter(30, 100, default=52, space='sell', optimize=True)
-    sell_rsi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=True)
-    sell_mfi_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=True)
-    sell_ema_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=True)
-    sell_trigger = CategoricalParameter(['sell-bb_upper1', 'sell-bb_upper2', 'sell-bb_upper3', 'sell-bb_upper4'], default='sell-bb_upper1', space='sell', optimize=True)
+    sell_fastema = IntParameter(1, 365, default=212, space='sell', optimize=False)
+    sell_slowema = IntParameter(1, 365, default=213, space='sell', optimize=False)
+    sell_rsi = IntParameter(30, 100, default=63, space='sell', optimize=False)
+    sell_mfi = IntParameter(30, 100, default=53, space='sell', optimize=False)
+    sell_rsi_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=False)
+    sell_mfi_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=False)
+    sell_ema_enabled = CategoricalParameter([True, False], default=False, space='sell', optimize=False)
+    sell_trigger = CategoricalParameter(['sell-bb_upper1', 'sell-bb_upper2', 'sell-bb_upper3', 'sell-bb_upper4'], default='sell-bb_upper3', space='sell', optimize=False)
     
-    cover_fastema = IntParameter(1, 250, default=165, space='buy', optimize=True)
-    cover_slowema = IntParameter(1, 250, default=206, space='buy', optimize=True)
-    cover_rsi = IntParameter(10, 70, default=31, space='buy', optimize=True)
-    cover_mfi = IntParameter(10, 70, default=66, space='buy', optimize=True)
-    cover_rsi_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=True)
-    cover_mfi_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=True)
-    cover_ema_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=True)
-    cover_trigger = CategoricalParameter(['bb_lower1', 'bb_lower2', 'bb_lower3', 'bb_lower4', 'fibonacci'], default='bb_lower3', space='buy', optimize=True)
-    cover_fib_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=True)
-    cover_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_236', space='buy', optimize=True)
+    cover_fastema = IntParameter(1, 250, default=45, space='buy', optimize=False)
+    cover_slowema = IntParameter(1, 250, default=235, space='buy', optimize=False)
+    cover_rsi = IntParameter(10, 70, default=64, space='buy', optimize=False)
+    cover_mfi = IntParameter(10, 70, default=63, space='buy', optimize=False)
+    cover_rsi_enabled = CategoricalParameter([True, False], default=False, space='buy', optimize=False)
+    cover_mfi_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=False)
+    cover_ema_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=False)
+    cover_trigger = CategoricalParameter(['bb_lower1', 'bb_lower2', 'bb_lower3', 'bb_lower4', 'fibonacci'], default='bb_lower1', space='buy', optimize=False)
+    cover_fib_enabled = CategoricalParameter([True, False], default=True, space='buy', optimize=False)
+    cover_fib_level = CategoricalParameter(['fib_236', 'fib_382', 'fib_5', 'fib_618', 'fib_786'], default='fib_382', space='buy', optimize=False)
 
     def leverage(self, pair: str, current_time: 'datetime', current_rate: float,
                 proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
