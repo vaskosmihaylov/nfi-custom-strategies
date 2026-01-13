@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **15 different trading strategies** running in separate Docker containers
+- **13 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -18,17 +18,15 @@ The multi-strategy setup includes:
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
                            ├── BandtasticFiboHyper (Port 8082)
-                           ├── TrendFollowing (Port 8083)
                            ├── FVG (Port 8085)
-                           ├── PowerTower (Port 8086)
-                           ├── FastSupertrend (Port 8087)
-                           ├── MacheteV8b (Port 8089)
-                           ├── ElliotV5_SMA (Port 8090)
-                           ├── BinClucMadV1 (Port 8091)
-                           ├── NASOSv4 (Port 8092)
-                           ├── MartyEMA (Port 8093)
-                           ├── Ichimoku (Port 8094)
-                           └── BigWill (Port 8095)
+                           ├── MacheteV8b (Port 8090)
+                           ├── ElliotV5_SMA (Port 8091)
+                           ├── BinClucMadV1 (Port 8092)
+                           ├── NASOSv4 (Port 8093)
+                           ├── MartyEMA (Port 8094)
+                           ├── Ichimoku (Port 8095)
+                           ├── BigWill (Port 8096)
+                           └── ElliotV5_SMA_Shorts (Port 8097)
 ```
 
 ## 📁 Files Created
@@ -42,16 +40,12 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `freqtrade-proxy-common.conf` - Reusable proxy headers
 
 ### Environment Files (in `env-files/`)
-- `nfi-x7.env` - NostalgiaForInfinityX6 strategy
-- `quickadapter.env` - QuickAdapter strategy
-- `bandtastic.env` - BandtasticFiboHyper strategy
-- `trendfollowing.env` - TrendFollowing strategy
+- `nfi-x7.env` - NostalgiaForInfinityX7 strategy
+- `bandtastic.env` - BandtasticFiboHyper_Combined strategy
 - `fvg.env` - FVG Advanced Strategy
-- `powertower.env` - PowerTower strategy
-- `fastsupertrend.env` - FastSupertrend strategy
-- `notankai.env` - NoTankAI strategy
 - `machetev8b.env` - MacheteV8b strategy
-- `elliotv5_sma.env` - ElliotV5_SMA strategy
+- `elliotv5_sma.env` - ElliotV5_SMA strategy (longs-only)
+- `elliotv5_sma_shorts.env` - ElliotV5_SMA_Shorts strategy (shorts-only)
 - `binclucmadv1.env` - BinClucMadV1 strategy
 - `nasosv4.env` - NASOSv4 strategy
 - `martyema.env` - MartyEMA strategy
@@ -130,14 +124,10 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 |----------|----------|---------|----------|----------|
 | **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
 | **Bandtastic** | `Vasko_Bandtastic` | `http://freq.gaiaderma.com/bandtastic` | `bandtastic_user` | `bandtastic_secure_password` |
-| **QuickAdapter** | `Vasko_QuickAdapter` | `http://freq.gaiaderma.com/quickadapter` | `quickadapter_user` | `quickadapter_secure_password` |
-| **TrendFollowing** | `Vasko_TrendFollowing` | `http://freq.gaiaderma.com/trendfollowing` | `trendfollowing_user` | `trendfollowing_secure_password` |
 | **FVG** | `Vasko_FVG` | `http://freq.gaiaderma.com/fvg` | `fvg_user` | `fvg_secure_password` |
-| **PowerTower** | `Vasko_PowerTower` | `http://freq.gaiaderma.com/powertower` | `powertower_user` | `powertower_secure_password` |
-| **FastSupertrend** | `Vasko_FastSupertrend` | `http://freq.gaiaderma.com/fastsupertrend` | `fastsupertrend_user` | `fastsupertrend_secure_password` |
-| **NoTankAI** | `Vasko_NoTankAI` | `http://freq.gaiaderma.com/notankai` | `notankai_user` | `notankai_secure_password` |
 | **MacheteV8b** | `Vasko_MacheteV8b` | `http://freq.gaiaderma.com/machetev8b` | `machetev8b_user` | `machetev8b_secure_password` |
 | **ElliotV5_SMA** | `Vasko_ElliotV5_SMA` | `http://freq.gaiaderma.com/elliotv5_sma` | `elliotv5_sma_user` | `elliotv5_sma_secure_password` |
+| **ElliotV5_SMA_Shorts** | `Vasko_ElliotV5_SMA_Shorts` | `http://freq.gaiaderma.com/elliotv5_sma_shorts` | `elliotv5_sma_shorts_user` | `elliotv5_sma_shorts_secure_password` |
 | **BinClucMadV1** | `Vasko_BinClucMadV1` | `http://freq.gaiaderma.com/binclucmadv1` | `binclucmadv1_user` | `binclucmadv1_secure_password` |
 | **NASOSv4** | `Vasko_NASOSv4` | `http://freq.gaiaderma.com/nasosv4` | `nasosv4_user` | `nasosv4_secure_password` |
 | **MartyEMA** | `Vasko_MartyEMA` | `http://freq.gaiaderma.com/martyema` | `martyema_user` | `martyema_secure_password` |
@@ -216,33 +206,25 @@ All strategies use the same base configuration (`configs/recommended_config.json
 
 ### Port Allocation
 - nfi-x7: 8080
-- QuickAdapter: 8081
 - BandtasticFiboHyper: 8082
-- TrendFollowing: 8083
 - FVG: 8085
-- PowerTower: 8086
-- FastSupertrend: 8087
-- NoTankAI: 8088
-- MacheteV8b: 8089
-- ElliotV5_SMA: 8090
-- BinClucMadV1: 8091
-- NASOSv4: 8092
-- MartyEMA: 8093
-- Ichimoku: 8094
-- BigWill: 8095
+- MacheteV8b: 8090
+- ElliotV5_SMA: 8091
+- BinClucMadV1: 8092
+- NASOSv4: 8093
+- MartyEMA: 8094
+- Ichimoku: 8095
+- BigWill: 8096
+- ElliotV5_SMA_Shorts: 8097
 
 ### Database Separation
 Each strategy uses its own SQLite database:
 - `nfi-x7-tradesv3.sqlite`
-- `quickadapter-tradesv3.sqlite`
 - `bandtastic-tradesv3.sqlite`
-- `trendfollowing-tradesv3.sqlite`
 - `fvg-tradesv3.sqlite`
-- `powertower-tradesv3.sqlite`
-- `fastsupertrend-tradesv3.sqlite`
-- `notankai-tradesv3.sqlite`
 - `machetev8b-tradesv3.sqlite`
 - `elliotv5_sma-tradesv3.sqlite`
+- `elliotv5_sma_shorts-tradesv3.sqlite`
 - `binclucmadv1-tradesv3.sqlite`
 - `nasosv4-tradesv3.sqlite`
 - `martyema-tradesv3.sqlite`

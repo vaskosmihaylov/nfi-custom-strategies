@@ -56,23 +56,6 @@ services:
       --strategy-path user_data/strategies/BandtasticFiboHyper
       --strategy BandtasticFiboHyper_Combined
 
-  # TrendFollowing Strategy
-  freqtrade-trendfollowing:
-    <<: *common-settings
-    container_name: freqtrade-trendfollowing
-    ports:
-      - "127.0.0.1:8083:8080"
-    env_file:
-      - path: ./env-files/trendfollowing.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/trendfollowing-tradesv3.sqlite
-      --log-file user_data/logs/trendfollowing.log
-      --strategy-path user_data/strategies/trendfollowing
-      --strategy TrendFollowingStrategy
-
   # FVGAdvancedStrategy_V2 Strategy
   freqtrade-fvg:
     <<: *common-settings
@@ -89,40 +72,6 @@ services:
       --log-file user_data/logs/fvg.log
       --strategy-path user_data/strategies/FVGAdvancedStrategy_V2
       --strategy FVGAdvancedStrategy_V2
-
-  # PowerTower Strategy
-  freqtrade-powertower:
-    <<: *common-settings
-    container_name: freqtrade-powertower
-    ports:
-      - "127.0.0.1:8086:8080"
-    env_file:
-      - path: ./env-files/powertower.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/powertower-tradesv3.sqlite
-      --log-file user_data/logs/powertower.log
-      --strategy-path user_data/strategies/powertower
-      --strategy PowerTower
-
-  # FastSupertrend Strategy
-  freqtrade-fastsupertrend:
-    <<: *common-settings
-    container_name: freqtrade-fastsupertrend
-    ports:
-      - "127.0.0.1:8087:8080"
-    env_file:
-      - path: ./env-files/fastsupertrend.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/fastsupertrend-tradesv3.sqlite
-      --log-file user_data/logs/fastsupertrend.log
-      --strategy-path user_data/strategies/fastsupertrend
-      --strategy FastSupertrend_ts_origstop_fix
 
   # MacheteV8b Strategy
   freqtrade-machetev8b:
@@ -242,6 +191,23 @@ services:
       --log-file user_data/logs/bigwill.log
       --strategy-path user_data/strategies/BigWill
       --strategy BigWill
+
+  # ElliotV5_SMA_Shorts Strategy (Shorts-only parallel test)
+  freqtrade-elliotv5_sma_shorts:
+    <<: *common-settings
+    container_name: freqtrade-elliotv5_sma_shorts
+    ports:
+      - "127.0.0.1:8097:8080"
+    env_file:
+      - path: ./env-files/elliotv5_sma_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/elliotv5_sma_shorts-tradesv3.sqlite
+      --log-file user_data/logs/elliotv5_sma_shorts.log
+      --strategy-path user_data/strategies/ElliotV5_SMA
+      --strategy ElliotV5_SMA_Shorts
 
 networks:
   default:
