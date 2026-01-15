@@ -71,7 +71,6 @@ update_all_env_files() {
         "env-files/nfi-x6.env"
         "env-files/bandtastic.env"
         "env-files/trendfollowing.env"
-        "env-files/fvg.env"
         "env-files/powertower.env"
         "env-files/fastsupertrend.env"
     )

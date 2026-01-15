@@ -77,16 +77,12 @@ declare -A STRATEGY_CONTAINERS=(
     ["BandtasticFiboHyper.py"]="bandtastic"
     ["BandtasticFiboHyper_Combined.py"]="bandtastic"
     ["TrendFollowingStrategy.py"]="trendfollowing"
-    ["FVGAdvancedStrategy_V2.py"]="fvg"
     ["PowerTower.py"]="powertower"
     ["FastSupertrend.py"]="fastsupertrend"
-    ["MacheteV8b.py"]="machetev8b"
     ["ElliotV5_SMA_Shorts.py"]="elliotv5_sma"
     ["BinClucMadV1.py"]="binclucmadv1"
     ["NASOSv4.py"]="nasosv4"
     ["MartyEMA.py"]="martyema"
-    ["Ichimoku_v2.py"]="ichimoku"
-    ["BigWill.py"]="bigwill"
 )
 
 # ============================================================================

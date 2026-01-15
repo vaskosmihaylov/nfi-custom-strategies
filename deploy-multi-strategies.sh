@@ -61,9 +61,8 @@ show_help() {
     echo "  help                Show this help message"
     echo ""
     echo "Available strategies:"
-    echo "  nfi-x7, bandtastic, fvg, machetev8b, elliotv5_sma,"
-    echo "  elliotv5_sma_shorts, binclucmadv1, nasosv4, martyema,"
-    echo "  ichimoku, bigwill"
+    echo "  nfi-x7, bandtastic, elliotv5_sma, elliotv5_sma_shorts,"
+    echo "  binclucmadv1, nasosv4, martyema"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -76,15 +75,11 @@ show_help() {
     echo "FreqUI Bot URLs (use these in FreqUI):"
     echo "  NFI-X7:                http://freq.gaiaderma.com/nfi-x7"
     echo "  Bandtastic:            http://freq.gaiaderma.com/bandtastic"
-    echo "  FVG:                   http://freq.gaiaderma.com/fvg"
-    echo "  MacheteV8b:            http://freq.gaiaderma.com/machetev8b"
     echo "  ElliotV5_SMA:          http://freq.gaiaderma.com/elliotv5_sma"
     echo "  ElliotV5_SMA_Shorts:   http://freq.gaiaderma.com/elliotv5_sma_shorts"
     echo "  BinClucMadV1:          http://freq.gaiaderma.com/binclucmadv1"
     echo "  NASOSv4:               http://freq.gaiaderma.com/nasosv4"
     echo "  MartyEMA:              http://freq.gaiaderma.com/martyema"
-    echo "  Ichimoku:              http://freq.gaiaderma.com/ichimoku"
-    echo "  BigWill:               http://freq.gaiaderma.com/bigwill"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -212,14 +207,10 @@ health_check() {
     local strategies=(
         "nfi-x7:8080"
         "bandtastic:8082"
-        "fvg:8085"
-        "machetev8b:8090"
         "elliotv5_sma:8091"
         "binclucmadv1:8092"
         "nasosv4:8093"
         "martyema:8094"
-        "ichimoku:8095"
-        "bigwill:8096"
         "elliotv5_sma_shorts:8097"
     )
     
