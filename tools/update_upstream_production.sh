@@ -345,6 +345,53 @@ detect_affected_strategies() {
     echo "${affected_strategies[@]}"
 }
 
+copy_strategies_to_docker_paths() {
+    local changed_files="$1"
+
+    log_info "Copying updated strategy files to Docker-accessible paths..."
+
+    # Check which strategies were affected and copy them
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+
+        # Extract filename
+        local filename=$(basename "$file")
+
+        # Special handling for NostalgiaForInfinityX7.py
+        # Docker cannot reliably import through symlinks, so we copy the file
+        if [ "$filename" = "NostalgiaForInfinityX7.py" ]; then
+            local source_file="${REPO_PATH}/${filename}"
+            local target_dir="${REPO_PATH}/user_data/strategies/nfi"
+            local target_file="${target_dir}/${filename}"
+
+            if [ -f "$source_file" ]; then
+                # Create target directory if it doesn't exist
+                mkdir -p "$target_dir"
+
+                # Remove symlink if it exists (symlinks don't work with Python imports in Docker)
+                if [ -L "$target_file" ]; then
+                    log_info "Removing symlink: $target_file"
+                    rm -f "$target_file"
+                fi
+
+                # Copy the strategy file
+                log_info "Copying $filename to $target_dir/"
+                if cp "$source_file" "$target_file"; then
+                    log_success "Copied $filename successfully"
+                    # Verify the copy
+                    if [ -f "$target_file" ]; then
+                        log_info "Verified: $(ls -lh "$target_file" | awk '{print $5, $9}')"
+                    fi
+                else
+                    log_error "Failed to copy $filename"
+                fi
+            else
+                log_warn "Source file not found: $source_file"
+            fi
+        fi
+    done <<< "$changed_files"
+}
+
 restart_strategies() {
     local restart_list="$1"
 
@@ -463,6 +510,11 @@ main() {
 
     # Update was successful
     log_success "Successfully merged upstream changes"
+
+    # Copy strategy files to Docker-accessible paths (symlinks don't work with Python imports in Docker)
+    if [ -n "$CHANGED_FILES" ]; then
+        copy_strategies_to_docker_paths "$CHANGED_FILES"
+    fi
 
     # Detect affected strategies
     local affected_strategies=""
