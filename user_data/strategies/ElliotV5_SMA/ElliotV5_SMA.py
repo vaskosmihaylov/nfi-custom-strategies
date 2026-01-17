@@ -302,3 +302,16 @@ class ElliotV5_SMA(IStrategy):
             ]=1
 
         return dataframe
+
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
+        """
+        Fixed 3x leverage for all long trades.
+
+        Increased from 1x to 3x for higher profit potential while maintaining
+        risk control through -18.9% stop loss (allows 6.3% price movement).
+
+        Returns:
+            float: Leverage multiplier (3.0 = 3x)
+        """
+        return 3.0

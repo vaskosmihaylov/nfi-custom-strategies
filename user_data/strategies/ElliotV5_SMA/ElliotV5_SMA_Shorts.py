@@ -115,8 +115,8 @@ class ElliotV5_SMA_Shorts(IStrategy):
         "201": 0.02     # 2% after 201 minutes (vs 3%)
     }
 
-    # Tighter stop loss for shorts (short squeezes are brutal)
-    stoploss = -0.12  # -12% vs -18.9% for longs
+    # Stop loss for shorts (matches long strategy for consistent risk management)
+    stoploss = -0.189  # Matches long strategy - allows 6.3% price movement with 3x leverage
 
     # Hyperopt parameters for short entries (use 'buy' space per Freqtrade convention)
     base_nb_candles_short_entry = IntParameter(
@@ -212,15 +212,15 @@ class ElliotV5_SMA_Shorts(IStrategy):
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
                 proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
         """
-        Fixed 2x leverage for all short trades.
+        Fixed 3x leverage for all short trades.
 
-        Conservative leverage to manage risk. Short squeezes can be violent,
-        so we use moderate leverage to avoid liquidation.
+        Increased from 2x to 3x for higher profit potential while maintaining
+        risk control through -18.9% stop loss (allows 6.3% price movement).
 
         Returns:
-            float: Leverage multiplier (2.0 = 2x)
+            float: Leverage multiplier (3.0 = 3x)
         """
-        return 2.0
+        return 3.0
 
     def informative_pairs(self):
         """
