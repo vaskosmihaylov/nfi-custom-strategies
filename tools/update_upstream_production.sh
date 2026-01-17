@@ -55,7 +55,7 @@ MERGE_STRATEGY="merge"
 CONFLICT_STRATEGY="abort"
 
 # Logging
-LOG_FILE="/var/log/nfi-update.log"  # Update this path or use relative path
+LOG_FILE="${REPO_PATH}/tools/logs/nfi-update.log"  # Update this path or use relative path
 KEEP_LOGS_DAYS=30  # Keep logs for 30 days
 
 # Telegram notifications (optional)
@@ -71,14 +71,10 @@ NOTIFY_ON_ERROR=true     # Notify on errors
 # Strategy to container mapping (based on your deploy-multi-strategies.sh)
 # Format: "strategy_file:container_name"
 declare -A STRATEGY_CONTAINERS=(
-    ["NostalgiaForInfinityX6.py"]="nfi-x6"
     ["NostalgiaForInfinityX7.py"]="nfi-x7"
     # Add more mappings as needed
     ["BandtasticFiboHyper.py"]="bandtastic"
     ["BandtasticFiboHyper_Combined.py"]="bandtastic"
-    ["TrendFollowingStrategy.py"]="trendfollowing"
-    ["PowerTower.py"]="powertower"
-    ["FastSupertrend.py"]="fastsupertrend"
     ["ElliotV5_SMA_Shorts.py"]="elliotv5_sma"
     ["BinClucMadV1.py"]="binclucmadv1"
     ["NASOSv4.py"]="nasosv4"

@@ -159,8 +159,9 @@ user_data/plot
 user_data/freqaimodels
 artifacts/
 
-# Don't commit configs
+# Don't commit configs and csv data files
 config*.json
+*.csv
 
 # Don't commit any sqlite file which contains your tradings
 
