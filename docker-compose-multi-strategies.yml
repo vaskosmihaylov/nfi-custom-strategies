@@ -141,6 +141,57 @@ services:
       --strategy-path user_data/strategies/ElliotV5_SMA
       --strategy ElliotV5_SMA_Shorts
 
+  # E0V1E Strategy (Longs)
+  freqtrade-e0v1e:
+    <<: *common-settings
+    container_name: freqtrade-e0v1e
+    ports:
+      - "127.0.0.1:8098:8080"
+    env_file:
+      - path: ./env-files/e0v1e.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/e0v1e-tradesv3.sqlite
+      --log-file user_data/logs/e0v1e.log
+      --strategy-path user_data/strategies/e0v1e
+      --strategy E0V1E
+
+  # E0V1E_Shorts Strategy (Shorts-only parallel test)
+  freqtrade-e0v1e_shorts:
+    <<: *common-settings
+    container_name: freqtrade-e0v1e_shorts
+    ports:
+      - "127.0.0.1:8099:8080"
+    env_file:
+      - path: ./env-files/e0v1e_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/e0v1e_shorts-tradesv3.sqlite
+      --log-file user_data/logs/e0v1e_shorts.log
+      --strategy-path user_data/strategies/e0v1e
+      --strategy E0V1E_Shorts
+
+  # EI4_t4c0s_V2_2 Strategy (Longs)
+  freqtrade-ei4_t4c0s_v2_2:
+    <<: *common-settings
+    container_name: freqtrade-ei4_t4c0s_v2_2
+    ports:
+      - "127.0.0.1:8100:8080"
+    env_file:
+      - path: ./env-files/ei4_t4c0s_v2_2.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/ei4_t4c0s_v2_2-tradesv3.sqlite
+      --log-file user_data/logs/ei4_t4c0s_v2_2.log
+      --strategy-path user_data/strategies/El
+      --strategy EI4_t4c0s_V2_2
+
 networks:
   default:
     name: freqtrade-network
