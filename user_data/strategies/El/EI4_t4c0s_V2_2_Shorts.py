@@ -151,10 +151,6 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
     stoploss = -0.99
     sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
 
-    # Position limits
-    max_open_trades = 4
-    max_short_trades = 4
-
     # SMAOffset
     base_nb_candles_buy = IntParameter(8, 30, default=buy_params['base_nb_candles_buy'], space='buy', optimize=False)
     base_nb_candles_sell = IntParameter(8, 30, default=sell_params['base_nb_candles_sell'], space='sell', optimize=False)

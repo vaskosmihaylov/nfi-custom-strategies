@@ -139,7 +139,40 @@ class E0V1E(IStrategy):
 
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
+        """
+        Combined time-based + indicator-based custom stoploss.
 
+        Logic:
+        - Hours 0-24: Wide stop (-0.99) - PROTECTION WINDOW for leverage recovery
+        - Hours 24+:  Enable indicator-based trailing for profitable positions
+                     Close zombie trades at breakeven
+
+        Why this works:
+        - Prevents premature exits in first 24h (when price often recovers in 2-5h)
+        - After 24h, uses technical indicators to trail profitable positions
+        - Closes zombie trades stuck at breakeven
+        - Combines best of time-based protection + indicator intelligence
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit/loss ratio
+            **kwargs: Additional arguments
+
+        Returns:
+            float: Stoploss percentage
+        """
+        # Calculate trade duration in hours
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Phase 1: First 24 hours - PROTECTION WINDOW
+        # Use very wide stoploss to allow price recovery
+        if trade_duration < 24:
+            return -0.99
+
+        # Phase 2: After 24 hours - Enable indicator logic
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
 
@@ -148,26 +181,66 @@ class E0V1E(IStrategy):
             enter_tag = trade.enter_tag
         enter_tags = enter_tag.split()
 
-        if "ewo" in enter_tags:
-            if current_profit >= 0.05:
-                return -0.005
-
+        # For PROFITABLE positions (> 1%) - use indicators to trail
         if current_profit > 0.01:
+            # Tight trailing for EWO entries at 5% profit
+            if "ewo" in enter_tags and current_profit >= 0.05:
+                return -0.01  # 1% stop (less aggressive than original 0.1%)
+
+            # Exit on strong overbought when profitable
+            if current_candle["rsi"] > 85:  # Stricter threshold (was 80)
+                return -0.01  # 1% stop
+
             if current_candle["fastk"] > self.sell_fastx.value:
-                return -0.001
+                return -0.01  # 1% stop
 
-            if current_candle["rsi"] > 80:
-                return -0.001
-
-        if current_profit < 0.01:
+        # For LOSING or BREAKEVEN positions
+        if current_profit <= 0.01:
+            # Extreme overbought - price might reverse down, cut losses
             if current_candle["rsi"] > 90:
-                return -0.001
+                return -0.01  # 1% stop
 
+            # Close zombie trades at breakeven
+            if -0.005 <= current_profit <= 0.005:
+                return -0.001  # Very tight stop
+
+        # Default to base stoploss
         return self.stoploss
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
+        """
+        Custom exit logic combining unclog mechanism and deadfish detection.
 
+        Logic:
+        - After 48 hours: If profit < -4%, return 'unclog' to force exit
+        - Otherwise: Check deadfish conditions
+
+        Why 48 hours and -4%:
+        - Gives position 2 full days to recover
+        - -4% loss threshold = -12% price movement with 3x leverage (reasonable cutoff)
+        - Prevents capital being locked in dead trades
+        - Frees up margin for better opportunities
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit/loss ratio
+            **kwargs: Additional arguments
+
+        Returns:
+            Optional[Union[str, bool]]: Exit reason string or None
+        """
+        # Calculate trade duration
+        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Unclog: Force exit losing positions after 48 hours
+        if trade_duration_hours >= 48 and current_profit < -0.04:
+            return 'unclog'
+
+        # Existing deadfish detection
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
 
@@ -179,6 +252,9 @@ class E0V1E(IStrategy):
                     'volume_mean_24'] * self.sell_deadfish_volume_factor.value)):
             logger.info(f"{pair} sell_stoploss_deadfish at {current_profit*100}")
             return "sell_stoploss_deadfish"
+
+        # No custom exit, continue normal logic (ROI, signals, trailing stop)
+        return None
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 

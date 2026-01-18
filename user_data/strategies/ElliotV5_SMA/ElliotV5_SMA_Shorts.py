@@ -225,21 +225,22 @@ class ElliotV5_SMA_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Time-based custom stoploss to prevent premature exits during leverage recovery.
+        Combined time-based + indicator-based custom stoploss for shorts.
 
         Logic:
-        - Hours 0-24: Very wide stop (-0.99) to avoid premature exits during normal volatility
-        - After 24h + near breakeven (±1%): Tight stop (-0.001) to close position
-        - After 24h + not near breakeven: Return base stoploss (-0.189)
+        - Hours 0-24: Wide stop (-0.99) - PROTECTION WINDOW for leverage recovery
+        - Hours 24+:  Enable indicator-based trailing for profitable short positions
+                     Close zombie trades at breakeven
 
         Why this works:
-        - With 3x leverage, -18.9% stoploss = 6.3% price movement tolerance
-        - Price often recovers within 2-5 hours after initial dip
-        - Wide stop prevents exit during recovery phase
-        - Breakeven closure prevents zombie positions
+        - Prevents premature exits in first 24h (when price often recovers in 2-5h)
+        - After 24h, uses EWO and RSI to trail profitable shorts intelligently
+        - Closes zombie trades stuck at breakeven
+        - Combines best of time-based protection + Elliott Wave indicator intelligence
 
-        Note: This logic works identically for both longs and shorts because Freqtrade
-        automatically handles profit sign inversion for short positions.
+        Note: Indicator logic is INVERTED for shorts:
+        - Profitable short = price went DOWN (RSI low, negative EWO)
+        - Losing short = price went UP (RSI high, positive EWO)
 
         Args:
             pair: Trading pair
@@ -250,24 +251,52 @@ class ElliotV5_SMA_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage (-0.99, -0.001, or self.stoploss)
+            float: Stoploss percentage
         """
         # Calculate trade duration in hours
         trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
 
-        # Phase 1: First 24 hours - prevent premature exits
+        # Phase 1: First 24 hours - PROTECTION WINDOW
         # Use very wide stoploss to allow price recovery
         if trade_duration < 24:
             return -0.99
 
-        # Phase 2: After 24 hours - breakeven or base stoploss
-        # Check if profit is near breakeven (within ±0.5%)
-        # This catches true zombie trades stuck at breakeven
-        if -0.005 <= current_profit <= 0.005:
-            # Near breakeven - close the position with tight stoploss
-            return -0.001
+        # Phase 2: After 24 hours - Enable indicator logic
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Not near breakeven - use base stoploss
+        # For PROFITABLE short positions (> 2%) - use indicators to trail
+        if current_profit > 0.02:
+            # Strong oversold with low EWO - likely bottom, trail tight to lock gains
+            if current_candle['rsi'] < 20 and current_candle['EWO'] < -8:
+                return -0.01  # 1% trailing stop
+
+            # Extreme oversold - price might bounce, take profits
+            if current_candle['rsi'] < 15:
+                return -0.01  # 1% trailing stop
+
+            # At 5%+ profit, tighter trailing
+            if current_profit >= 0.05:
+                if current_candle['rsi'] < 25:
+                    return -0.015  # 1.5% trailing stop
+
+        # For MODERATELY profitable short positions (1-2%)
+        elif current_profit > 0.01:
+            # Very extreme oversold only
+            if current_candle['rsi'] < 15:
+                return -0.01
+
+        # For LOSING or BREAKEVEN short positions
+        if current_profit <= 0.01:
+            # Extreme overbought - price pumping hard, cut losses
+            if current_candle['rsi'] > 90:
+                return -0.01
+
+            # Close zombie trades at breakeven
+            if -0.005 <= current_profit <= 0.005:
+                return -0.001  # Very tight stop
+
+        # Default to base stoploss
         return self.stoploss
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
