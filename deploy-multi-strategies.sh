@@ -61,8 +61,8 @@ show_help() {
     echo "  help                Show this help message"
     echo ""
     echo "Available strategies:"
-    echo "  nfi-x7, bandtastic, elliotv5_sma, elliotv5_sma_shorts,"
-    echo "  binclucmadv1, nasosv4, martyema"
+    echo "  nfi-x7, bandtastic, elliotv5_sma, binclucmadv1, nasosv4, martyema,"
+    echo "  elliotv5_sma_shorts, e0v1e, e0v1e_shorts, ei4_t4c0s_v2_2, ei4_t4c0s_v2_2_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -76,10 +76,14 @@ show_help() {
     echo "  NFI-X7:                http://freq.gaiaderma.com/nfi-x7"
     echo "  Bandtastic:            http://freq.gaiaderma.com/bandtastic"
     echo "  ElliotV5_SMA:          http://freq.gaiaderma.com/elliotv5_sma"
-    echo "  ElliotV5_SMA_Shorts:   http://freq.gaiaderma.com/elliotv5_sma_shorts"
     echo "  BinClucMadV1:          http://freq.gaiaderma.com/binclucmadv1"
     echo "  NASOSv4:               http://freq.gaiaderma.com/nasosv4"
     echo "  MartyEMA:              http://freq.gaiaderma.com/martyema"
+    echo "  ElliotV5_SMA_Shorts:   http://freq.gaiaderma.com/elliotv5_sma_shorts"
+    echo "  E0V1E:                 http://freq.gaiaderma.com/e0v1e"
+    echo "  E0V1E_Shorts:          http://freq.gaiaderma.com/e0v1e_shorts"
+    echo "  EI4_t4c0s_V2_2:        http://freq.gaiaderma.com/ei4_t4c0s_v2_2"
+    echo "  EI4_t4c0s_V2_2_Shorts: http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -212,6 +216,10 @@ health_check() {
         "nasosv4:8093"
         "martyema:8094"
         "elliotv5_sma_shorts:8097"
+        "e0v1e:8098"
+        "e0v1e_shorts:8099"
+        "ei4_t4c0s_v2_2:8100"
+        "ei4_t4c0s_v2_2_shorts:8101"
     )
     
     local healthy=0

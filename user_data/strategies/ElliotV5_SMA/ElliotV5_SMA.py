@@ -1,6 +1,6 @@
 
 from freqtrade.strategy.interface import IStrategy
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 from functools import reduce
 from pandas import DataFrame
 
@@ -227,7 +227,7 @@ class ElliotV5_SMA(IStrategy):
         },
     }
 
-    use_custom_stoploss = False
+    use_custom_stoploss = True
 
     def informative_pairs(self):
 
@@ -315,3 +315,84 @@ class ElliotV5_SMA(IStrategy):
             float: Leverage multiplier (3.0 = 3x)
         """
         return 3.0
+
+    def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
+                        current_profit: float, **kwargs) -> float:
+        """
+        Time-based custom stoploss to prevent premature exits during leverage recovery.
+
+        Logic:
+        - Hours 0-24: Very wide stop (-0.99) to avoid premature exits during normal volatility
+        - After 24h + near breakeven (±1%): Tight stop (-0.001) to close position
+        - After 24h + not near breakeven: Return base stoploss (-0.189)
+
+        Why this works:
+        - With 3x leverage, -18.9% stoploss = 6.3% price movement tolerance
+        - Price often recovers within 2-5 hours after initial dip
+        - Wide stop prevents exit during recovery phase
+        - Breakeven closure prevents zombie positions
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit/loss ratio
+            **kwargs: Additional arguments
+
+        Returns:
+            float: Stoploss percentage (-0.99, -0.001, or self.stoploss)
+        """
+        # Calculate trade duration in hours
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Phase 1: First 24 hours - prevent premature exits
+        # Use very wide stoploss to allow price recovery
+        if trade_duration < 24:
+            return -0.99
+
+        # Phase 2: After 24 hours - breakeven or base stoploss
+        # Check if profit is near breakeven (within ±0.5%)
+        # This catches true zombie trades stuck at breakeven
+        if -0.005 <= current_profit <= 0.005:
+            # Near breakeven - close the position with tight stoploss
+            return -0.001
+
+        # Not near breakeven - use base stoploss
+        return self.stoploss
+
+    def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
+                    current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
+        """
+        Unclog mechanism to force-close losing positions after extended duration.
+
+        Logic:
+        - After 48 hours: If profit < -4%, return 'unclog' to force exit
+        - Otherwise: Return None to allow normal exit logic
+
+        Why 48 hours and -4%:
+        - Gives position 2 full days to recover
+        - -4% loss threshold = -12% price movement with 3x leverage (reasonable cutoff)
+        - Prevents capital being locked in dead trades
+        - Frees up margin for better opportunities
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit/loss ratio
+            **kwargs: Additional arguments
+
+        Returns:
+            Optional[Union[str, bool]]: 'unclog' to force exit, None otherwise
+        """
+        # Calculate trade duration
+        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Unclog: Force exit losing positions after 48 hours
+        if trade_duration_hours >= 48 and current_profit < -0.04:
+            return 'unclog'
+
+        # No custom exit, continue normal logic (ROI, signals, trailing stop)
+        return None

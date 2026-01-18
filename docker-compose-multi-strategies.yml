@@ -192,6 +192,23 @@ services:
       --strategy-path user_data/strategies/El
       --strategy EI4_t4c0s_V2_2
 
+  # EI4_t4c0s_V2_2_Shorts Strategy (Shorts-only parallel test)
+  freqtrade-ei4_t4c0s_v2_2_shorts:
+    <<: *common-settings
+    container_name: freqtrade-ei4_t4c0s_v2_2_shorts
+    ports:
+      - "127.0.0.1:8101:8080"
+    env_file:
+      - path: ./env-files/ei4_t4c0s_v2_2_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/ei4_t4c0s_v2_2_shorts-tradesv3.sqlite
+      --log-file user_data/logs/ei4_t4c0s_v2_2_shorts.log
+      --strategy-path user_data/strategies/El
+      --strategy EI4_t4c0s_V2_2_Shorts
+
 networks:
   default:
     name: freqtrade-network
