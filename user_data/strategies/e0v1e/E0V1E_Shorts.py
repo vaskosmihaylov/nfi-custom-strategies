@@ -96,10 +96,6 @@ class E0V1E_Shorts(IStrategy):
     # Custom stoploss
     use_custom_stoploss = True
 
-    # Position limits
-    max_open_trades = 4
-    max_short_trades = 4
-
     # Shorts-specific parameters (inverted from longs)
     is_optimize_ewo = True
     sell_rsi_fast = IntParameter(50, 65, default=55, space='buy', optimize=is_optimize_ewo)
