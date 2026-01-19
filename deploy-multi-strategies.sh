@@ -122,15 +122,17 @@ stop_strategies() {
 # Function to restart strategies
 restart_strategies() {
     local strategy=$1
-    
+
     if [ -n "$strategy" ]; then
-        print_status "Restarting $strategy strategy..."
-        docker compose -f docker-compose-multi-strategies.yml restart freqtrade-$strategy
+        print_status "Restarting $strategy strategy (reloading env vars)..."
+        # Use up -d --force-recreate to reload env files
+        # docker compose restart does NOT reload env files!
+        docker compose -f docker-compose-multi-strategies.yml up -d --force-recreate freqtrade-$strategy
     else
-        print_status "Restarting all strategies..."
-        docker compose -f docker-compose-multi-strategies.yml restart
+        print_status "Restarting all strategies (reloading env vars)..."
+        docker compose -f docker-compose-multi-strategies.yml up -d --force-recreate
     fi
-    
+
     print_success "Restarted strategies"
     sleep 5
     health_check
