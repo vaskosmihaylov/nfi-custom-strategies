@@ -111,7 +111,7 @@ def EWO(dataframe, sma_length=5, sma2_length=35):
     return smadif
 
 class ElliotV5_SMA(IStrategy):
-    INTERFACE_VERSION = 2
+    INTERFACE_VERSION = 3
 
     minimal_roi = {
         "0": 0.215,
@@ -215,8 +215,8 @@ class ElliotV5_SMA(IStrategy):
         if conditions:
             dataframe.loc[
                 reduce(lambda x, y: x | y, conditions),
-                'buy'
-            ]=1
+                'enter_long'
+            ] = 1
 
         return dataframe
 
@@ -233,8 +233,8 @@ class ElliotV5_SMA(IStrategy):
         if conditions:
             dataframe.loc[
                 reduce(lambda x, y: x | y, conditions),
-                'sell'
-            ]=1
+                'exit_long'
+            ] = 1
 
         return dataframe
 

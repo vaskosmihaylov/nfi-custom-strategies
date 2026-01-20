@@ -76,7 +76,7 @@ declare -A STRATEGY_CONTAINERS=(
     ["ElliotV5_SMA_Shorts.py"]="elliotv5_sma"
     ["BinClucMadV1.py"]="binclucmadv1"
     ["NASOSv4.py"]="nasosv4"
-    ["MartyEMA.py"]="martyema"
+    ["RsiquiV5.py"]="rsiquiv5"
 )
 
 # ============================================================================

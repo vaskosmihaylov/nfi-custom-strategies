@@ -65,7 +65,7 @@ def SSLChannels(dataframe, length = 7):
     return df['sslDown'], df['sslUp']
 
 class CombinedBinHClucAndMADV6(IStrategy):
-    INTERFACE_VERSION = 2
+    INTERFACE_VERSION = 3
 
     minimal_roi = {
         "0": 0.029,          # I feel lucky!
@@ -231,7 +231,7 @@ class CombinedBinHClucAndMADV6(IStrategy):
                 (dataframe['rsi'] < dataframe['rsi_1h'] - 43.276) &
                 (dataframe['volume'] > 0)
             ),
-            'buy'
+            'enter_long'
         ] = 1
 
         return dataframe
@@ -243,6 +243,6 @@ class CombinedBinHClucAndMADV6(IStrategy):
                 (dataframe['volume'] > 0) # Make sure Volume is not 0
             )
             ,
-            'sell'
+            'exit_long'
         ] = 1
         return dataframe

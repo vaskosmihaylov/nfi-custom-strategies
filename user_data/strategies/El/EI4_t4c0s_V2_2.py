@@ -32,6 +32,7 @@ def EWO(dataframe, ema_length=5, ema2_length=3):
 
 
 class EI4_t4c0s_V2_2(IStrategy):
+    INTERFACE_VERSION = 3
 
     # ROI table:
     # minimal_roi = {

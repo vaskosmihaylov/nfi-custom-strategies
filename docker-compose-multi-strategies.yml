@@ -90,22 +90,22 @@ services:
       --strategy-path user_data/strategies/NASOSv4
       --strategy NASOSv4
 
-  # MartyEMA Strategy
-  freqtrade-martyema:
+  # RsiquiV5 Strategy (Replaces MartyEMA)
+  freqtrade-rsiquiv5:
     <<: *common-settings
-    container_name: freqtrade-martyema
+    container_name: freqtrade-rsiquiv5
     ports:
       - "127.0.0.1:8094:8080"
     env_file:
-      - path: ./env-files/martyema.env
+      - path: ./env-files/rsiquiv5.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/martyema-tradesv3.sqlite
-      --log-file user_data/logs/martyema.log
-      --strategy-path user_data/strategies/MartyEMA
-      --strategy MartyEMA
+      --db-url sqlite:////freqtrade/user_data/rsiquiv5-tradesv3.sqlite
+      --log-file user_data/logs/rsiquiv5.log
+      --strategy-path user_data/strategies/Rsiqui
+      --strategy RsiquiV5
 
   # ElliotV5_SMA_Shorts Strategy (Shorts-only parallel test)
   freqtrade-elliotv5_sma_shorts:

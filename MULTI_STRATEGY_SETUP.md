@@ -21,7 +21,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ElliotV5_SMA (Port 8091)
                            ├── BinClucMadV1 (Port 8092)
                            ├── NASOSv4 (Port 8093)
-                           ├── MartyEMA (Port 8094)
+                           ├── RsiquiV5 (Port 8094)
                            ├── ElliotV5_SMA_Shorts (Port 8097)
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
@@ -43,7 +43,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `elliotv5_sma.env` - ElliotV5_SMA strategy (longs-only)
 - `binclucmadv1.env` - BinClucMadV1 strategy
 - `nasosv4.env` - NASOSv4 strategy
-- `martyema.env` - MartyEMA strategy
+- `rsiquiv5.env` - RsiquiV5 strategy (supports both longs and shorts)
 - `elliotv5_sma_shorts.env` - ElliotV5_SMA_Shorts strategy (shorts-only)
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
@@ -123,7 +123,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ElliotV5_SMA** | `Vasko_ElliotV5_SMA` | `http://freq.gaiaderma.com/elliotv5_sma` | `elliotv5_sma_user` | `elliotv5_sma_secure_password` |
 | **BinClucMadV1** | `Vasko_BinClucMadV1` | `http://freq.gaiaderma.com/binclucmadv1` | `binclucmadv1_user` | `binclucmadv1_secure_password` |
 | **NASOSv4** | `Vasko_NASOSv4` | `http://freq.gaiaderma.com/nasosv4` | `nasosv4_user` | `nasosv4_secure_password` |
-| **MartyEMA** | `Vasko_MartyEMA` | `http://freq.gaiaderma.com/martyema` | `martyema_user` | `martyema_secure_password` |
+| **RsiquiV5** | `Vasko_RsiquiV5` | `http://freq.gaiaderma.com/rsiquiv5` | `rsiquiv5_user` | `rsiquiv5_secure_password` |
 | **ElliotV5_SMA_Shorts** | `Vasko_ElliotV5_SMA_Shorts` | `http://freq.gaiaderma.com/elliotv5_sma_shorts` | `elliotv5_sma_shorts_user` | `elliotv5_sma_shorts_secure_password` |
 | **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
@@ -172,7 +172,7 @@ curl http://127.0.0.1:8082/api/v1/ping  # Bandtastic
 curl http://127.0.0.1:8091/api/v1/ping  # ElliotV5_SMA
 curl http://127.0.0.1:8092/api/v1/ping  # BinClucMadV1
 curl http://127.0.0.1:8093/api/v1/ping  # NASOSv4
-curl http://127.0.0.1:8094/api/v1/ping  # MartyEMA
+curl http://127.0.0.1:8094/api/v1/ping  # RsiquiV5
 curl http://127.0.0.1:8097/api/v1/ping  # ElliotV5_SMA_Shorts
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
@@ -215,7 +215,7 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - ElliotV5_SMA: 8091
 - BinClucMadV1: 8092
 - NASOSv4: 8093
-- MartyEMA: 8094
+- RsiquiV5: 8094
 - ElliotV5_SMA_Shorts: 8097
 - E0V1E: 8098
 - E0V1E_Shorts: 8099
@@ -227,7 +227,7 @@ Each strategy uses its own SQLite database:
 - `elliotv5_sma-tradesv3.sqlite`
 - `binclucmadv1-tradesv3.sqlite`
 - `nasosv4-tradesv3.sqlite`
-- `martyema-tradesv3.sqlite`
+- `rsiquiv5-tradesv3.sqlite`
 - `elliotv5_sma_shorts-tradesv3.sqlite`
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
@@ -331,7 +331,7 @@ curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/elliotv5_sma/api/v1/ping
 curl http://freq.gaiaderma.com/binclucmadv1/api/v1/ping
 curl http://freq.gaiaderma.com/nasosv4/api/v1/ping
-curl http://freq.gaiaderma.com/martyema/api/v1/ping
+curl http://freq.gaiaderma.com/rsiquiv5/api/v1/ping
 curl http://freq.gaiaderma.com/elliotv5_sma_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping

@@ -21,6 +21,8 @@ def ewo(dataframe, ema_length=5, ema2_length=35):
 
 
 class E0V1E(IStrategy):
+    INTERFACE_VERSION = 3
+
     minimal_roi = {
         "0": 10
     }
