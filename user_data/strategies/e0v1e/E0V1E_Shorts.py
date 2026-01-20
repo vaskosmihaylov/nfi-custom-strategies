@@ -91,7 +91,7 @@ class E0V1E_Shorts(IStrategy):
     }
 
     # Tighter stop loss for shorts (vs -0.99 for longs)
-    stoploss = -0.189
+    stoploss = -0.99  # Very wide - will be tightened by custom_stoploss after 48h protection period = -0.189
 
     # Custom stoploss
     use_custom_stoploss = True
@@ -222,22 +222,23 @@ class E0V1E_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Combined time-based + indicator-based custom stoploss for shorts.
+        Indicator-based trailing stoploss for PROFITABLE shorts.
+
+        3-Layer Architecture:
+        Layer 1: Base stoploss (-0.99) = Safety net
+        Layer 2: custom_stoploss (THIS) = Indicator-based profit taking
+        Layer 3: custom_exit = Time-based unclog + deadfish for losers
 
         Logic:
-        - Hours 0-24: Wide stop (-0.99) - PROTECTION WINDOW for leverage recovery
-        - Hours 24+:  Enable indicator-based trailing for profitable short positions
-                     Close zombie trades at breakeven
-
-        Why this works:
-        - Prevents premature exits in first 24h (when price often recovers in 2-5h)
-        - After 24h, uses technical indicators to trail profitable shorts
-        - Closes zombie trades stuck at breakeven
-        - Combines best of time-based protection + indicator intelligence
+        - Hours 0-48: Don't tighten (return 1.0) - protection window
+        - Hours 48+: Trail PROFITABLE shorts based on RSI/Stochastic indicators
+          - Uses oversold levels to detect bottoms (time to take profit)
+          - Tightens stops for EWO entries at high profit levels
+          - Does NOT handle losing trades (custom_exit does that)
 
         Note: Indicator logic is INVERTED for shorts:
         - Profitable short = price went DOWN (RSI low, fastk low)
-        - Losing short = price went UP (RSI high, fastk high)
+        - Low RSI/fastk = oversold = price bottom = SHORT should exit
 
         Args:
             pair: Trading pair
@@ -248,69 +249,60 @@ class E0V1E_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage
+            float: Stoploss percentage (must be MORE NEGATIVE than base to tighten)
         """
         # Calculate trade duration in hours
         trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
 
-        # Phase 1: First 24 hours - PROTECTION WINDOW
-        # Use very wide stoploss to allow price recovery
-        if trade_duration < 24:
-            return -0.99
+        # Phase 1: First 48 hours - PROTECTION WINDOW
+        # Return 1.0 to keep base stoploss (-0.99) without tightening
+        if trade_duration < 48:
+            return 1.0
 
-        # Phase 2: After 24 hours - Enable indicator logic
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        current_candle = dataframe.iloc[-1].squeeze()
-
-        enter_tag = ''
-        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
-            enter_tag = trade.enter_tag
-        enter_tags = enter_tag.split()
-
-        # For PROFITABLE short positions (> 1%) - use indicators to trail
+        # Phase 2: After 48 hours - Trail ONLY profitable shorts
+        # Losing/zombie trades are handled by custom_exit
+        
+        # Only apply indicator logic if trade is profitable
         if current_profit > 0.01:
+            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+            current_candle = dataframe.iloc[-1].squeeze()
+
+            enter_tag = ''
+            if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+                enter_tag = trade.enter_tag
+            enter_tags = enter_tag.split()
+
             # Tight trailing for EWO entries at 5% profit
             if "ewo_short" in enter_tags and current_profit >= 0.05:
-                return -0.01  # 1% stop (less aggressive than original 0.1%)
+                return -0.01  # 1% stop
 
             # Exit on strong oversold when profitable (price might bounce back up)
-            if current_candle["rsi"] < 15:  # Stricter threshold (was 20)
+            if current_candle["rsi"] < 15:
                 return -0.01  # 1% stop
 
             if current_candle["fastk"] < self.cover_fastx.value:
                 return -0.01  # 1% stop
 
-        # For LOSING or BREAKEVEN short positions
-        if current_profit <= 0.01:
-            # Extreme overbought - price pumping hard, cut losses
-            # FIX: Was "RSI < 10" (BUG) - should be "RSI > 90" for losing shorts
-            if current_candle["rsi"] > 90:
-                return -0.01  # 1% stop
-
-            # Close zombie trades at breakeven
-            if -0.005 <= current_profit <= 0.005:
-                return -0.001  # Very tight stop
-
-        # Default to base stoploss
-        return self.stoploss
+        # Default: Return 1.0 to keep base stoploss active
+        # Losing trades will be handled by custom_exit after 48h
+        return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        Custom exit logic combining unclog mechanism and deadfish detection.
+        3-Layer Exit System for Shorts:
+        
+        Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
+        Layer 2: custom_stoploss = Indicator-based trailing for PROFITABLE shorts
+        Layer 3: custom_exit (THIS) = Time-based unclog + deadfish for LOSING/ZOMBIE shorts
 
         Logic:
-        - After 48 hours: If profit < -4%, return 'unclog' to force exit
-        - Otherwise: Check deadfish conditions
-
-        Why 48 hours and -4%:
-        - Gives position 2 full days to recover
-        - -4% loss threshold = -12% price movement with 3x leverage (reasonable cutoff)
-        - Prevents capital being locked in dead trades
-        - Frees up margin for better opportunities
-
-        Note: This logic works identically for both longs and shorts because Freqtrade
-        automatically handles profit sign inversion for short positions.
+        - Hours 0-48: No forced exits, let position develop
+        - After 48 hours:
+          - If losing > 4%: Force exit ('unclog') - cut losses
+          - If at breakeven (-0.5% to +0.5%): Force exit ('zombie') - free up capital
+          - Check deadfish conditions (low volatility dead trade)
+          - Otherwise: Let indicators handle it (custom_stoploss)
 
         Args:
             pair: Trading pair
@@ -323,14 +315,24 @@ class E0V1E_Shorts(IStrategy):
         Returns:
             Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Calculate trade duration
+        # Calculate trade duration in hours
         trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
 
-        # Unclog: Force exit losing positions after 48 hours
-        if trade_duration_hours >= 48 and current_profit < -0.04:
-            return 'unclog'
+        # Phase 1: First 48 hours - NO forced exits
+        if trade_duration_hours < 48:
+            return None
 
-        # Existing deadfish detection
+        # Phase 2: After 48 hours - Unclog losing/zombie trades
+        
+        # Unclog: Force exit if losing > 4% (worst case scenario)
+        if current_profit < -0.04:
+            return 'unclog'
+        
+        # Zombie: Force exit if stuck at breakeven after 48h
+        if -0.005 <= current_profit <= 0.005:
+            return 'zombie'
+
+        # Deadfish detection (low volatility dead trade)
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
 
@@ -343,7 +345,7 @@ class E0V1E_Shorts(IStrategy):
             logger.info(f"{pair} cover_stoploss_deadfish at {current_profit*100}")
             return "cover_stoploss_deadfish"
 
-        # No custom exit, continue normal logic (ROI, signals, trailing stop)
+        # Profitable trades: Let custom_stoploss handle trailing
         return None
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:

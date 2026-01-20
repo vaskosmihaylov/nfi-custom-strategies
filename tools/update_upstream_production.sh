@@ -73,8 +73,6 @@ NOTIFY_ON_ERROR=true     # Notify on errors
 declare -A STRATEGY_CONTAINERS=(
     ["NostalgiaForInfinityX7.py"]="nfi-x7"
     # Add more mappings as needed
-    ["BandtasticFiboHyper.py"]="bandtastic"
-    ["BandtasticFiboHyper_Combined.py"]="bandtastic"
     ["ElliotV5_SMA_Shorts.py"]="elliotv5_sma"
     ["BinClucMadV1.py"]="binclucmadv1"
     ["NASOSv4.py"]="nasosv4"

@@ -227,11 +227,23 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
         """
-        Crash mode custom stoploss (inverse of moon mode for longs).
+        Crash mode custom stoploss for PROFITABLE shorts.
+
+        3-Layer Architecture:
+        Layer 1: Base stoploss (-0.99) = Safety net
+        Layer 2: custom_stoploss (THIS) = Crash mode profit taking
+        Layer 3: custom_exit = Time-based unclog for losers
+
+        Logic:
+        - Hours 0-48: Don't tighten (return 1.0) - protection window
+        - Hours 48+: Apply crash mode for PROFITABLE shorts
+          - Crash mode (min_l < 0.003): Making new lows = tighten stops
+          - Rally mode (min_l >= 0.003): Not making new lows = allow trailing
+          - Does NOT handle losing trades (custom_exit does that)
 
         For shorts:
-        - Crash mode (min_l > 0.003): Making new lows = profitable short → TIGHTEN stops
-        - Rally mode (min_l <= 0.003): Not making new lows → Allow trailing
+        - Crash mode (min_l < 0.003): Making new lows = profitable short → TIGHTEN stops
+        - Rally mode (min_l >= 0.003): Not making new lows → Allow trailing
 
         This is the inverse of the long strategy's moon mode which loosens stops
         when making new highs. For shorts, we want to protect profit when the
@@ -246,8 +258,19 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage
+            float: Stoploss percentage (must be MORE NEGATIVE than base to tighten)
         """
+        # Calculate trade duration in hours
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Phase 1: First 48 hours - PROTECTION WINDOW
+        # Return 1.0 to keep base stoploss (-0.99) without tightening
+        if trade_duration < 48:
+            return 1.0
+
+        # Phase 2: After 48 hours - Apply crash mode ONLY for profitable shorts
+        # Losing/zombie trades are handled by custom_exit
+        
         dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
         SLT1 = current_candle['move_mean']
@@ -280,7 +303,9 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
                 logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
                 return SL1
 
-        return self.stoploss
+        # Default: Return 1.0 to keep base stoploss active
+        # Losing trades will be handled by custom_exit after 48h
+        return 1.0
 
     def custom_entry_price(self, pair: str, trade: Optional['Trade'], current_time: datetime, proposed_rate: float,
                            entry_tag: Optional[str], side: str, **kwargs) -> float:
@@ -374,10 +399,20 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         """
-        Unclog mechanism for shorts.
+        3-Layer Exit System for Shorts:
+        
+        Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
+        Layer 2: custom_stoploss = Crash mode trailing for PROFITABLE shorts
+        Layer 3: custom_exit (THIS) = Time-based unclog for LOSING/ZOMBIE shorts
 
-        Force exit losing short positions after 3 days at -4% loss.
-        Tighter than longs (4 days) due to short squeeze risk.
+        Logic:
+        - Hours 0-48: No forced exits, let position develop
+        - After 48 hours:
+          - If losing > 4%: Force exit ('unclog_short') - cut losses
+          - If at breakeven (-0.5% to +0.5%): Force exit ('zombie_short') - free up capital
+          - Otherwise: Let crash mode handle it (custom_stoploss)
+
+        Note: Uses hours (48h) instead of days for consistency across all short strategies.
 
         Args:
             pair: Trading pair
@@ -387,11 +422,27 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
             current_profit: Current profit
 
         Returns:
-            str: 'unclog_short' to force exit, None otherwise
+            str: Exit reason or None
         """
-        # Exit any short positions at a loss if they are held for more than 3 days
-        if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
+        # Calculate trade duration in hours
+        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Phase 1: First 48 hours - NO forced exits
+        if trade_duration_hours < 48:
+            return None
+
+        # Phase 2: After 48 hours - Unclog losing/zombie trades
+        
+        # Unclog: Force exit if losing > 4% (worst case scenario)
+        if current_profit < -0.04:
             return 'unclog_short'
+        
+        # Zombie: Force exit if stuck at breakeven after 48h
+        if -0.005 <= current_profit <= 0.005:
+            return 'zombie_short'
+
+        # Profitable trades: Let custom_stoploss (crash mode) handle trailing
+        return None
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
                  proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:

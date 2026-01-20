@@ -40,7 +40,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 ### Environment Files (in `env-files/`)
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
-- `bandtastic.env` - BandtasticFiboHyper_Combined strategy
 - `elliotv5_sma.env` - ElliotV5_SMA strategy (longs-only)
 - `binclucmadv1.env` - BinClucMadV1 strategy
 - `nasosv4.env` - NASOSv4 strategy
@@ -74,7 +73,7 @@ Before starting, update the API credentials in each environment file:
 
 # Or start individual strategies
 ./deploy-multi-strategies.sh start nfi-x7
-./deploy-multi-strategies.sh start bandtastic
+./deploy-multi-strategies.sh start elliotv5_sma
 ```
 
 ### Step 3: Setup NGINX (requires sudo)
@@ -121,7 +120,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | Strategy | Bot Name | API URL | Username | Password |
 |----------|----------|---------|----------|----------|
 | **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
-| **Bandtastic** | `Vasko_Bandtastic` | `http://freq.gaiaderma.com/bandtastic` | `bandtastic_user` | `bandtastic_secure_password` |
 | **ElliotV5_SMA** | `Vasko_ElliotV5_SMA` | `http://freq.gaiaderma.com/elliotv5_sma` | `elliotv5_sma_user` | `elliotv5_sma_secure_password` |
 | **BinClucMadV1** | `Vasko_BinClucMadV1` | `http://freq.gaiaderma.com/binclucmadv1` | `binclucmadv1_user` | `binclucmadv1_secure_password` |
 | **NASOSv4** | `Vasko_NASOSv4` | `http://freq.gaiaderma.com/nasosv4` | `nasosv4_user` | `nasosv4_secure_password` |
@@ -132,10 +130,10 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **EI4_t4c0s_V2_2** | `Vasko_EI4_t4c0s_V2_2` | `http://freq.gaiaderma.com/ei4_t4c0s_v2_2` | `ei4_t4c0s_v2_2_user` | `ei4_t4c0s_v2_2_secure_password` |
 
 ### ✅ URL Flow Example:
-1. **FreqUI configured with**: `http://freq.gaiaderma.com/bandtastic`
+1. **FreqUI configured with**: `http://freq.gaiaderma.com/elliotv5_sma`
 2. **FreqUI automatically appends**: `/api/v1/token/login`
-3. **Final request**: `http://freq.gaiaderma.com/bandtastic/api/v1/token/login`
-4. **NGINX proxies to**: `http://127.0.0.1:8082/api/v1/token/login`
+3. **Final request**: `http://freq.gaiaderma.com/elliotv5_sma/api/v1/token/login`
+4. **NGINX proxies to**: `http://127.0.0.1:8091/api/v1/token/login`
 
 ## 🔒 Security Considerations
 
@@ -182,7 +180,7 @@ curl http://127.0.0.1:8100/api/v1/ping  # EI4_t4c0s_V2_2
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
-curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
+curl http://freq.gaiaderma.com/elliotv5_sma/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2/api/v1/ping
@@ -203,8 +201,7 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 ### File-based Logs
 Each strategy logs to separate files in `user_data/logs/`:
 - `nfi-x7.log`
-- `quickadapter.log`
-- `bandtastic.log`
+- `elliotv5_sma.log`
 - etc.
 
 ## 🛠️ Configuration Details
@@ -227,7 +224,6 @@ All strategies use the same base configuration (`configs/recommended_config.json
 ### Database Separation
 Each strategy uses its own SQLite database:
 - `nfi-x7-tradesv3.sqlite`
-- `bandtastic-tradesv3.sqlite`
 - `elliotv5_sma-tradesv3.sqlite`
 - `binclucmadv1-tradesv3.sqlite`
 - `nasosv4-tradesv3.sqlite`
@@ -241,8 +237,8 @@ Each strategy uses its own SQLite database:
 The NGINX configuration uses simple base paths without complex rewrites:
 ```nginx
 # Strategy-specific paths (FreqUI appends /api/v1/* to these)
-location /bandtastic/ {
-    proxy_pass http://127.0.0.1:8082/;
+location /elliotv5_sma/ {
+    proxy_pass http://127.0.0.1:8091/;
 }
 ```
 
@@ -251,10 +247,10 @@ location /bandtastic/ {
 ### Common Issues
 
 1. **CORS/Double-Path Issues**
-   
-   **Problem**: Browser console shows `POST http://freq.gaiaderma.com/api/v1/bandtastic/api/v1/token/login 405 (Method Not Allowed)`
-   
-   **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/bandtastic` instead of `http://freq.gaiaderma.com/api/v1/bandtastic`
+
+   **Problem**: Browser console shows `POST http://freq.gaiaderma.com/api/v1/elliotv5_sma/api/v1/token/login 405 (Method Not Allowed)`
+
+   **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/elliotv5_sma` instead of `http://freq.gaiaderma.com/api/v1/elliotv5_sma`
 
 2. **Port Conflicts**
    ```bash
@@ -332,7 +328,6 @@ After setup, verify everything works:
 ```bash
 # Test all endpoints
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
-curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 curl http://freq.gaiaderma.com/elliotv5_sma/api/v1/ping
 curl http://freq.gaiaderma.com/binclucmadv1/api/v1/ping
 curl http://freq.gaiaderma.com/nasosv4/api/v1/ping
@@ -344,7 +339,7 @@ curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2/api/v1/ping
 
 # Test health endpoints
 curl http://freq.gaiaderma.com/health/nfi-x7
-curl http://freq.gaiaderma.com/health/bandtastic
+curl http://freq.gaiaderma.com/health/elliotv5_sma
 curl http://freq.gaiaderma.com/health/e0v1e
 curl http://freq.gaiaderma.com/health/e0v1e_shorts
 curl http://freq.gaiaderma.com/health/ei4_t4c0s_v2_2
@@ -362,4 +357,4 @@ All endpoints should return `{"status":"pong"}`.
 
 For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stable/
 
-**Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/bandtastic` instead of `http://freq.gaiaderma.com/api/v1/bandtastic`.
+**Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/elliotv5_sma` instead of `http://freq.gaiaderma.com/api/v1/elliotv5_sma`.

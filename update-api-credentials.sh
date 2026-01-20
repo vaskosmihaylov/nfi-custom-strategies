@@ -69,7 +69,6 @@ update_all_env_files() {
     # List of all environment files
     local env_files=(
         "env-files/nfi-x6.env"
-        "env-files/bandtastic.env"
         "env-files/trendfollowing.env"
         "env-files/powertower.env"
         "env-files/fastsupertrend.env"
