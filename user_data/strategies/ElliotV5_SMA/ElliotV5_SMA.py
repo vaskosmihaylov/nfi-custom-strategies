@@ -1,3 +1,70 @@
+"""
+ElliotV5_SMA Strategy - Long Positions with 3-Layer Stop Loss Protection
+
+A momentum-based long strategy using Elliott Wave Oscillator (EWO) and Simple
+Moving Averages (SMA) to identify high-probability entry points during both
+bullish and oversold market conditions.
+
+## Entry Logic
+
+Two entry conditions (OR logic - either can trigger):
+
+1. **High EWO Entry**: Price below SMA with strong positive momentum
+   - Price < SMA * low_offset (discount to moving average)
+   - EWO > ewo_high (strong upward momentum)
+   - RSI < rsi_buy (not overbought)
+
+2. **Low EWO Entry**: Deep oversold conditions
+   - Price < SMA * low_offset (discount to moving average)
+   - EWO < ewo_low (deep negative momentum, likely reversal)
+
+## Exit Logic
+
+- **ROI-based**: Time-decay profit targets (21.5% → 3% over 201 minutes)
+- **Signal-based**: Price crosses above SMA * high_offset
+- **Trailing stop**: Activates at +3% profit with 0.5% trail
+- **Custom stop loss**: 3-layer protection system (see below)
+
+## 3-Layer Stop Loss Architecture
+
+**Layer 1: Base Stoploss** (-0.99)
+- Very wide safety net, almost never hit
+- Allows maximum recovery time
+
+**Layer 2: custom_stoploss()**
+- 48-hour protection window (no tightening)
+- After 48h: Trails profitable positions (>1%) using RSI/EWO indicators
+- Graduated trailing: 1% at 2% profit, 1.5% at 5% profit
+
+**Layer 3: custom_exit()**
+- Unclog mechanism: Exits losing positions (-4%) after 48h
+- Zombie detection: Exits breakeven trades (±0.5%) after 48h
+- Prevents capital lockup in dead positions
+
+## Risk Management
+
+- **Leverage**: Fixed 3x for all trades
+- **Max Loss**: -4% after 48-hour protection (-12% price movement)
+- **Protection Period**: 48 hours to allow recovery from volatility
+- **Improvement**: Prevents premature -18.9% stop losses
+
+## Performance Characteristics
+
+- **Timeframe**: 5-minute candles
+- **Best Markets**: Trending or mean-reverting with clear momentum shifts
+- **Risk Level**: Moderate (3x leverage with -4% max loss after protection)
+
+## Technical Requirements
+
+- FreqTrade 2023.1+
+- Technical Analysis Library (TA-Lib)
+- Minimum 2000 candles for startup
+
+## See Also
+
+- ElliotV5_SMA_Shorts: Short-only variant of this strategy
+- Memory file: elliotv5_sma_stoploss_fix_jan2026 (implementation details)
+"""
 
 from freqtrade.strategy.interface import IStrategy
 from typing import Dict, List, Optional, Union
@@ -5,14 +72,9 @@ from functools import reduce
 from pandas import DataFrame
 
 import talib.abstract as ta
-import numpy as np
-import freqtrade.vendor.qtpylib.indicators as qtpylib
-import datetime
-from technical.util import resample_to_interval, resampled_merge
 from datetime import datetime, timedelta
 from freqtrade.persistence import Trade
-from freqtrade.strategy import stoploss_from_open, merge_informative_pair, DecimalParameter, IntParameter, CategoricalParameter
-import technical.indicators as ftt
+from freqtrade.strategy import DecimalParameter, IntParameter
 
 buy_params = {
       "base_nb_candles_buy": 17,
@@ -27,153 +89,26 @@ sell_params = {
       "high_offset": 1.019
     }
 
-def EWO(dataframe, ema_length=5, ema2_length=35):
+def EWO(dataframe, sma_length=5, sma2_length=35):
+    """
+    Elliott Wave Oscillator - Momentum indicator.
+
+    Note: Despite the traditional EWO name, this implementation uses SMA (not EMA)
+    for calculation, as it provides better signals for this strategy.
+
+    Args:
+        dataframe: OHLCV dataframe
+        sma_length: Fast SMA period (default 5)
+        sma2_length: Slow SMA period (default 35)
+
+    Returns:
+        Series: Percentage difference between fast and slow SMAs
+    """
     df = dataframe.copy()
-    ema1 = ta.SMA(df, timeperiod=ema_length)
-    ema2 = ta.SMA(df, timeperiod=ema2_length)
-    emadif = (ema1 - ema2) / df['close'] * 100
-    return emadif
-
-def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-
-
-
-        dataframe['adx'] = ta.ADX(dataframe)
-
-        dataframe['plus_dm'] = ta.PLUS_DM(dataframe)
-        dataframe['plus_di'] = ta.PLUS_DI(dataframe)
-
-        dataframe['minus_dm'] = ta.MINUS_DM(dataframe)
-        dataframe['minus_di'] = ta.MINUS_DI(dataframe)
-
-        aroon = ta.AROON(dataframe)
-        dataframe['aroonup'] = aroon['aroonup']
-        dataframe['aroondown'] = aroon['aroondown']
-        dataframe['aroonosc'] = ta.AROONOSC(dataframe)
-
-        dataframe['ao'] = qtpylib.awesome_oscillator(dataframe)
-
-        keltner = qtpylib.keltner_channel(dataframe)
-        dataframe["kc_upperband"] = keltner["upper"]
-        dataframe["kc_lowerband"] = keltner["lower"]
-        dataframe["kc_middleband"] = keltner["mid"]
-        dataframe["kc_percent"] = (
-            (dataframe["close"] - dataframe["kc_lowerband"]) /
-            (dataframe["kc_upperband"] - dataframe["kc_lowerband"])
-        )
-        dataframe["kc_width"] = (
-            (dataframe["kc_upperband"] - dataframe["kc_lowerband"]) / dataframe["kc_middleband"]
-        )
-
-        dataframe['uo'] = ta.ULTOSC(dataframe)
-
-        dataframe['cci'] = ta.CCI(dataframe)
-
-        dataframe['rsi'] = ta.RSI(dataframe)
-
-        rsi = 0.1 * (dataframe['rsi'] - 50)
-        dataframe['fisher_rsi'] = (np.exp(2 * rsi) - 1) / (np.exp(2 * rsi) + 1)
-
-        dataframe['fisher_rsi_norma'] = 50 * (dataframe['fisher_rsi'] + 1)
-
-        stoch = ta.STOCH(dataframe)
-        dataframe['slowd'] = stoch['slowd']
-        dataframe['slowk'] = stoch['slowk']
-
-        stoch_fast = ta.STOCHF(dataframe)
-        dataframe['fastd'] = stoch_fast['fastd']
-        dataframe['fastk'] = stoch_fast['fastk']
-
-
-
-        stoch_rsi = ta.STOCHRSI(dataframe)
-        dataframe['fastd_rsi'] = stoch_rsi['fastd']
-        dataframe['fastk_rsi'] = stoch_rsi['fastk']
-
-        macd = ta.MACD(dataframe)
-        dataframe['macd'] = macd['macd']
-        dataframe['macdsignal'] = macd['macdsignal']
-        dataframe['macdhist'] = macd['macdhist']
-
-        dataframe['mfi'] = ta.MFI(dataframe)
-
-        dataframe['roc'] = ta.ROC(dataframe)
-
-
-
-        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
-        dataframe['bb_lowerband'] = bollinger['lower']
-        dataframe['bb_middleband'] = bollinger['mid']
-        dataframe['bb_upperband'] = bollinger['upper']
-        dataframe["bb_percent"] = (
-            (dataframe["close"] - dataframe["bb_lowerband"]) /
-            (dataframe["bb_upperband"] - dataframe["bb_lowerband"])
-        )
-        dataframe["bb_width"] = (
-            (dataframe["bb_upperband"] - dataframe["bb_lowerband"]) / dataframe["bb_middleband"]
-        )
-
-        dataframe['sar'] = ta.SAR(dataframe)
-
-        dataframe['tema'] = ta.TEMA(dataframe, timeperiod=9)
-
-
-
-        hilbert = ta.HT_SINE(dataframe)
-        dataframe['htsine'] = hilbert['sine']
-        dataframe['htleadsine'] = hilbert['leadsine']
-
-
-
-        dataframe['CDLHAMMER'] = ta.CDLHAMMER(dataframe)
-
-        dataframe['CDLINVERTEDHAMMER'] = ta.CDLINVERTEDHAMMER(dataframe)
-
-        dataframe['CDLDRAGONFLYDOJI'] = ta.CDLDRAGONFLYDOJI(dataframe)
-
-        dataframe['CDLPIERCING'] = ta.CDLPIERCING(dataframe) # values [0, 100]
-
-        dataframe['CDLMORNINGSTAR'] = ta.CDLMORNINGSTAR(dataframe) # values [0, 100]
-
-        dataframe['CDL3WHITESOLDIERS'] = ta.CDL3WHITESOLDIERS(dataframe) # values [0, 100]
-
-
-
-        dataframe['CDLHANGINGMAN'] = ta.CDLHANGINGMAN(dataframe)
-
-        dataframe['CDLSHOOTINGSTAR'] = ta.CDLSHOOTINGSTAR(dataframe)
-
-        dataframe['CDLGRAVESTONEDOJI'] = ta.CDLGRAVESTONEDOJI(dataframe)
-
-        dataframe['CDLDARKCLOUDCOVER'] = ta.CDLDARKCLOUDCOVER(dataframe)
-
-        dataframe['CDLEVENINGDOJISTAR'] = ta.CDLEVENINGDOJISTAR(dataframe)
-
-        dataframe['CDLEVENINGSTAR'] = ta.CDLEVENINGSTAR(dataframe)
-
-
-
-        dataframe['CDL3LINESTRIKE'] = ta.CDL3LINESTRIKE(dataframe)
-
-        dataframe['CDLSPINNINGTOP'] = ta.CDLSPINNINGTOP(dataframe) # values [0, -100, 100]
-
-        dataframe['CDLENGULFING'] = ta.CDLENGULFING(dataframe) # values [0, -100, 100]
-
-        dataframe['CDLHARAMI'] = ta.CDLHARAMI(dataframe) # values [0, -100, 100]
-
-        dataframe['CDL3OUTSIDE'] = ta.CDL3OUTSIDE(dataframe) # values [0, -100, 100]
-
-        dataframe['CDL3INSIDE'] = ta.CDL3INSIDE(dataframe) # values [0, -100, 100]
-
-
-
-        heikinashi = qtpylib.heikinashi(dataframe)
-        dataframe['ha_open'] = heikinashi['open']
-        dataframe['ha_close'] = heikinashi['close']
-        dataframe['ha_high'] = heikinashi['high']
-        dataframe['ha_low'] = heikinashi['low']
-
-        return dataframe
+    sma1 = ta.SMA(df, timeperiod=sma_length)
+    sma2 = ta.SMA(df, timeperiod=sma2_length)
+    smadif = (sma1 - sma2) / df['close'] * 100
+    return smadif
 
 class ElliotV5_SMA(IStrategy):
     INTERFACE_VERSION = 2
@@ -185,7 +120,7 @@ class ElliotV5_SMA(IStrategy):
         "201": 0.03
     }
 
-    stoploss = -0.189
+    stoploss = -0.99
 
     base_nb_candles_buy = IntParameter(
         5, 80, default=buy_params['base_nb_candles_buy'], space='buy', optimize=True)
@@ -319,18 +254,26 @@ class ElliotV5_SMA(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Combined time-based + indicator-based custom stoploss.
+        3-Layer stop loss architecture with 48-hour protection window.
+
+        Layer 1: Base stoploss (-0.99) acts as wide safety net
+        Layer 2: This method controls tightening for PROFITABLE trades only
+        Layer 3: custom_exit() handles losing/zombie trades
 
         Logic:
-        - Hours 0-24: Wide stop (-0.99) - PROTECTION WINDOW for leverage recovery
-        - Hours 24+:  Enable indicator-based trailing for profitable positions
-                     Close zombie trades at breakeven
+        - Hours 0-48: Return 1.0 (keep base stoploss, don't tighten) - PROTECTION WINDOW
+        - Hours 48+:  Trail ONLY profitable positions (>1%) using RSI/EWO indicators
 
         Why this works:
-        - Prevents premature exits in first 24h (when price often recovers in 2-5h)
-        - After 24h, uses EWO and RSI to trail profitable positions intelligently
-        - Closes zombie trades stuck at breakeven
-        - Combines best of time-based protection + Elliott Wave indicator intelligence
+        - Prevents premature exits in first 48h (allows recovery from normal volatility)
+        - FreqTrade limitation: custom_stoploss can ONLY tighten, never widen
+        - Solution: Wide base stoploss + return 1.0 during protection = no tightening
+        - After 48h, losing trades handled by custom_exit (unclog/zombie)
+        - Profitable trades get smart indicator-based trailing
+
+        CRITICAL: Must return 1.0 (not -0.99) during protection!
+        - Returning -0.99 would try to widen (IGNORED by FreqTrade)
+        - Returning 1.0 means "don't change stop" (keeps base -0.99)
 
         Args:
             pair: Trading pair
@@ -341,68 +284,65 @@ class ElliotV5_SMA(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage
+            float: Stoploss percentage or 1.0 to keep base stoploss
         """
         # Calculate trade duration in hours
         trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
 
-        # Phase 1: First 24 hours - PROTECTION WINDOW
-        # Use very wide stoploss to allow price recovery
-        if trade_duration < 24:
-            return -0.99
+        # Phase 1: First 48 hours - PROTECTION WINDOW
+        # Return 1.0 to keep base stoploss active (don't tighten)
+        if trade_duration < 48:
+            return 1.0
 
-        # Phase 2: After 24 hours - Enable indicator logic
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        current_candle = dataframe.iloc[-1].squeeze()
+        # Phase 2: After 48 hours - Trail ONLY profitable trades
+        # Losing trades will be handled by custom_exit (unclog/zombie)
+        if current_profit > 0.01:
+            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+            current_candle = dataframe.iloc[-1].squeeze()
 
-        # For PROFITABLE positions (> 2%) - use indicators to trail
-        if current_profit > 0.02:
-            # Strong overbought with high EWO - likely top, trail tight
-            if current_candle['rsi'] > 80 and current_candle['EWO'] > 8:
-                return -0.01  # 1% trailing stop
+            # For positions > 2% profit - aggressive trailing
+            if current_profit > 0.02:
+                # Strong overbought with high EWO - likely top, trail tight
+                if current_candle['rsi'] > 80 and current_candle['EWO'] > 8:
+                    return -0.01  # 1% trailing stop
 
-            # Extreme overbought - take profits
-            if current_candle['rsi'] > 85:
-                return -0.01  # 1% trailing stop
+                # Extreme overbought - take profits
+                if current_candle['rsi'] > 85:
+                    return -0.01  # 1% trailing stop
 
-            # At 5%+ profit, tighter trailing
-            if current_profit >= 0.05:
-                if current_candle['rsi'] > 75:
-                    return -0.015  # 1.5% trailing stop
+                # At 5%+ profit, tighter trailing
+                if current_profit >= 0.05:
+                    if current_candle['rsi'] > 75:
+                        return -0.015  # 1.5% trailing stop
 
-        # For MODERATELY profitable positions (1-2%)
-        elif current_profit > 0.01:
-            # Very extreme overbought only
-            if current_candle['rsi'] > 85:
-                return -0.01
+            # For positions 1-2% profit - conservative trailing
+            else:
+                # Very extreme overbought only
+                if current_candle['rsi'] > 85:
+                    return -0.01
 
-        # For LOSING or BREAKEVEN positions
-        if current_profit <= 0.01:
-            # Extreme overbought - cut losses before reversal
-            if current_candle['rsi'] > 90:
-                return -0.01
-
-            # Close zombie trades at breakeven
-            if -0.005 <= current_profit <= 0.005:
-                return -0.001  # Very tight stop
-
-        # Default to base stoploss
-        return self.stoploss
+        # Default: Keep base stoploss (don't tighten)
+        # Losing/breakeven trades handled by custom_exit
+        return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        Unclog mechanism to force-close losing positions after extended duration.
+        Layer 3 of stop loss architecture: Handle losing and zombie trades.
 
         Logic:
-        - After 48 hours: If profit < -4%, return 'unclog' to force exit
-        - Otherwise: Return None to allow normal exit logic
+        - Hours 0-48: Return None (protection window, no forced exits)
+        - Hours 48+:
+          * If loss > 4%: Force exit ('unclog')
+          * If at breakeven (±0.5%): Force exit ('zombie')
+          * Otherwise: Continue normal exit logic
 
-        Why 48 hours and -4%:
-        - Gives position 2 full days to recover
-        - -4% loss threshold = -12% price movement with 3x leverage (reasonable cutoff)
-        - Prevents capital being locked in dead trades
-        - Frees up margin for better opportunities
+        Why this approach:
+        - Separates concerns: custom_stoploss trails profits, custom_exit cuts losses
+        - 48-hour protection allows recovery from normal volatility
+        - -4% max loss = -12% price movement with 3x leverage (much better than -18.9%)
+        - Zombie detection frees capital stuck in breakeven trades
+        - Works with FreqTrade limitation (custom_exit can exit anytime)
 
         Args:
             pair: Trading pair
@@ -413,14 +353,25 @@ class ElliotV5_SMA(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            Optional[Union[str, bool]]: 'unclog' to force exit, None otherwise
+            Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Calculate trade duration
+        # Calculate trade duration in hours
         trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
 
-        # Unclog: Force exit losing positions after 48 hours
-        if trade_duration_hours >= 48 and current_profit < -0.04:
+        # Phase 1: First 48 hours - PROTECTION WINDOW
+        # No forced exits during protection period
+        if trade_duration_hours < 48:
+            return None
+
+        # Phase 2: After 48 hours - Risk management for losing/zombie trades
+
+        # Unclog: Force exit losing positions to prevent large losses
+        if current_profit < -0.04:
             return 'unclog'
+
+        # Zombie: Force exit breakeven trades to free up capital
+        if -0.005 <= current_profit <= 0.005:
+            return 'zombie'
 
         # No custom exit, continue normal logic (ROI, signals, trailing stop)
         return None
