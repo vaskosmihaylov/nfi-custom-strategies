@@ -62,7 +62,8 @@ show_help() {
     echo ""
     echo "Available strategies:"
     echo "  nfi-x7, elliotv5_sma, binclucmadv1, nasosv4, rsiquiv5,"
-    echo "  elliotv5_sma_shorts, e0v1e, e0v1e_shorts, ei4_t4c0s_v2_2, ei4_t4c0s_v2_2_shorts"
+    echo "  elliotv5_sma_shorts, e0v1e, e0v1e_shorts, ei4_t4c0s_v2_2, ei4_t4c0s_v2_2_shorts,"
+    echo "  etcg, etcg_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -83,6 +84,8 @@ show_help() {
     echo "  E0V1E_Shorts:          http://freq.gaiaderma.com/e0v1e_shorts"
     echo "  EI4_t4c0s_V2_2:        http://freq.gaiaderma.com/ei4_t4c0s_v2_2"
     echo "  EI4_t4c0s_V2_2_Shorts: http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts"
+    echo "  ETCG:                  http://freq.gaiaderma.com/etcg"
+    echo "  ETCG_Shorts:           http://freq.gaiaderma.com/etcg_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -220,6 +223,8 @@ health_check() {
         "e0v1e_shorts:8099"
         "ei4_t4c0s_v2_2:8100"
         "ei4_t4c0s_v2_2_shorts:8101"
+        "etcg:8102"
+        "etcg_shorts:8103"
     )
     
     local healthy=0

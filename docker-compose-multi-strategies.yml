@@ -192,6 +192,40 @@ services:
       --strategy-path user_data/strategies/El
       --strategy EI4_t4c0s_V2_2_Shorts
 
+  # ETCG Strategy (Longs)
+  freqtrade-etcg:
+    <<: *common-settings
+    container_name: freqtrade-etcg
+    ports:
+      - "127.0.0.1:8102:8080"
+    env_file:
+      - path: ./env-files/etcg.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/etcg-tradesv3.sqlite
+      --log-file user_data/logs/etcg.log
+      --strategy-path user_data/strategies/ETCG
+      --strategy ETCG
+
+  # ETCG_Shorts Strategy (Shorts-only)
+  freqtrade-etcg_shorts:
+    <<: *common-settings
+    container_name: freqtrade-etcg_shorts
+    ports:
+      - "127.0.0.1:8103:8080"
+    env_file:
+      - path: ./env-files/etcg_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/etcg_shorts-tradesv3.sqlite
+      --log-file user_data/logs/etcg_shorts.log
+      --strategy-path user_data/strategies/ETCG
+      --strategy ETCG_Shorts
+
 networks:
   default:
     name: freqtrade-network
