@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **10 different trading strategies** running in separate Docker containers
+- **12 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -25,7 +25,10 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ElliotV5_SMA_Shorts (Port 8097)
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
-                           └── EI4_t4c0s_V2_2 (Port 8100)
+                           ├── EI4_t4c0s_V2_2 (Port 8100)
+                           ├── EI4_t4c0s_V2_2_Shorts (Port 8101)
+                           ├── ETCG (Port 8102)
+                           └── ETCG_Shorts (Port 8103)
 ```
 
 ## 📁 Files Created
@@ -40,6 +43,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 ### Environment Files (in `env-files/`)
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
+- `bandtastic.env` - BandtasticFiboHyper strategy (combined longs/shorts)
 - `elliotv5_sma.env` - ElliotV5_SMA strategy (longs-only)
 - `binclucmadv1.env` - BinClucMadV1 strategy
 - `nasosv4.env` - NASOSv4 strategy
@@ -48,6 +52,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `ei4_t4c0s_v2_2.env` - EI4_t4c0s_V2_2 strategy (longs with 3x leverage)
+- `ei4_t4c0s_v2_2_shorts.env` - EI4_t4c0s_V2_2_Shorts strategy (shorts with 3x leverage)
+- `etcg.env` - ETCG strategy (longs-only, multi-entry)
+- `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
 
 ## 🚀 Quick Start
 
@@ -128,6 +135,9 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
 | **EI4_t4c0s_V2_2** | `Vasko_EI4_t4c0s_V2_2` | `http://freq.gaiaderma.com/ei4_t4c0s_v2_2` | `ei4_t4c0s_v2_2_user` | `ei4_t4c0s_v2_2_secure_password` |
+| **EI4_t4c0s_V2_2_Shorts** | `Vasko_EI4_t4c0s_V2_2_Shorts` | `http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts` | `ei4_t4c0s_v2_2_shorts_user` | `ei4_t4c0s_v2_2_shorts_secure_password` |
+| **ETCG** | `Vasko_ETCG` | `http://freq.gaiaderma.com/etcg` | `etcg_user` | `etcg_secure_password` |
+| **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 
 ### ✅ URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/elliotv5_sma`
@@ -177,6 +187,9 @@ curl http://127.0.0.1:8097/api/v1/ping  # ElliotV5_SMA_Shorts
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # EI4_t4c0s_V2_2
+curl http://127.0.0.1:8101/api/v1/ping  # EI4_t4c0s_V2_2_Shorts
+curl http://127.0.0.1:8102/api/v1/ping  # ETCG
+curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -184,6 +197,9 @@ curl http://freq.gaiaderma.com/elliotv5_sma/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2/api/v1/ping
+curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/etcg/api/v1/ping
+curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -220,10 +236,14 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - E0V1E: 8098
 - E0V1E_Shorts: 8099
 - EI4_t4c0s_V2_2: 8100
+- EI4_t4c0s_V2_2_Shorts: 8101
+- ETCG: 8102
+- ETCG_Shorts: 8103
 
 ### Database Separation
 Each strategy uses its own SQLite database:
 - `nfi-x7-tradesv3.sqlite`
+- `bandtastic-tradesv3.sqlite`
 - `elliotv5_sma-tradesv3.sqlite`
 - `binclucmadv1-tradesv3.sqlite`
 - `nasosv4-tradesv3.sqlite`
@@ -232,6 +252,9 @@ Each strategy uses its own SQLite database:
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
 - `ei4_t4c0s_v2_2-tradesv3.sqlite`
+- `ei4_t4c0s_v2_2_shorts-tradesv3.sqlite`
+- `etcg-tradesv3.sqlite`
+- `etcg_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
@@ -328,6 +351,7 @@ After setup, verify everything works:
 ```bash
 # Test all endpoints
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
+curl http://freq.gaiaderma.com/bandtastic/api/v1/ping
 curl http://freq.gaiaderma.com/elliotv5_sma/api/v1/ping
 curl http://freq.gaiaderma.com/binclucmadv1/api/v1/ping
 curl http://freq.gaiaderma.com/nasosv4/api/v1/ping
@@ -336,13 +360,20 @@ curl http://freq.gaiaderma.com/elliotv5_sma_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2/api/v1/ping
+curl http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/etcg/api/v1/ping
+curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 
 # Test health endpoints
 curl http://freq.gaiaderma.com/health/nfi-x7
+curl http://freq.gaiaderma.com/health/bandtastic
 curl http://freq.gaiaderma.com/health/elliotv5_sma
 curl http://freq.gaiaderma.com/health/e0v1e
 curl http://freq.gaiaderma.com/health/e0v1e_shorts
 curl http://freq.gaiaderma.com/health/ei4_t4c0s_v2_2
+curl http://freq.gaiaderma.com/health/ei4_t4c0s_v2_2_shorts
+curl http://freq.gaiaderma.com/health/etcg
+curl http://freq.gaiaderma.com/health/etcg_shorts
 
 # Check container status
 ./deploy-multi-strategies.sh status

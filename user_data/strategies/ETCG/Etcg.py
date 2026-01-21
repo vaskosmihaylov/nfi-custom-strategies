@@ -174,6 +174,15 @@ class ETCG(IStrategy):
         if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 4:
             return 'unclog'
 
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag: str, side: str,
+                 **kwargs) -> float:
+        """
+        Customize leverage for each trade.
+
+        Returns fixed 3x leverage for all trades.
+        """
+        return 3.0
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()

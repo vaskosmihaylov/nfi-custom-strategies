@@ -58,10 +58,10 @@ class ETCG_Shorts(IStrategy):
     - Stop Loss: -18.9% (tighter than -99% for longs)
 
     Key Differences from Long Strategy:
-    - Tighter stop loss: -18.9% vs -99%
-    - More conservative ROI: 5% vs 5% initial (same start, faster decay)
+    - Same stop loss: -99% (managed by trailing stop)
+    - More conservative ROI: 7% vs 5% initial (more conservative)
     - Shorter unclog window: 3 days vs 4 days
-    - Max 4 short positions via confirm_trade_entry()
+    - Max 8 short positions via confirm_trade_entry()
     - Leverage: 3x (set in environment)
 
     Author: Derived from ETCG
@@ -142,12 +142,12 @@ class ETCG_Shorts(IStrategy):
             }
         ]
 
-    # Stoploss (tighter than longs):
-    stoploss = -0.189
+    # Stoploss (same as longs):
+    stoploss = -0.99
 
     # Position limits
-    max_open_trades = 4
-    max_short_trades = 4
+    max_open_trades = 8
+    max_short_trades = 8
 
     # SMAOffset
     base_nb_candles_sell = IntParameter(8, 20, default=sell_params['base_nb_candles_sell'], space='sell', optimize=False)
@@ -235,6 +235,15 @@ class ETCG_Shorts(IStrategy):
         if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 3:
             return 'unclog_short'
 
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag: str, side: str,
+                 **kwargs) -> float:
+        """
+        Customize leverage for each trade.
+
+        Returns fixed 3x leverage for all trades.
+        """
+        return 3.0
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
