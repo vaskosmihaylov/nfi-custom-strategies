@@ -169,8 +169,5 @@ config*.json
 *.sqlite-shm
 *.sqlite-wal
 .env**
-
-# Custom NFI strategy location (synced from upstream via post-merge hook)
-user_data/strategies/nfi/NostalgiaForInfinityX*.py
 daily-sync-nfi.sh
 manage-daily-sync.sh
