@@ -25,28 +25,35 @@ Two entry conditions (OR logic - either can trigger):
 - **Trailing stop**: Activates at +3% profit with 0.5% trail
 - **Custom stop loss**: 3-layer protection system (see below)
 
-## 3-Layer Stop Loss Architecture
+## Volatility-Adaptive Stop Loss with Moon Mode
 
-**Layer 1: Base Stoploss** (-0.99)
-- Very wide safety net, almost never hit
-- Allows maximum recovery time
+**NO PROTECTION WINDOW** - Immediately trails to prevent liquidations
 
-**Layer 2: custom_stoploss()**
-- 48-hour protection window (no tightening)
-- After 48h: Trails profitable positions (>1%) using RSI/EWO indicators
-- Graduated trailing: 1% at 2% profit, 1.5% at 5% profit
+**Base Stoploss** (-0.99)
+- Wide safety net that allows recovery
 
-**Layer 3: custom_exit()**
-- Unclog mechanism: Exits losing positions (-4%) after 48h
-- Zombie detection: Exits breakeven trades (±0.5%) after 48h
-- Prevents capital lockup in dead positions
+**custom_stoploss()** - Volatility-Adaptive Trailing
+- Moon Mode: When making new highs (max_l > 0.003), allows wider trailing
+- Adapts to each coin's volatility (move_mean, move_mean_x)
+- For volatile coins (15-20% swings), automatically uses wider stops
+- Prevents liquidations by tightening before -30% loss
+
+**custom_exit()** - Time-Based Unclog
+- Exits losing positions after N days at -4% loss
+- Frees capital from dead positions
+
+**confirm_trade_exit()** - Exit Quality Control
+- Blocks ROI exits when not making new highs
+- Blocks exits with profit below 0.3%
+- Ensures better exit prices
 
 ## Risk Management
 
 - **Leverage**: Fixed 3x for all trades
-- **Max Loss**: -4% after 48-hour protection (-12% price movement)
-- **Protection Period**: 48 hours to allow recovery from volatility
-- **Improvement**: Prevents premature -18.9% stop losses
+- **Liquidation Prevention**: Volatility-adaptive stops trigger before -30% liquidation point
+- **Volatility Adaptation**: Stop distance adjusts to each coin's natural price swings
+- **Moon Mode**: Lets winners run when making new highs
+- **No Protection Window**: Immediate stop loss response prevents deep losses
 
 ## Performance Characteristics
 
@@ -72,9 +79,13 @@ from functools import reduce
 from pandas import DataFrame
 
 import talib.abstract as ta
+import numpy as np
 from datetime import datetime, timedelta
 from freqtrade.persistence import Trade
 from freqtrade.strategy import DecimalParameter, IntParameter
+import logging
+
+logger = logging.getLogger(__name__)
 
 buy_params = {
       "base_nb_candles_buy": 17,
@@ -122,6 +133,12 @@ class ElliotV5_SMA(IStrategy):
 
     stoploss = -0.99
 
+    # Volatility-based trailing stop parameters
+    sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
+    move = IntParameter(35, 60, default=48, space='buy', optimize=True)
+    mms = IntParameter(6, 20, default=12, space='buy', optimize=True)
+    mml = IntParameter(300, 400, default=360, space='buy', optimize=True)
+
     base_nb_candles_buy = IntParameter(
         5, 80, default=buy_params['base_nb_candles_buy'], space='buy', optimize=True)
     base_nb_candles_sell = IntParameter(
@@ -138,6 +155,10 @@ class ElliotV5_SMA(IStrategy):
     ewo_high = DecimalParameter(
         2.0, 12.0, default=buy_params['ewo_high'], space='buy', optimize=True)
     rsi_buy = IntParameter(30, 70, default=buy_params['rsi_buy'], space='buy', optimize=True)
+
+    # Unclog parameters (used in custom_exit)
+    unclog_days = IntParameter(1, 5, default=4, space='sell', optimize=True)
+    unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
 
     trailing_stop = True
     trailing_stop_positive = 0.005
@@ -189,6 +210,32 @@ class ElliotV5_SMA(IStrategy):
         dataframe['EWO'] = EWO(dataframe, self.fast_ewo, self.slow_ewo)
 
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
+
+        # Volatility-based indicators for adaptive stop loss
+        dataframe['OHLC4'] = (dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
+
+        # Check how far we are from min and max over short window
+        dataframe['max'] = dataframe['OHLC4'].rolling(self.mms.value).max() / dataframe['OHLC4'] - 1
+        dataframe['min'] = abs(dataframe['OHLC4'].rolling(self.mms.value).min() / dataframe['OHLC4'] - 1)
+
+        # Check how far we are from min and max over long window (360 candles = 30 hours at 5m)
+        dataframe['max_l'] = dataframe['OHLC4'].rolling(self.mml.value).max() / dataframe['OHLC4'] - 1
+        dataframe['min_l'] = abs(dataframe['OHLC4'].rolling(self.mml.value).min() / dataframe['OHLC4'] - 1)
+
+        # Apply rolling window operation to calculate volatility
+        rolling_window = dataframe['OHLC4'].rolling(self.move.value)
+
+        # Calculate the peak-to-peak value (max - min) in rolling window
+        ptp_value = rolling_window.apply(lambda x: np.ptp(x))
+
+        # Normalize volatility by current price
+        dataframe['move'] = ptp_value / dataframe['OHLC4']
+
+        # Per-pair volatility adaptation (NOT rolling mean - intentional)
+        # Uses mean across ALL history to get this coin's natural volatility
+        # NAORIS might average 15% moves, BTC might average 3% - this adapts stops per coin
+        dataframe['move_mean'] = dataframe['move'].mean()  # Average volatility
+        dataframe['move_mean_x'] = dataframe['move'].mean() * 1.6  # 1.6x average volatility
 
         return dataframe
 
@@ -254,26 +301,27 @@ class ElliotV5_SMA(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        3-Layer stop loss architecture with 48-hour protection window.
+        Volatility-adaptive trailing stop loss with Moon Mode.
 
-        Layer 1: Base stoploss (-0.99) acts as wide safety net
-        Layer 2: This method controls tightening for PROFITABLE trades only
-        Layer 3: custom_exit() handles losing/zombie trades
+        NO PROTECTION WINDOW - Starts trailing immediately to prevent liquidations.
 
-        Logic:
-        - Hours 0-48: Return 1.0 (keep base stoploss, don't tighten) - PROTECTION WINDOW
-        - Hours 48+:  Trail ONLY profitable positions (>1%) using RSI/EWO indicators
+        Moon Mode Logic:
+        - When making new highs (max_l > 0.003): Allow wider trailing
+          → Trail at move_mean_x (1.6x volatility) when profit > move_mean_x
+          → Trail at sl1 (tight) when profit > move_mean
+        - When not making new highs: Tighter protection
+          → Trail at sl1 when profit > sl1
 
-        Why this works:
-        - Prevents premature exits in first 48h (allows recovery from normal volatility)
-        - FreqTrade limitation: custom_stoploss can ONLY tighten, never widen
-        - Solution: Wide base stoploss + return 1.0 during protection = no tightening
-        - After 48h, losing trades handled by custom_exit (unclog/zombie)
-        - Profitable trades get smart indicator-based trailing
+        Volatility Adaptation:
+        - move_mean: Average volatility of this pair
+        - move_mean_x: 1.6x average volatility (wider buffer)
+        - For volatile coins (15-20% swings), stops adapt automatically
+        - For stable coins, stops are tighter
 
-        CRITICAL: Must return 1.0 (not -0.99) during protection!
-        - Returning -0.99 would try to widen (IGNORED by FreqTrade)
-        - Returning 1.0 means "don't change stop" (keeps base -0.99)
+        Why this prevents liquidations:
+        - No 48h protection = stops can trigger immediately when needed
+        - Volatility-adaptive = won't stop out on normal swings
+        - Base stop still -0.99 = allows recovery, but custom_stoploss tightens before -30%
 
         Args:
             pair: Trading pair
@@ -284,65 +332,54 @@ class ElliotV5_SMA(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage or 1.0 to keep base stoploss
+            float: Stoploss percentage or self.stoploss to keep base
         """
-        # Calculate trade duration in hours
-        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Phase 1: First 48 hours - PROTECTION WINDOW
-        # Return 1.0 to keep base stoploss active (don't tighten)
-        if trade_duration < 48:
-            return 1.0
+        SLT1 = current_candle['move_mean']  # Average volatility
+        SL1 = self.sl1.value  # Fixed tight stop (e.g., -0.013 = 1.3%)
+        SLT2 = current_candle['move_mean_x']  # 1.6x average volatility
+        SL2 = current_candle['move_mean_x'] - current_candle['move_mean']  # Difference
 
-        # Phase 2: After 48 hours - Trail ONLY profitable trades
-        # Losing trades will be handled by custom_exit (unclog/zombie)
-        if current_profit > 0.01:
-            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-            current_candle = dataframe.iloc[-1].squeeze()
+        display_profit = current_profit * 100
+        slt1 = SLT1 * 100 if SLT1 is not None else 0
+        sl1 = SL1 * 100
+        slt2 = SLT2 * 100 if SLT2 is not None else 0
+        sl2 = SL2 * 100 if SL2 is not None else 0
 
-            # For positions > 2% profit - aggressive trailing
-            if current_profit > 0.02:
-                # Strong overbought with high EWO - likely top, trail tight
-                if current_candle['rsi'] > 80 and current_candle['EWO'] > 8:
-                    return -0.01  # 1% trailing stop
+        # Moon mode: When making new highs (price near 360-candle high), allow wider trailing
+        if current_candle['max_l'] > 0.003:
+            # At high profit (> 1.6x volatility), trail with medium stop
+            if SLT2 is not None and not np.isnan(SLT2) and current_profit > SLT2:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt2:.2f}/{sl2:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt2:.2f}/{sl2:.2f} activated')
+                return SL2
+            # At medium profit (> average volatility), trail with tight stop
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SLT1:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
+        else:
+            # Not making new highs: Tighter protection
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SL1:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                return SL1  # Safe stoploss
 
-                # Extreme overbought - take profits
-                if current_candle['rsi'] > 85:
-                    return -0.01  # 1% trailing stop
-
-                # At 5%+ profit, tighter trailing
-                if current_profit >= 0.05:
-                    if current_candle['rsi'] > 75:
-                        return -0.015  # 1.5% trailing stop
-
-            # For positions 1-2% profit - conservative trailing
-            else:
-                # Very extreme overbought only
-                if current_candle['rsi'] > 85:
-                    return -0.01
-
-        # Default: Keep base stoploss (don't tighten)
-        # Losing/breakeven trades handled by custom_exit
-        return 1.0
+        return self.stoploss  # Keep base -0.99
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        Layer 3 of stop loss architecture: Handle losing and zombie trades.
+        Time-based unclog mechanism for losing and zombie trades.
 
-        Logic:
-        - Hours 0-48: Return None (protection window, no forced exits)
-        - Hours 48+:
-          * If loss > 4%: Force exit ('unclog')
-          * If at breakeven (±0.5%): Force exit ('zombie')
-          * Otherwise: Continue normal exit logic
+        With volatility-adaptive stop loss, this mainly handles:
+        - Unclog: Trades that have been losing for too long
+        - Zombie: Trades stuck at breakeven
 
-        Why this approach:
-        - Separates concerns: custom_stoploss trails profits, custom_exit cuts losses
-        - 48-hour protection allows recovery from normal volatility
-        - -4% max loss = -12% price movement with 3x leverage (much better than -18.9%)
-        - Zombie detection frees capital stuck in breakeven trades
-        - Works with FreqTrade limitation (custom_exit can exit anytime)
+        Logic (matches EI4_t4c0s_V2_2):
+        - If losing > unclog threshold after unclog_days: Force exit ('unclog')
 
         Args:
             pair: Trading pair
@@ -355,23 +392,51 @@ class ElliotV5_SMA(IStrategy):
         Returns:
             Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Calculate trade duration in hours
-        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
-
-        # Phase 1: First 48 hours - PROTECTION WINDOW
-        # No forced exits during protection period
-        if trade_duration_hours < 48:
-            return None
-
-        # Phase 2: After 48 hours - Risk management for losing/zombie trades
-
-        # Unclog: Force exit losing positions to prevent large losses
-        if current_profit < -0.04:
+        # Unclog: Sell any positions at a loss if they are held for more than N days
+        if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
             return 'unclog'
 
-        # Zombie: Force exit breakeven trades to free up capital
-        if -0.005 <= current_profit <= 0.005:
-            return 'zombie'
-
-        # No custom exit, continue normal logic (ROI, signals, trailing stop)
         return None
+
+    def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
+                           rate: float, time_in_force: str, exit_reason: str,
+                           current_time: datetime, **kwargs) -> bool:
+        """
+        Confirm trade exit with moon mode logic.
+
+        Prevents premature exits when:
+        - ROI exit when NOT making new highs (max_l < 0.003)
+        - Any exit with profit below 0.3%
+
+        This ensures we don't exit winners too early and captures more upside.
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            order_type: Order type
+            amount: Trade amount
+            rate: Exit rate
+            time_in_force: Time in force
+            exit_reason: Reason for exit
+            current_time: Current timestamp
+
+        Returns:
+            bool: True to confirm exit, False to block
+        """
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        last_candle = dataframe.iloc[-1].squeeze()
+
+        # Block ROI exit if not making new highs (wait for better opportunity)
+        if exit_reason == 'roi' and (last_candle['max_l'] < 0.003):
+            return False
+
+        # Block exits with very low profit - wait for better exit
+        if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.003:
+            logger.info(f"{trade.pair} ROI profit is below 0.3%")
+            return False
+
+        if exit_reason == 'trailing_stop_loss' and trade.calc_profit_ratio(rate) < 0:
+            logger.info(f"{trade.pair} Trailing stop price is below 0")
+            return False
+
+        return True

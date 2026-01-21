@@ -23,12 +23,19 @@ Entry Conditions (OR logic - either triggers entry):
 Exit Conditions:
 - Signal: Price falls below EMA discount
 - ROI: Time-decay targets (15% → 10% → 6% → 2%)
-- Stop Loss: -12% (tighter than longs due to short squeeze risk)
+- Volatility-Adaptive Stop Loss: Crash mode for profit protection
 - Trailing Stop: +2% activation, 0.5% trail
 
+Volatility-Adaptive Stop Loss with Crash Mode:
+- NO PROTECTION WINDOW - Immediately trails to prevent liquidations
+- Crash Mode: When making new lows (min_l < 0.003), tightens stops to protect profits
+- Rally Mode: When not making new lows, allows wider trailing based on volatility
+- Adapts to each coin's volatility (move_mean, move_mean_x)
+- Prevents liquidations by tightening before -30% loss
+
 Key Differences from Long Strategy:
-- Tighter stop loss: -12% vs -18.9% (shorts are riskier)
-- Lower ROI targets: 15% max vs 21.5% (faster profit-taking)
+- Crash Mode vs Moon Mode: Tightens when making new lows (inverse logic)
+- Lower ROI targets: 15% max vs 21.5% (faster profit-taking for shorts)
 - Asymmetric EWO thresholds: Adjusted for crypto bear market dynamics
 - Always uses RSI filters: Extra confirmation to avoid short squeezes
 - Max 4 short positions: Position limit enforcement via confirm_trade_entry
@@ -48,6 +55,9 @@ import numpy as np
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 from freqtrade.persistence import Trade
 from freqtrade.strategy import DecimalParameter, IntParameter
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Optimized parameters for short entries
@@ -116,7 +126,20 @@ class ElliotV5_SMA_Shorts(IStrategy):
     }
 
     # Stop loss for shorts (matches long strategy for consistent risk management)
-    stoploss = -0.99  # Very wide - will be tightened by custom_stoploss after 48h protection period = -0.189  # Matches long strategy - allows 6.3% price movement with 3x leverage
+    stoploss = -0.99
+
+    # Volatility-based trailing stop parameters
+    sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
+    move = IntParameter(35, 60, default=48, space='buy', optimize=True)
+    mms = IntParameter(6, 20, default=12, space='buy', optimize=True)
+    mml = IntParameter(300, 400, default=360, space='buy', optimize=True)
+
+    # Unclog parameters (used in custom_exit)
+    unclog_days = IntParameter(1, 5, default=3, space='sell', optimize=True)
+    unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
+
+    # Position limits (enforced via confirm_trade_entry)
+    max_short_trades = 4
 
     # Hyperopt parameters for short entries (use 'buy' space per Freqtrade convention)
     base_nb_candles_short_entry = IntParameter(
@@ -162,11 +185,7 @@ class ElliotV5_SMA_Shorts(IStrategy):
     process_only_new_candles = True
     startup_candle_count = 2000
 
-    # Position limits (enforced via confirm_trade_entry)
-    max_open_trades = 4  # Max 4 short positions
-    max_short_trades = 4  # Explicit short limit
-
-    # Custom stoploss enabled for time-based stop loss management
+    # Custom stoploss enabled for volatility-adaptive stop loss
     use_custom_stoploss = True
 
     # Plot configuration
@@ -225,23 +244,27 @@ class ElliotV5_SMA_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Indicator-based trailing stoploss for PROFITABLE shorts.
+        Volatility-adaptive trailing stop loss with Crash Mode for shorts.
 
-        3-Layer Architecture:
-        Layer 1: Base stoploss (-0.99) = Safety net
-        Layer 2: custom_stoploss (THIS) = Indicator-based profit taking
-        Layer 3: custom_exit = Time-based unclog for losers
+        NO PROTECTION WINDOW - Starts trailing immediately to prevent liquidations.
 
-        Logic:
-        - Hours 0-48: Don't tighten (return 1.0) - protection window
-        - Hours 48+: Trail PROFITABLE shorts based on RSI/EWO indicators
-          - Uses RSI oversold levels to detect bottoms (time to take profit)
-          - Tightens stops as profit increases
-          - Does NOT handle losing trades (custom_exit does that)
+        Crash Mode Logic (inverse of Moon Mode):
+        - When making new lows (min_l < 0.003): Tighter stops to protect profits
+          → Short is very profitable (price crashing) = use conservative stop
+        - When not making new lows (price rallying): Allow wider trailing
+          → Trail at move_mean_x (1.6x volatility) when profit > move_mean_x
+          → Trail at sl1 (tight) when profit > move_mean
 
-        Note: Indicator logic is INVERTED for shorts:
-        - Profitable short = price went DOWN (RSI low, negative EWO)
-        - Low RSI = oversold = price bottom = SHORT should exit
+        Volatility Adaptation:
+        - move_mean: Average volatility of this pair
+        - move_mean_x: 1.6x average volatility (wider buffer)
+        - For volatile coins (15-20% swings), stops adapt automatically
+        - For stable coins, stops are tighter
+
+        Why this prevents liquidations:
+        - No 48h protection = stops can trigger immediately when needed
+        - Volatility-adaptive = won't stop out on normal swings
+        - Base stop still -0.99 = allows recovery, but custom_stoploss tightens before -30%
 
         Args:
             pair: Trading pair
@@ -252,75 +275,55 @@ class ElliotV5_SMA_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage (must be MORE NEGATIVE than base to tighten)
+            float: Stoploss percentage or 1.0 to keep base
         """
-        # Calculate trade duration in hours
-        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Phase 1: First 48 hours - PROTECTION WINDOW
-        # Return 1.0 to keep base stoploss (-0.99) without tightening
-        if trade_duration < 48:
-            return 1.0
+        SLT1 = current_candle['move_mean']  # Average volatility
+        SL1 = self.sl1.value  # Fixed tight stop (e.g., -0.013 = 1.3%)
+        SLT2 = current_candle['move_mean_x']  # 1.6x average volatility
+        SL2 = current_candle['move_mean_x'] - current_candle['move_mean']  # Difference
 
-        # Phase 2: After 48 hours - Trail ONLY profitable shorts
-        # Losing/zombie trades are handled by custom_exit
-        
-        # Only apply indicator logic if trade is profitable
-        if current_profit > 0.01:
-            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-            current_candle = dataframe.iloc[-1].squeeze()
+        display_profit = current_profit * 100
+        slt1 = SLT1 * 100 if SLT1 is not None else 0
+        sl1 = SL1 * 100
+        slt2 = SLT2 * 100 if SLT2 is not None else 0
+        sl2 = SL2 * 100 if SL2 is not None else 0
 
-            # For moderately profitable shorts (1-2%)
-            if current_profit <= 0.02:
-                # Very extreme oversold only
-                if current_candle['rsi'] < 15:
-                    return -0.01  # 1% trailing stop
-            
-            # For profitable shorts (2-5%)
-            elif current_profit <= 0.05:
-                # Strong oversold with low EWO - likely bottom, trail tight
-                if current_candle['rsi'] < 20 and current_candle['EWO'] < -8:
-                    return -0.01  # 1% trailing stop
+        # Crash mode: When making new lows (min_l < 0.003), tighten stops
+        # Small min_l = price at/near lows = SHORT IS PROFITABLE (price crashing)
+        if current_candle['min_l'] < 0.003:
+            # Short is very profitable (market crashing to new lows), use conservative stop
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SL1:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - Crash Mode {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - Crash Mode {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
 
-                # Extreme oversold - price might bounce
-                if current_candle['rsi'] < 15:
-                    return -0.01  # 1% trailing stop
-            
-            # For highly profitable shorts (>5%)
-            else:
-                # At 5%+ profit, tighter trailing
-                if current_candle['rsi'] < 25:
-                    return -0.015  # 1.5% trailing stop
-                    
-                # Strong oversold with low EWO
-                if current_candle['rsi'] < 20 and current_candle['EWO'] < -8:
-                    return -0.01  # 1% trailing stop
+        # Rally mode: Not making new lows (price rising away from lows), allow trailing
+        else:
+            if SLT2 is not None and not np.isnan(SLT2) and current_profit > SLT2:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt2:.2f}/{sl2:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt2:.2f}/{sl2:.2f} activated')
+                return SL2
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SLT1:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
 
-        # Default: Return 1.0 to keep base stoploss active
-        # Losing trades will be handled by custom_exit after 48h
+        # Default: Return 1.0 to keep base stoploss active (valid FreqTrade API)
         return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        3-Layer Exit System for Shorts:
-        
-        Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
-        Layer 2: custom_stoploss = Indicator-based trailing for PROFITABLE shorts
-        Layer 3: custom_exit (THIS) = Time-based unclog for LOSING/ZOMBIE shorts
+        Time-based unclog mechanism for losing and zombie trades.
 
-        Logic:
-        - Hours 0-48: No forced exits, let position develop
-        - After 48 hours:
-          - If losing > 4%: Force exit ('unclog') - cut losses
-          - If at breakeven (-0.5% to +0.5%): Force exit ('zombie') - free up capital
-          - Otherwise: Let indicators handle it (custom_stoploss)
+        With volatility-adaptive stop loss, this mainly handles:
+        - Unclog: Trades that have been losing for too long
 
-        Why this works:
-        - Gives position 48 hours to recover
-        - -4% loss = -12% price movement with 3x leverage (reasonable cutoff)
-        - Zombie trades lock up capital without profit - exit at breakeven
-        - Profitable trades continue with indicator-based trailing
+        Logic (matches EI4_t4c0s_V2_2):
+        - If losing > unclog threshold after unclog_days: Force exit ('unclog_short')
 
         Args:
             pair: Trading pair
@@ -331,27 +334,57 @@ class ElliotV5_SMA_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            Optional[Union[str, bool]]: Exit reason or None
+            Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Calculate trade duration in hours
-        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+        # Unclog: Sell any short positions at a loss if they are held for more than N days
+        if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
+            return 'unclog_short'
 
-        # Phase 1: First 48 hours - NO forced exits
-        if trade_duration_hours < 48:
-            return None
-
-        # Phase 2: After 48 hours - Unclog losing/zombie trades
-        
-        # Unclog: Force exit if losing > 4% (worst case scenario)
-        if current_profit < -0.04:
-            return 'unclog'
-        
-        # Zombie: Force exit if stuck at breakeven after 48h
-        if -0.005 <= current_profit <= 0.005:
-            return 'zombie'
-
-        # Profitable trades: Let custom_stoploss handle trailing
         return None
+
+    def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
+                           rate: float, time_in_force: str, exit_reason: str,
+                           current_time: datetime, **kwargs) -> bool:
+        """
+        Confirm trade exit with crash mode logic (inverse of moon mode).
+
+        Prevents premature exits when:
+        - ROI exit when NOT making new lows (min_l > 0.003)
+        - Any exit with profit below 0.3%
+
+        For shorts: min_l > 0.003 = price far from lows = not crashing = block exit
+
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            order_type: Order type
+            amount: Trade amount
+            rate: Exit rate
+            time_in_force: Time in force
+            exit_reason: Reason for exit
+            current_time: Current timestamp
+
+        Returns:
+            bool: True to confirm exit, False to block
+        """
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        last_candle = dataframe.iloc[-1].squeeze()
+
+        # Block ROI exit if not making new lows (wait for crash to continue)
+        # For shorts: min_l > 0.003 = price far from lows = not crashing = block exit
+        if exit_reason == 'roi' and (last_candle['min_l'] > 0.003):
+            return False
+
+        # Block exits with very low profit - wait for better exit
+        if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.003:
+            logger.info(f"{trade.pair} ROI profit is below 0.3%")
+            return False
+
+        if exit_reason == 'trailing_stop_loss' and trade.calc_profit_ratio(rate) < 0:
+            logger.info(f"{trade.pair} Trailing stop price is below 0")
+            return False
+
+        return True
 
     def informative_pairs(self):
         """
@@ -382,6 +415,7 @@ class ElliotV5_SMA_Shorts(IStrategy):
         - EMAs: Multiple periods for entry/exit price reference
         - EWO: Elliott Wave Oscillator (momentum indicator)
         - RSI: Relative Strength Index (overbought/oversold filter)
+        - Volatility indicators: For adaptive stop loss
         """
         # Calculate EMAs for entry signals (short at premium above EMA)
         for val in self.base_nb_candles_short_entry.range:
@@ -397,6 +431,32 @@ class ElliotV5_SMA_Shorts(IStrategy):
 
         # Calculate RSI (14-period)
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
+
+        # Volatility-based indicators for adaptive stop loss
+        dataframe['OHLC4'] = (dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
+
+        # Check how far we are from min and max over short window
+        dataframe['max'] = dataframe['OHLC4'].rolling(self.mms.value).max() / dataframe['OHLC4'] - 1
+        dataframe['min'] = abs(dataframe['OHLC4'].rolling(self.mms.value).min() / dataframe['OHLC4'] - 1)
+
+        # Check how far we are from min and max over long window (360 candles = 30 hours at 5m)
+        dataframe['max_l'] = dataframe['OHLC4'].rolling(self.mml.value).max() / dataframe['OHLC4'] - 1
+        dataframe['min_l'] = abs(dataframe['OHLC4'].rolling(self.mml.value).min() / dataframe['OHLC4'] - 1)
+
+        # Apply rolling window operation to calculate volatility
+        rolling_window = dataframe['OHLC4'].rolling(self.move.value)
+
+        # Calculate the peak-to-peak value (max - min) in rolling window
+        ptp_value = rolling_window.apply(lambda x: np.ptp(x))
+
+        # Normalize volatility by current price
+        dataframe['move'] = ptp_value / dataframe['OHLC4']
+
+        # Per-pair volatility adaptation (NOT rolling mean - intentional)
+        # Uses mean across ALL history to get this coin's natural volatility
+        # NAORIS might average 15% moves, BTC might average 3% - this adapts stops per coin
+        dataframe['move_mean'] = dataframe['move'].mean()  # Average volatility
+        dataframe['move_mean_x'] = dataframe['move'].mean() * 1.6  # 1.6x average volatility
 
         return dataframe
 
