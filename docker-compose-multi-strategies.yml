@@ -107,6 +107,23 @@ services:
       --strategy-path user_data/strategies/Rsiqui
       --strategy RsiquiV5
 
+  # NASOSv4_Shorts Strategy (Shorts-only with 3x leverage)
+  freqtrade-nasosv4_shorts:
+    <<: *common-settings
+    container_name: freqtrade-nasosv4_shorts
+    ports:
+      - "127.0.0.1:8104:8080"
+    env_file:
+      - path: ./env-files/nasosv4_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/nasosv4_shorts-tradesv3.sqlite
+      --log-file user_data/logs/nasosv4_shorts.log
+      --strategy-path user_data/strategies/NASOSv4
+      --strategy NASOSv4_Shorts
+
   # ElliotV5_SMA_Shorts Strategy (Shorts-only parallel test)
   freqtrade-elliotv5_sma_shorts:
     <<: *common-settings
