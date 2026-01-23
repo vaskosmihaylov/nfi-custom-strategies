@@ -171,6 +171,3 @@ config*.json
 .env**
 daily-sync-nfi.sh
 manage-daily-sync.sh
-
-# Custom strategy location - not in upstream
-user_data/strategies/nfi/
