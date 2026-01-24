@@ -22,21 +22,21 @@ Two entry conditions (OR logic - either can trigger):
 
 - **ROI-based**: Time-decay profit targets (21.5% → 3% over 201 minutes)
 - **Signal-based**: Price crosses above SMA * high_offset
-- **Trailing stop**: Tiered profit-based (0.5%-2% based on profit level)
-- **Custom stop loss**: Profit-based tiered system (see below)
+- **Trailing stop**: Activates at +3% profit with 0.5% trail
+- **Custom stop loss**: 3-layer protection system (see below)
 
-## Profit-Based Stop Loss with Emergency Exit
+## Volatility-Adaptive Stop Loss with Moon Mode
 
-**Base Stoploss** (-0.09)
-- 9% account loss = 27% price movement at 3x leverage
-- Safe margin: 24% buffer before -33% liquidation
+**NO PROTECTION WINDOW** - Immediately trails to prevent liquidations
 
-**custom_stoploss()** - Profit-Based Tiered Trailing
-- Loss zone: -9% stop until breakeven
-- Early profit (0-1%): -2% trailing stop
-- Medium profit (1-3%): -1% trailing stop
-- High profit (3%+): -0.5% trailing stop
-- Emergency exit: Triggers within 15% of liquidation price
+**Base Stoploss** (-0.99)
+- Wide safety net that allows recovery
+
+**custom_stoploss()** - Volatility-Adaptive Trailing
+- Moon Mode: When making new highs (max_l > 0.003), allows wider trailing
+- Adapts to each coin's volatility (move_mean, move_mean_x)
+- For volatile coins (15-20% swings), automatically uses wider stops
+- Prevents liquidations by tightening before -30% loss
 
 **custom_exit()** - Time-Based Unclog
 - Exits losing positions after N days at -4% loss
@@ -131,7 +131,7 @@ class ElliotV5_SMA(IStrategy):
         "201": 0.03
     }
 
-    stoploss = -0.09  # 9% base stop = 27% loss at 3x leverage (safe from -33% liquidation)
+    stoploss = -0.99
 
     # Volatility-based trailing stop parameters
     sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
@@ -255,8 +255,6 @@ class ElliotV5_SMA(IStrategy):
             (
                 (dataframe['close'] < (dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * self.low_offset.value)) &
                 (dataframe['EWO'] < self.ewo_low.value) &
-                (dataframe['rsi'] < 30) &  # Only enter true oversold conditions
-                (dataframe['rsi'] > dataframe['rsi'].shift(1)) &  # RSI must be turning up (reversal signal)
                 (dataframe['volume'] > 0)
             )
         )
@@ -303,65 +301,73 @@ class ElliotV5_SMA(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Tiered profit-based trailing stop for 3x leverage liquidation prevention.
+        Volatility-adaptive trailing stop loss with Moon Mode.
 
-        CRITICAL: At 3x leverage, liquidation occurs at approximately -33% price movement.
-        This stop system ensures we exit well before reaching liquidation zone.
+        NO PROTECTION WINDOW - Starts trailing immediately to prevent liquidations.
 
-        Stop Tiers (optimized for 3x leverage):
-        - Loss zone: -9% stop (27% loss at 3x) until breakeven
-        - Early profit (0-1%): -2% stop (6% loss at 3x) to protect capital
-        - Medium profit (1-3%): -1% stop (3% loss at 3x) to lock gains
-        - High profit (3%+): -0.5% stop (1.5% loss at 3x) to maximize winners
+        Moon Mode Logic:
+        - When making new highs (max_l > 0.003): Allow wider trailing
+          → Trail at move_mean_x (1.6x volatility) when profit > move_mean_x
+          → Trail at sl1 (tight) when profit > move_mean
+        - When not making new highs: Tighter protection
+          → Trail at sl1 when profit > sl1
 
-        Emergency Protection:
-        - If within 15% of liquidation price: Exit immediately
-        - Based on NFI pattern (proven in production)
+        Volatility Adaptation:
+        - move_mean: Average volatility of this pair
+        - move_mean_x: 1.6x average volatility (wider buffer)
+        - For volatile coins (15-20% swings), stops adapt automatically
+        - For stable coins, stops are tighter
 
-        Why this works:
-        - No protection window = stops active immediately
-        - Profit-based = adapts to trade performance
-        - Conservative = exits before liquidation zone (-33%)
-        - Simple logic = reliable, testable, maintainable
+        Why this prevents liquidations:
+        - No 48h protection = stops can trigger immediately when needed
+        - Volatility-adaptive = won't stop out on normal swings
+        - Base stop still -0.99 = allows recovery, but custom_stoploss tightens before -30%
 
         Args:
             pair: Trading pair
-            trade: Trade object with liquidation_price
+            trade: Trade object
             current_time: Current timestamp
             current_rate: Current price
             current_profit: Current profit/loss ratio
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage (negative = loss threshold)
+            float: Stoploss percentage or self.stoploss to keep base
         """
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Emergency liquidation protection (borrowed from NFI strategy)
-        # Only active in futures/margin mode when liquidation price exists
-        if (self.config.get('trading_mode', '') in ('futures', 'margin')
-            and trade.liquidation_price is not None
-            and current_rate < trade.liquidation_price * 1.15):  # Within 15% of liquidation
-            logger.warning(f"{pair} EMERGENCY EXIT - Near liquidation! "
-                          f"Price: {current_rate:.8f}, Liq: {trade.liquidation_price:.8f}")
-            return 0.001  # Exit immediately (tiny positive = force exit)
+        SLT1 = current_candle['move_mean']  # Average volatility
+        SL1 = self.sl1.value  # Fixed tight stop (e.g., -0.013 = 1.3%)
+        SLT2 = current_candle['move_mean_x']  # 1.6x average volatility
+        SL2 = current_candle['move_mean_x'] - current_candle['move_mean']  # Difference
 
-        # Profit-based trailing stops (adapted from E0V1E strategy)
-        # Each tier balances protection vs letting winners run
+        display_profit = current_profit * 100
+        slt1 = SLT1 * 100 if SLT1 is not None else 0
+        sl1 = SL1 * 100
+        slt2 = SLT2 * 100 if SLT2 is not None else 0
+        sl2 = SL2 * 100 if SL2 is not None else 0
 
-        if current_profit >= 0.03:  # 3%+ profit
-            # High profit = tight trail to lock in gains
-            return -0.005  # 0.5% trailing stop (1.5% loss at 3x leverage)
+        # Moon mode: When making new highs (price near 360-candle high), allow wider trailing
+        if current_candle['max_l'] > 0.003:
+            # At high profit (> 1.6x volatility), trail with medium stop
+            if SLT2 is not None and not np.isnan(SLT2) and current_profit > SLT2:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt2:.2f}/{sl2:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt2:.2f}/{sl2:.2f} activated')
+                return SL2
+            # At medium profit (> average volatility), trail with tight stop
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SLT1:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - Moon Mode {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
+        else:
+            # Not making new highs: Tighter protection
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SL1:
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                return SL1  # Safe stoploss
 
-        elif current_profit >= 0.01:  # 1-3% profit
-            # Medium profit = moderate trail
-            return -0.01  # 1% trailing stop (3% loss at 3x leverage)
-
-        elif current_profit >= 0.00:  # Breakeven to 1% profit
-            # Low profit = wider trail to avoid premature exit
-            return -0.02  # 2% trailing stop (6% loss at 3x leverage)
-
-        # Still in loss = use base stoploss
-        return self.stoploss  # -9% base stop (27% loss at 3x leverage)
+        return self.stoploss  # Keep base -0.99
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:

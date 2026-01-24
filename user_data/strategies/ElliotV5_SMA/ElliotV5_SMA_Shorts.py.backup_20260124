@@ -126,7 +126,7 @@ class ElliotV5_SMA_Shorts(IStrategy):
     }
 
     # Stop loss for shorts (matches long strategy for consistent risk management)
-    stoploss = -0.09  # 9% base stop = 27% loss at 3x leverage (safe from -33% liquidation)
+    stoploss = -0.99
 
     # Volatility-based trailing stop parameters
     sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
@@ -244,56 +244,75 @@ class ElliotV5_SMA_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Tiered profit-based trailing stop for SHORT positions with 3x leverage.
+        Volatility-adaptive trailing stop loss with Crash Mode for shorts.
 
-        Identical logic to long strategy, but liquidation check inverted for shorts.
+        NO PROTECTION WINDOW - Starts trailing immediately to prevent liquidations.
 
-        CRITICAL: At 3x leverage, liquidation occurs at approximately +33% price movement.
-        This stop system ensures we exit well before reaching liquidation zone.
+        Crash Mode Logic (inverse of Moon Mode):
+        - When making new lows (min_l < 0.003): Tighter stops to protect profits
+          → Short is very profitable (price crashing) = use conservative stop
+        - When not making new lows (price rallying): Allow wider trailing
+          → Trail at move_mean_x (1.6x volatility) when profit > move_mean_x
+          → Trail at sl1 (tight) when profit > move_mean
 
-        Stop Tiers (optimized for 3x leverage):
-        - Loss zone: -9% stop (27% loss at 3x) until breakeven
-        - Early profit (0-1%): -2% stop (6% loss at 3x) to protect capital
-        - Medium profit (1-3%): -1% stop (3% loss at 3x) to lock gains
-        - High profit (3%+): -0.5% stop (1.5% loss at 3x) to maximize winners
+        Volatility Adaptation:
+        - move_mean: Average volatility of this pair
+        - move_mean_x: 1.6x average volatility (wider buffer)
+        - For volatile coins (15-20% swings), stops adapt automatically
+        - For stable coins, stops are tighter
 
-        Emergency Protection:
-        - If within 15% of liquidation price: Exit immediately (inverted for shorts)
-        - Based on NFI pattern (proven in production)
+        Why this prevents liquidations:
+        - No 48h protection = stops can trigger immediately when needed
+        - Volatility-adaptive = won't stop out on normal swings
+        - Base stop still -0.99 = allows recovery, but custom_stoploss tightens before -30%
 
         Args:
             pair: Trading pair
-            trade: Trade object with liquidation_price
+            trade: Trade object
             current_time: Current timestamp
             current_rate: Current price
             current_profit: Current profit/loss ratio
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage (negative = loss threshold)
+            float: Stoploss percentage or 1.0 to keep base
         """
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Emergency liquidation protection for SHORTS (inverted logic)
-        # Only active in futures/margin mode when liquidation price exists
-        if (self.config.get('trading_mode', '') in ('futures', 'margin')
-            and trade.liquidation_price is not None
-            and current_rate > trade.liquidation_price * 0.85):  # Within 15% of liquidation (INVERTED)
-            logger.warning(f"{pair} SHORT EMERGENCY EXIT - Near liquidation! "
-                          f"Price: {current_rate:.8f}, Liq: {trade.liquidation_price:.8f}")
-            return 0.001  # Exit immediately
+        SLT1 = current_candle['move_mean']  # Average volatility
+        SL1 = self.sl1.value  # Fixed tight stop (e.g., -0.013 = 1.3%)
+        SLT2 = current_candle['move_mean_x']  # 1.6x average volatility
+        SL2 = current_candle['move_mean_x'] - current_candle['move_mean']  # Difference
 
-        # Profit-based trailing stops (same as longs)
-        if current_profit >= 0.03:  # 3%+ profit
-            return -0.005  # 0.5% trailing stop
+        display_profit = current_profit * 100
+        slt1 = SLT1 * 100 if SLT1 is not None else 0
+        sl1 = SL1 * 100
+        slt2 = SLT2 * 100 if SLT2 is not None else 0
+        sl2 = SL2 * 100 if SL2 is not None else 0
 
-        elif current_profit >= 0.01:  # 1-3% profit
-            return -0.01  # 1% trailing stop
+        # Crash mode: When making new lows (min_l < 0.003), tighten stops
+        # Small min_l = price at/near lows = SHORT IS PROFITABLE (price crashing)
+        if current_candle['min_l'] < 0.003:
+            # Short is very profitable (market crashing to new lows), use conservative stop
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SL1:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - Crash Mode {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - Crash Mode {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
 
-        elif current_profit >= 0.00:  # Breakeven to 1% profit
-            return -0.02  # 2% trailing stop
+        # Rally mode: Not making new lows (price rising away from lows), allow trailing
+        else:
+            if SLT2 is not None and not np.isnan(SLT2) and current_profit > SLT2:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt2:.2f}/{sl2:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt2:.2f}/{sl2:.2f} activated')
+                return SL2
+            if SLT1 is not None and not np.isnan(SLT1) and current_profit > SLT1:
+                self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
+                return SL1
 
-        # Still in loss = use base stoploss
-        return self.stoploss  # -9% base stop (27% loss at 3x leverage)
+        # Default: Return 1.0 to keep base stoploss active (valid FreqTrade API)
+        return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
@@ -476,7 +495,6 @@ class ElliotV5_SMA_Shorts(IStrategy):
                 (dataframe['EWO'] < self.ewo_low.value) &
                 # RSI confirms upward movement (rally to short)
                 (dataframe['rsi'] > self.rsi_short.value) &
-                (dataframe['rsi'] < dataframe['rsi'].shift(1)) &  # RSI turning down (continuation signal)
                 # Volume confirmation
                 (dataframe['volume'] > 0)
             )
