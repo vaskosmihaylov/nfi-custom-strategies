@@ -22,7 +22,7 @@ x-common-settings:
     start_interval: 5s
 
 services:
-  # NostalgiaForInfinityX6 Strategy
+  # NostalgiaForInfinityX7 Strategy (uses upstream symlink)
   freqtrade-nfi-x7:
     <<: *common-settings
     container_name: freqtrade-nfi-x7
@@ -36,7 +36,7 @@ services:
       --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/nfi-x7-tradesv3.sqlite
       --log-file user_data/logs/nfi-x7.log
-      --strategy-path user_data/strategies/nfi
+      --strategy-path user_data/strategies
       --strategy NostalgiaForInfinityX7
 
   # ElliotV5_SMA Strategy

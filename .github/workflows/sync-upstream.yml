@@ -1,0 +1,75 @@
+name: Sync Fork from Upstream
+
+on:
+  # Run daily at 6:00 AM UTC
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper merge
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/iterativv/NostalgiaForInfinity.git || true
+          git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          echo "Current branch: $(git branch --show-current)"
+          echo "Merging from upstream/main..."
+
+          # Merge upstream changes
+          git merge upstream/main --no-edit || {
+            echo "Merge conflict detected, attempting auto-resolution..."
+
+            # If there are conflicts, prefer upstream version for NFI files
+            # but keep our custom directories
+            git status --porcelain | grep '^UU' || exit 0
+
+            # For any conflicts in root-level .py files, take upstream version
+            for file in $(git diff --name-only --diff-filter=U); do
+              if [[ "$file" == NostalgiaForInfinity*.py ]]; then
+                echo "Auto-resolving $file - taking upstream version"
+                git checkout --theirs "$file"
+                git add "$file"
+              fi
+            done
+
+            # Try to complete merge
+            git commit --no-edit || {
+              echo "❌ Merge conflicts could not be auto-resolved"
+              echo "Manual intervention required!"
+              exit 1
+            }
+          }
+
+      - name: Push to fork
+        run: |
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "✅ Sync completed successfully"
+          echo "Latest commit: $(git log -1 --oneline)"
+
+          # Check for NFI version
+          if [ -f "NostalgiaForInfinityX7.py" ]; then
+            VERSION=$(grep 'return "v' NostalgiaForInfinityX7.py | head -1 | sed 's/.*return "\(v[^"]*\)".*/\1/' 2>/dev/null || echo "unknown")
+            echo "NFI X7 version: $VERSION"
+          fi
