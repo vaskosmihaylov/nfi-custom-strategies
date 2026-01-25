@@ -112,4 +112,4 @@ class RsiquiV5_long_only(IStrategy):
         return dataframe
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float, proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
-        return 10
+        return 3
