@@ -41,6 +41,7 @@ user_data/strategies/
 
 **Why this works**:
 - Upstream NFI strategies are symlinks (no conflicts during merge)
+- Root-level strategy files are mounted into Docker (makes symlinks work)
 - Your custom subdirectories are not in upstream (no conflicts)
 - Freqtrade loads strategies recursively from subdirectories
 - GitHub Actions handles sync automatically
@@ -172,7 +173,9 @@ cd /opt/trading/nfi-custom-strategies
 - ✅ Simple production script: `pull-and-restart.sh` (just pull + restart)
 
 ### Updated
-- ✅ `docker-compose-multi-strategies.yml` line 39: `user_data/strategies/nfi` → `user_data/strategies`
+- ✅ `docker-compose-multi-strategies.yml`:
+  - Line 39: `user_data/strategies/nfi` → `user_data/strategies`
+  - Added volume mounts for root-level NFI files (makes symlinks work in Docker)
 
 ---
 
@@ -208,13 +211,40 @@ docker exec freqtrade-nfi-x7 ls -la /freqtrade/user_data/strategies/ | grep X7
 # Should show symlink:
 # lrwxr-xr-x NostalgiaForInfinityX7.py -> ../../NostalgiaForInfinityX7.py
 
+# Verify symlink target exists in container
+docker exec freqtrade-nfi-x7 ls -la /freqtrade/NostalgiaForInfinityX7.py
+# Should show the file exists (not "No such file")
+
 # Check class name in root file
 docker exec freqtrade-nfi-x7 grep 'class Nostalgia' /freqtrade/NostalgiaForInfinityX7.py
 # Should show: class NostalgiaForInfinityX7(IStrategy):
 
+# Verify symlink resolves correctly
+docker exec freqtrade-nfi-x7 cat /freqtrade/user_data/strategies/NostalgiaForInfinityX7.py | head -100 | grep 'class Nostalgia'
+# Should show: class NostalgiaForInfinityX7(IStrategy):
+
 # Restart container
-docker restart freqtrade-nfi-x7
+docker compose -f docker-compose-multi-strategies.yml restart freqtrade-nfi-x7
 docker logs freqtrade-nfi-x7 | tail -50
+```
+
+### If symlink is broken in Docker:
+**Error**: "Impossible to load Strategy 'NostalgiaForInfinityX7'"
+
+**Cause**: Root-level strategy files not mounted in Docker
+
+**Fix**: Check `docker-compose-multi-strategies.yml` has these volume mounts:
+```yaml
+volumes:
+  - "./user_data:/freqtrade/user_data"
+  - "./NostalgiaForInfinityX7.py:/freqtrade/NostalgiaForInfinityX7.py:ro"
+  - "./NostalgiaForInfinityX6.py:/freqtrade/NostalgiaForInfinityX6.py:ro"
+  - "./NostalgiaForInfinityX5.py:/freqtrade/NostalgiaForInfinityX5.py:ro"
+```
+
+Then recreate containers:
+```bash
+docker compose -f docker-compose-multi-strategies.yml up -d --force-recreate
 ```
 
 ### If GitHub Actions fails:

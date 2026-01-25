@@ -13,6 +13,10 @@ x-common-settings:
     - "./user_data:/freqtrade/user_data"
     - "./user_data/data:/freqtrade/user_data/data"
     - "./configs:/freqtrade/configs"
+    # Mount root-level strategy files (needed for symlinks to work)
+    - "./NostalgiaForInfinityX7.py:/freqtrade/NostalgiaForInfinityX7.py:ro"
+    - "./NostalgiaForInfinityX6.py:/freqtrade/NostalgiaForInfinityX6.py:ro"
+    - "./NostalgiaForInfinityX5.py:/freqtrade/NostalgiaForInfinityX5.py:ro"
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:8080"]
     interval: 1m30s
