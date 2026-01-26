@@ -129,8 +129,8 @@ class ETCG(IStrategy):
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.001
-    trailing_stop_positive_offset = 0.012
+    trailing_stop_positive = 0.005  # 0.5% - increased from 0.1% to let winners run
+    trailing_stop_positive_offset = 0.03  # 3% - increased from 1.2% to capture bigger moves
     trailing_only_offset_is_reached = True
 
     #cofi
