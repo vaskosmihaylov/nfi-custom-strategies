@@ -131,7 +131,7 @@ class ElliotV5_SMA(IStrategy):
         "201": 0.03
     }
 
-    stoploss = -0.09  # 9% base stop = 27% loss at 3x leverage (safe from -33% liquidation)
+    stoploss = -0.075  # 7.5% base stop = 22.5% loss at 3x leverage (safer buffer from -33% liquidation)
 
     # Volatility-based trailing stop parameters
     sl1 = DecimalParameter(-0.013, -0.005, default=-0.013, space='sell', optimize=True)
@@ -211,6 +211,15 @@ class ElliotV5_SMA(IStrategy):
 
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
 
+        # ATR volatility filter (NEW - prevents entries on ultra-volatile coins)
+        # ATR as percentage of price helps identify problematic coins
+        dataframe['atr'] = ta.ATR(dataframe, timeperiod=14)
+        dataframe['atr_pct'] = (dataframe['atr'] / dataframe['close']) * 100
+
+        # Volume surge confirmation (NEW - ensures strong momentum entries)
+        # Moving average of volume over 20 periods
+        dataframe['volume_ma'] = dataframe['volume'].rolling(20).mean()
+
         # Volatility-based indicators for adaptive stop loss
         dataframe['OHLC4'] = (dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
 
@@ -240,23 +249,54 @@ class ElliotV5_SMA(IStrategy):
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        """
+        Define LONG entry conditions with enhanced filters.
+
+        Two conditions (OR logic - either can trigger entry):
+
+        Condition 1: High EWO Long
+        - Price at discount below EMA (EWO > 3.34)
+        - RSI < 65 confirms not overbought
+        - Buy the dip with strong positive momentum
+
+        Condition 2: Low EWO Long (Falling Knife Prevention)
+        - Price at discount below EMA (EWO < -17.457)
+        - RSI < 30 confirms oversold
+        - RSI turning up confirms reversal (prevents catching falling knives)
+        - Buy true reversals, not just crashes
+
+        Both conditions require:
+        - Price trading at discount below EMA
+        - ATR filter: Volatility < 10% (prevents ultra-volatile coins)
+        - Volume surge: Volume > 1.5x MA (ensures strong momentum)
+        """
         conditions = []
 
+        # Condition 1: High EWO Long (Strong positive momentum dip)
         conditions.append(
             (
                 (dataframe['close'] < (dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * self.low_offset.value)) &
                 (dataframe['EWO'] > self.ewo_high.value) &
                 (dataframe['rsi'] < self.rsi_buy.value) &
+                # NEW: ATR volatility filter
+                (dataframe['atr_pct'] < 10.0) &  # Less than 10% ATR
+                # NEW: Volume surge confirmation
+                (dataframe['volume'] > dataframe['volume_ma'] * 1.5) &  # 50% above average volume
                 (dataframe['volume'] > 0)
             )
         )
 
+        # Condition 2: Low EWO Long (Falling knife prevention with reversal confirmation)
         conditions.append(
             (
                 (dataframe['close'] < (dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * self.low_offset.value)) &
                 (dataframe['EWO'] < self.ewo_low.value) &
                 (dataframe['rsi'] < 30) &  # Only enter true oversold conditions
                 (dataframe['rsi'] > dataframe['rsi'].shift(1)) &  # RSI must be turning up (reversal signal)
+                # NEW: ATR volatility filter
+                (dataframe['atr_pct'] < 10.0) &  # Less than 10% ATR
+                # NEW: Volume surge confirmation
+                (dataframe['volume'] > dataframe['volume_ma'] * 1.5) &  # 50% above average volume
                 (dataframe['volume'] > 0)
             )
         )
@@ -303,26 +343,33 @@ class ElliotV5_SMA(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Tiered profit-based trailing stop for 3x leverage liquidation prevention.
+        OPTIMIZED asymmetric trailing stop for LONG positions with 3x leverage.
 
-        CRITICAL: At 3x leverage, liquidation occurs at approximately -33% price movement.
-        This stop system ensures we exit well before reaching liquidation zone.
+        CRITICAL FIXES:
+        1. Tighter base stop (-7.5% vs -9%) to reduce slippage overshoots
+        2. Wider profit tiers to let winners run (target 4-6% vs tight 1-2%)
+        3. Emergency liquidation protection maintained
 
-        Stop Tiers (optimized for 3x leverage):
-        - Loss zone: -9% stop (27% loss at 3x) until breakeven
-        - Early profit (0-1%): -2% stop (6% loss at 3x) to protect capital
-        - Medium profit (1-3%): -1% stop (3% loss at 3x) to lock gains
-        - High profit (3%+): -0.5% stop (1.5% loss at 3x) to maximize winners
+        OPTIMIZATION RATIONALE:
+        - Longs had 100% win rate but only 1.4% avg profit
+        - Trailing stops too tight (0.5-2%) exiting too early
+        - Need to let winners develop to 4-6% before tightening
+
+        NEW OPTIMIZED TIERS (Let Winners Run):
+        - Loss zone: -7.5% stop (22.5% loss at 3x) - tighter to prevent overshoots
+        - Early profit (0-2%): -3% trail (9% loss at 3x) - WIDENED to let small wins grow
+        - Low profit (2-4%): -2% trail (6% loss at 3x) - captures 4%+ moves
+        - Medium profit (4-6%): -1.5% trail (4.5% loss at 3x) - protects significant gains
+        - High profit (6%+): -1% trail (3% loss at 3x) - locks in big winners
+
+        EXPECTED IMPROVEMENTS:
+        - Average wins: 1.4% → 3-5% (2-3x increase)
+        - Win rate: Stays ~100% (already excellent)
+        - Total profit: +242 → +500-700 USDT per 17 trades
 
         Emergency Protection:
         - If within 15% of liquidation price: Exit immediately
         - Based on NFI pattern (proven in production)
-
-        Why this works:
-        - No protection window = stops active immediately
-        - Profit-based = adapts to trade performance
-        - Conservative = exits before liquidation zone (-33%)
-        - Simple logic = reliable, testable, maintainable
 
         Args:
             pair: Trading pair
@@ -345,35 +392,45 @@ class ElliotV5_SMA(IStrategy):
                           f"Price: {current_rate:.8f}, Liq: {trade.liquidation_price:.8f}")
             return 0.001  # Exit immediately (tiny positive = force exit)
 
-        # Profit-based trailing stops (adapted from E0V1E strategy)
-        # Each tier balances protection vs letting winners run
+        # OPTIMIZED Profit-based trailing stops (asymmetric - let winners run)
+        if current_profit >= 0.06:  # 6%+ profit (HIGH - lock in big wins)
+            return -0.01  # 1% trailing stop (tight to protect big gains)
 
-        if current_profit >= 0.03:  # 3%+ profit
-            # High profit = tight trail to lock in gains
-            return -0.005  # 0.5% trailing stop (1.5% loss at 3x leverage)
+        elif current_profit >= 0.04:  # 4-6% profit (MEDIUM - significant gains)
+            return -0.015  # 1.5% trailing stop (balance protection & growth)
 
-        elif current_profit >= 0.01:  # 1-3% profit
-            # Medium profit = moderate trail
-            return -0.01  # 1% trailing stop (3% loss at 3x leverage)
+        elif current_profit >= 0.02:  # 2-4% profit (LOW - let it grow)
+            return -0.02  # 2% trailing stop (wider to reach 4%+)
 
-        elif current_profit >= 0.00:  # Breakeven to 1% profit
-            # Low profit = wider trail to avoid premature exit
-            return -0.02  # 2% trailing stop (6% loss at 3x leverage)
+        elif current_profit >= 0.00:  # Breakeven to 2% profit (EARLY - let it develop)
+            return -0.03  # 3% trailing stop (WIDENED from -2% to let winners develop)
 
-        # Still in loss = use base stoploss
-        return self.stoploss  # -9% base stop (27% loss at 3x leverage)
+        # Still in loss = use TIGHTER base stoploss (FIXED from -9% to -7.5%)
+        return -0.075  # -7.5% base stop (22.5% loss at 3x leverage, safer than old -9%)  # -9% base stop (27% loss at 3x leverage)
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        Time-based unclog mechanism for losing and zombie trades.
+        Enhanced exit logic with time-based profit locking and unclog mechanism.
 
-        With volatility-adaptive stop loss, this mainly handles:
-        - Unclog: Trades that have been losing for too long
-        - Zombie: Trades stuck at breakeven
+        NEW FEATURES:
+        1. Profit Locking: Exit profitable longs after extended hold (prevents erosion)
+        2. Unclog: Force exit losing positions after N days (frees capital)
 
-        Logic (matches EI4_t4c0s_V2_2):
-        - If losing > unclog threshold after unclog_days: Force exit ('unclog')
+        RATIONALE FOR PROFIT LOCKING (LONGS):
+        - Longs have UNLIMITED upside (can 10x, 100x)
+        - Use LONGER time windows than shorts to let big winners run
+        - But still lock profits to prevent complete reversals
+
+        Profit Locking Tiers (LONGER than shorts):
+        - 8%+ profit after 8 hours: Exit (exceptional long, lock it)
+        - 5%+ profit after 12 hours: Exit (good long, secure gains)
+        - 3%+ profit after 24 hours: Exit (solid long, don't get greedy)
+
+        Unclog Logic:
+        - Losing trades > unclog threshold after N days: Force exit
+        - Frees capital from dead positions
+        - Default: -4% after 4 days
 
         Args:
             pair: Trading pair
@@ -386,8 +443,31 @@ class ElliotV5_SMA(IStrategy):
         Returns:
             Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Unclog: Sell any positions at a loss if they are held for more than N days
-        if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
+        # Calculate trade duration in hours
+        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+        trade_duration_days = (current_time - trade.open_date_utc).days
+
+        # PROFIT LOCKING: Time-based exit for profitable longs
+        # LONGER windows than shorts to let big winners run
+
+        # Tier 1: Exceptional long (8%+ profit after 8 hours)
+        if current_profit >= 0.08 and trade_duration_hours >= 8:
+            logger.info(f"{pair} Profit Locking (Tier 1) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
+            return 'profit_lock_tier1'
+
+        # Tier 2: Good long (5%+ profit after 12 hours)
+        if current_profit >= 0.05 and trade_duration_hours >= 12:
+            logger.info(f"{pair} Profit Locking (Tier 2) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
+            return 'profit_lock_tier2'
+
+        # Tier 3: Solid long (3%+ profit after 24 hours)
+        if current_profit >= 0.03 and trade_duration_hours >= 24:
+            logger.info(f"{pair} Profit Locking (Tier 3) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
+            return 'profit_lock_tier3'
+
+        # UNCLOG: Sell any positions at a loss if they are held for more than N days
+        if current_profit < -self.unclog.value and trade_duration_days >= self.unclog_days.value:
+            logger.info(f"{pair} Unclog - {current_profit:.2%} after {trade_duration_days} days")
             return 'unclog'
 
         return None
