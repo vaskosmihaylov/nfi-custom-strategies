@@ -196,8 +196,8 @@ curl http://127.0.0.1:8100/api/v1/ping  # EI4_t4c0s_V2_2
 curl http://127.0.0.1:8101/api/v1/ping  # EI4_t4c0s_V2_2_Shorts
 curl http://127.0.0.1:8102/api/v1/ping  # ETCG
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
-curl http://127.0.0.1:8104/api/v1/ping  # ClucHAnix_hhll
-curl http://127.0.0.1:8105/api/v1/ping  # ClucHAnix_hhll_Shorts
+curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
+curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
