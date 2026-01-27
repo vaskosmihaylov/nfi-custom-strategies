@@ -247,6 +247,40 @@ services:
       --strategy-path user_data/strategies/ETCG
       --strategy ETCG_Shorts
 
+  # ClucHAnix_hhll Strategy (Longs)
+  freqtrade-cluchanix-hhll:
+    <<: *common-settings
+    container_name: freqtrade-cluchanix-hhll
+    ports:
+      - "127.0.0.1:8104:8080"
+    env_file:
+      - path: ./env-files/cluchanix_hhll.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/cluchanix_hhll-tradesv3.sqlite
+      --log-file user_data/logs/cluchanix_hhll.log
+      --strategy-path user_data/strategies/Cluc
+      --strategy ClucHAnix_hhll
+
+  # ClucHAnix_hhll_Shorts Strategy (Shorts-only)
+  freqtrade-cluchanix-hhll-shorts:
+    <<: *common-settings
+    container_name: freqtrade-cluchanix-hhll-shorts
+    ports:
+      - "127.0.0.1:8105:8080"
+    env_file:
+      - path: ./env-files/cluchanix_hhll_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/cluchanix_hhll_shorts-tradesv3.sqlite
+      --log-file user_data/logs/cluchanix_hhll_shorts.log
+      --strategy-path user_data/strategies/Cluc
+      --strategy ClucHAnix_hhll_Shorts    
+
 networks:
   default:
     name: freqtrade-network

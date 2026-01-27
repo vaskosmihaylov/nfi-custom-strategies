@@ -63,7 +63,7 @@ show_help() {
     echo "Available strategies:"
     echo "  nfi-x7, elliotv5_sma, binclucmadv1, nasosv4, rsiquiv5,"
     echo "  elliotv5_sma_shorts, e0v1e, e0v1e_shorts, ei4_t4c0s_v2_2, ei4_t4c0s_v2_2_shorts,"
-    echo "  etcg, etcg_shorts"
+    echo "  etcg, etcg_shorts, cluchanix-hhll, cluchanix-hhll-shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -86,6 +86,8 @@ show_help() {
     echo "  EI4_t4c0s_V2_2_Shorts: http://freq.gaiaderma.com/ei4_t4c0s_v2_2_shorts"
     echo "  ETCG:                  http://freq.gaiaderma.com/etcg"
     echo "  ETCG_Shorts:           http://freq.gaiaderma.com/etcg_shorts"
+    echo "  ClucHAnix_hhll:        http://freq.gaiaderma.com/cluchanix_hhll"
+    echo "  ClucHAnix_hhll_Shorts: http://freq.gaiaderma.com/cluchanix_hhll_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -225,6 +227,8 @@ health_check() {
         "ei4_t4c0s_v2_2_shorts:8101"
         "etcg:8102"
         "etcg_shorts:8103"
+        "cluchanix-hhll:8104"
+        "cluchanix-hhll-shorts:8105"
     )
     
     local healthy=0
