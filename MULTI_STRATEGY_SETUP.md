@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **14 different trading strategies** running in separate Docker containers
+- **16 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -30,7 +30,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ETCG (Port 8102)
                            ├── ETCG_Shorts (Port 8103)
                            ├── ClucHAnix_hhll (Port 8106)
-                           └── ClucHAnix_hhll_Shorts (Port 8107)
+                           ├── ClucHAnix_hhll_Shorts (Port 8107)
+                           ├── AwesomeEWOLambo (Port 8108)
+                           └── AwesomeEWOLambo_Shorts (Port 8109)
 ```
 
 ## 📁 Files Created
@@ -144,6 +146,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 | **ClucHAnix_hhll** | `Vasko_ClucHAnix_hhll` | `http://freq.gaiaderma.com/cluchanix_hhll` | `cluchanix_hhll_user` | `cluchanix_hhll_secure_password` |
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
+| **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
+| **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
 
 ### ✅ URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/elliotv5_sma`
@@ -198,6 +202,8 @@ curl http://127.0.0.1:8102/api/v1/ping  # ETCG
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
 curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
+curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
+curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -210,6 +216,8 @@ curl http://freq.gaiaderma.com/etcg/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
+curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -251,6 +259,8 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - ETCG_Shorts: 8103
 - ClucHAnix_hhll: 8106
 - ClucHAnix_hhll_Shorts: 8107
+- AwesomeEWOLambo: 8108
+- AwesomeEWOLambo_Shorts: 8109
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -269,6 +279,8 @@ Each strategy uses its own SQLite database:
 - `etcg_shorts-tradesv3.sqlite`
 - `cluchanix_hhll-tradesv3.sqlite`
 - `cluchanix_hhll_shorts-tradesv3.sqlite`
+- `awesomeewolambo-tradesv3.sqlite`
+- `awesomeewolambo_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
@@ -379,6 +391,8 @@ curl http://freq.gaiaderma.com/etcg/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
+curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
 
 # Test health endpoints
 curl http://freq.gaiaderma.com/health/nfi-x7
@@ -392,6 +406,8 @@ curl http://freq.gaiaderma.com/health/etcg
 curl http://freq.gaiaderma.com/health/etcg_shorts
 curl http://freq.gaiaderma.com/health/cluchanix_hhll
 curl http://freq.gaiaderma.com/health/cluchanix_hhll_shorts
+curl http://freq.gaiaderma.com/health/awesomeewolambo
+curl http://freq.gaiaderma.com/health/awesomeewolambo_shorts
 
 # Check container status
 ./deploy-multi-strategies.sh status
