@@ -3,6 +3,7 @@ import numpy as np
 import talib.abstract as ta
 import time
 import logging
+import pandas as pd
 
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import merge_informative_pair, DecimalParameter, stoploss_from_open, RealParameter
@@ -10,6 +11,9 @@ from pandas import DataFrame, Series
 from datetime import datetime, timedelta, timezone
 from freqtrade.persistence import Trade
 from typing import Optional
+
+# Opt-in to future pandas behavior to suppress FutureWarning
+pd.set_option('future.no_silent_downcasting', True)
 
 logger = logging.getLogger(__name__)
 
@@ -433,8 +437,6 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         informative['cmf'] = chaikin_money_flow(informative, 20)
 
         dataframe = merge_informative_pair(dataframe, informative, self.timeframe, inf_tf, ffill=True)
-        # Fix pandas FutureWarning about downcasting
-        dataframe = dataframe.infer_objects(copy=False)
 
         return dataframe
 
