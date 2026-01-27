@@ -29,8 +29,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── EI4_t4c0s_V2_2_Shorts (Port 8101)
                            ├── ETCG (Port 8102)
                            ├── ETCG_Shorts (Port 8103)
-                           ├── ClucHAnix_hhll (Port 8104)
-                           └── ClucHAnix_hhll_Shorts (Port 8105)
+                           ├── ClucHAnix_hhll (Port 8106)
+                           └── ClucHAnix_hhll_Shorts (Port 8107)
 ```
 
 ## 📁 Files Created
@@ -249,8 +249,8 @@ All strategies use the same base configuration (`configs/recommended_config.json
 - EI4_t4c0s_V2_2_Shorts: 8101
 - ETCG: 8102
 - ETCG_Shorts: 8103
-- ClucHAnix_hhll: 8104
-- ClucHAnix_hhll_Shorts: 8105
+- ClucHAnix_hhll: 8106
+- ClucHAnix_hhll_Shorts: 8107
 
 ### Database Separation
 Each strategy uses its own SQLite database:
