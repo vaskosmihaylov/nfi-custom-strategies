@@ -56,7 +56,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     - Tighter stop loss: -18.9% vs -70%
     - More aggressive ROI: 7% vs 2%
     - Shorter unclog: 3 days vs 10 days
-    - Max 4 short positions (vs 8+ longs)
+    - Max 8 short positions (same as longs)
     - All RSI thresholds inverted (100 - value)
     - All EMA offsets inverted (2 - value)
 
@@ -77,7 +77,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     timeframe = '5m'
 
     # Short-specific
-    max_short_trades = 4
+    max_short_trades = 8
 
     # Protection
     fast_ewo = 50
