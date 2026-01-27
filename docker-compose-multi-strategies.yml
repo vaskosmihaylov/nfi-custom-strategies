@@ -279,7 +279,41 @@ services:
       --db-url sqlite:////freqtrade/user_data/cluchanix_hhll_shorts-tradesv3.sqlite
       --log-file user_data/logs/cluchanix_hhll_shorts.log
       --strategy-path user_data/strategies/Cluc
-      --strategy ClucHAnix_hhll_Shorts    
+      --strategy ClucHAnix_hhll_Shorts
+
+  # AwesomeEWOLambo Strategy (Longs)
+  freqtrade-awesomeewolambo:
+    <<: *common-settings
+    container_name: freqtrade-awesomeewolambo
+    ports:
+      - "127.0.0.1:8108:8080"
+    env_file:
+      - path: ./env-files/awesomeewolambo.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/awesomeewolambo-tradesv3.sqlite
+      --log-file user_data/logs/awesomeewolambo.log
+      --strategy-path user_data/strategies/AwesomeEWOLambo
+      --strategy AwesomeEWOLambo
+
+  # AwesomeEWOLambo_Shorts Strategy (Shorts)
+  freqtrade-awesomeewolambo_shorts:
+    <<: *common-settings
+    container_name: freqtrade-awesomeewolambo_shorts
+    ports:
+      - "127.0.0.1:8109:8080"
+    env_file:
+      - path: ./env-files/awesomeewolambo_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/awesomeewolambo_shorts-tradesv3.sqlite
+      --log-file user_data/logs/awesomeewolambo_shorts.log
+      --strategy-path user_data/strategies/AwesomeEWOLambo
+      --strategy AwesomeEWOLambo_Shorts
 
 networks:
   default:
