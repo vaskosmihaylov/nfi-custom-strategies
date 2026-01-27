@@ -227,8 +227,9 @@ health_check() {
         "ei4_t4c0s_v2_2_shorts:8101"
         "etcg:8102"
         "etcg_shorts:8103"
-        "cluchanix-hhll:8104"
-        "cluchanix-hhll-shorts:8105"
+        "nasosv4_shorts:8104"
+        "cluchanix-hhll:8106"
+        "cluchanix-hhll-shorts:8107"
     )
     
     local healthy=0

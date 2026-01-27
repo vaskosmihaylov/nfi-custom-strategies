@@ -252,7 +252,7 @@ services:
     <<: *common-settings
     container_name: freqtrade-cluchanix-hhll
     ports:
-      - "127.0.0.1:8104:8080"
+      - "127.0.0.1:8106:8080"
     env_file:
       - path: ./env-files/cluchanix_hhll.env
         required: true
@@ -269,7 +269,7 @@ services:
     <<: *common-settings
     container_name: freqtrade-cluchanix-hhll-shorts
     ports:
-      - "127.0.0.1:8105:8080"
+      - "127.0.0.1:8107:8080"
     env_file:
       - path: ./env-files/cluchanix_hhll_shorts.env
         required: true
