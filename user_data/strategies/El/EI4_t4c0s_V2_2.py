@@ -155,14 +155,57 @@ class EI4_t4c0s_V2_2(IStrategy):
     unclog_days = IntParameter(1, 5, default=4, space='sell', optimize=True)
     unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
 
+    # Phase 1: ATR-Based Dynamic Stop Loss
+    atr_stop_multiplier = DecimalParameter(1.5, 3.0, default=2.0, space='sell', optimize=True)
+    max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.15, space='sell', optimize=False)
+    min_atr_stop = DecimalParameter(-0.05, -0.02, default=-0.03, space='sell', optimize=False)
+
+    # Phase 2: Reversal Detection
+    reversal_rsi_threshold = IntParameter(30, 45, default=40, space='sell', optimize=True)
+    reversal_loss_threshold = DecimalParameter(-0.05, -0.01, default=-0.02, space='sell', optimize=True)
+
 
     ### Trailing Stop ###
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
-
-
+        """
+        Custom stoploss with 2-layer protection:
+        
+        Layer 1 (NEW): ATR-based dynamic stop for LOSING trades
+        Layer 2 (EXISTING): Moon mode trailing for PROFITABLE trades
+        
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit ratio
+            **kwargs: Additional arguments
+            
+        Returns:
+            float: Stoploss percentage (negative value)
+        """
         dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
+        
+        # PHASE 1: ATR-Based Dynamic Stop Loss (for losing trades)
+        # Prevents liquidations by using volatility-adjusted stops
+        if current_profit < 0:
+            # Calculate ATR-based stop: 2x ATR as percentage
+            atr_stop = -1 * self.atr_stop_multiplier.value * current_candle['atr_pcnt']
+            
+            # Clamp between bounds to prevent too tight or too loose stops
+            # max_atr_stop = -0.15 (maximum loss allowed)
+            # min_atr_stop = -0.03 (minimum protection)
+            atr_stop = max(atr_stop, self.max_atr_stop.value)
+            atr_stop = min(atr_stop, self.min_atr_stop.value)
+            
+            # Return ATR-based stop for losing trades
+            # This prevents trades from reaching -50%+ losses
+            return atr_stop
+        
+        # PHASE 2: Moon Mode Trailing Stop (for profitable trades)
+        # Existing logic - only activates when trade is already profitable
         SLT1 = current_candle['move_mean']
         SL1 = self.sl1.value
         SLT2 = current_candle['move_mean_x']
@@ -172,7 +215,6 @@ class EI4_t4c0s_V2_2(IStrategy):
         sl1 = SL1 * 100
         slt2 = SLT2 * 100
         sl2 = SL2 * 100
-
 
         if current_candle['max_l'] > .003: #ignore stoploss if setting new highs
             if SLT2 is not None and current_profit > SLT2:
@@ -248,9 +290,53 @@ class EI4_t4c0s_V2_2(IStrategy):
         return True
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
-        # Sell any positions at a loss if they are held for more than 7 days.
+        """
+        Custom exit logic with indicator-based reversal detection.
+        
+        Exit reasons:
+        1. Reversal detection (NEW): Exit losing trades when indicators signal trend reversal
+        2. Unclog (EXISTING): Time-based exit for stuck losing trades
+        
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current rate
+            current_profit: Current profit
+            **kwargs: Additional arguments
+            
+        Returns:
+            str: Exit reason or None
+        """
+        # Get current candle data
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
+        
+        # PHASE 2: Indicator Reversal Detection (for losing trades)
+        # Exit early when multiple indicators signal trend reversal
+        if current_profit < self.reversal_loss_threshold.value:
+            
+            # 1. RSI Reversal: RSI drops below threshold = weakening momentum
+            if current_candle['rsi'] < self.reversal_rsi_threshold.value:
+                logger.info(f"*** {pair} *** Reversal: RSI {current_candle['rsi']:.2f} < {self.reversal_rsi_threshold.value} at {current_profit*100:.2f}% loss")
+                return 'reversal_rsi'
+            
+            # 2. EWO Reversal: EWO crosses below mean = momentum weakening
+            if current_candle['EWO'] < current_candle['EWO_MEAN_DN']:
+                logger.info(f"*** {pair} *** Reversal: EWO {current_candle['EWO']:.2f} < mean {current_candle['EWO_MEAN_DN']:.2f} at {current_profit*100:.2f}% loss")
+                return 'reversal_ewo'
+            
+            # 3. HMA Breakdown: Price breaks below Hull MA = trend change
+            if current_candle['close'] < current_candle['hma_50']:
+                logger.info(f"*** {pair} *** Reversal: Price {current_candle['close']:.6f} < HMA50 {current_candle['hma_50']:.6f} at {current_profit*100:.2f}% loss")
+                return 'reversal_hma'
+        
+        # EXISTING: Time-based unclog for stuck losing trades
         if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
+            logger.info(f"*** {pair} *** Unclog: {current_profit*100:.2f}% loss after {(current_time - trade.open_date_utc).days} days")
             return 'unclog'
+        
+        return None
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
                  proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:

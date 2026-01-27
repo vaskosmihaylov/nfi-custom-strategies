@@ -164,10 +164,9 @@ config*.json
 *.csv
 
 # Don't commit any sqlite file which contains your tradings
-
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
 .env**
-daily-sync-nfi.sh
-manage-daily-sync.sh
+sync-local.sh
+
