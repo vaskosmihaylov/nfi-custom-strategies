@@ -433,6 +433,8 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         informative['cmf'] = chaikin_money_flow(informative, 20)
 
         dataframe = merge_informative_pair(dataframe, informative, self.timeframe, inf_tf, ffill=True)
+        # Fix pandas FutureWarning about downcasting
+        dataframe = dataframe.infer_objects(copy=False)
 
         return dataframe
 
