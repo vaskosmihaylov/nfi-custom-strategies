@@ -88,6 +88,8 @@ show_help() {
     echo "  ETCG_Shorts:           http://freq.gaiaderma.com/etcg_shorts"
     echo "  ClucHAnix_hhll:        http://freq.gaiaderma.com/cluchanix_hhll"
     echo "  ClucHAnix_hhll_Shorts: http://freq.gaiaderma.com/cluchanix_hhll_shorts"
+    echo "  AwesomeEWOLambo:       http://freq.gaiaderma.com/awesomeewolambo"
+    echo "  AwesomeEWOLambo_Shorts: http://freq.gaiaderma.com/awesomeewolambo_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -230,6 +232,8 @@ health_check() {
         "nasosv4_shorts:8104"
         "cluchanix-hhll:8106"
         "cluchanix-hhll-shorts:8107"
+        "awesomeewolambo:8108"
+        "awesomeewolambo_shorts:8109"
     )
     
     local healthy=0
