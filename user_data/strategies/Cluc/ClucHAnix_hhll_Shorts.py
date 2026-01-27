@@ -138,8 +138,8 @@ class ClucHAnix_hhll_Shorts(IStrategy):
     close_bbupper = RealParameter(0.0005, 0.02, default=buy_params['close_bbupper'], space='buy', optimize=is_optimize_clucHA)
 
     is_optimize_hh_ll = False
-    short_ll_diff_48 = DecimalParameter(0.0, 15, default=buy_params['short_ll_diff_48'], optimize=is_optimize_hh_ll)
-    short_hh_diff_48 = DecimalParameter(-23, 40, default=buy_params['short_hh_diff_48'], optimize=is_optimize_hh_ll)
+    short_ll_diff_48 = DecimalParameter(0.0, 15, default=buy_params['short_ll_diff_48'], space='buy', optimize=is_optimize_hh_ll)
+    short_hh_diff_48 = DecimalParameter(-23, 40, default=buy_params['short_hh_diff_48'], space='buy', optimize=is_optimize_hh_ll)
 
     ## Slippage params
     is_optimize_slip = False
