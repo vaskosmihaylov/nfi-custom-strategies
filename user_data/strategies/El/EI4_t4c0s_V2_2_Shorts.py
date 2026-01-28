@@ -236,17 +236,15 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
         """
-        Custom stoploss with 3-layer protection for shorts:
+        Custom stoploss with 2-layer protection for shorts (mirrors long strategy):
         
-        Layer 0 (NEW): ATR-based dynamic stop for LOSING trades (prevents liquidations)
-        Layer 1: 48-hour protection window (no tightening)
-        Layer 2: Crash mode trailing for PROFITABLE shorts
+        Layer 1: ATR-based dynamic stop for LOSING trades (prevents liquidations)
+        Layer 2: Crash mode trailing for PROFITABLE shorts (immediate activation)
         
         Logic:
-        - LOSING trades: Use ATR-based stop immediately (NEW)
-        - Hours 0-48 (profitable): Don't tighten (return 1.0)
-        - Hours 48+ (profitable): Apply crash mode
-          - Crash mode (min_l < 0.003): Making new lows = tighten stops
+        - LOSING trades: Use ATR-based stop immediately
+        - PROFITABLE trades: Apply crash mode immediately (no 48-hour delay)
+          - Crash mode (min_l < 0.003): Making new lows = tighten stops (lock profits)
           - Rally mode (min_l >= 0.003): Not making new lows = allow trailing
         
         For shorts:
@@ -271,7 +269,7 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
         
-        # PHASE 1 (NEW): ATR-Based Dynamic Stop Loss (for losing trades)
+        # PHASE 1: ATR-Based Dynamic Stop Loss (for losing trades)
         # Prevents liquidations by using volatility-adjusted stops
         if current_profit < 0:
             # Calculate ATR-based stop: 2x ATR as percentage
@@ -287,15 +285,7 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
             # This prevents trades from reaching -50%+ losses
             return atr_stop
         
-        # Calculate trade duration in hours
-        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
-        
-        # Phase 2: First 48 hours - PROTECTION WINDOW (for profitable trades)
-        # Return 1.0 to keep base stoploss (-0.99) without tightening
-        if trade_duration < 48:
-            return 1.0
-        
-        # Phase 3: After 48 hours - Apply crash mode ONLY for profitable shorts
+        # PHASE 2: Crash Mode Trailing Stop (for profitable trades - IMMEDIATE activation)
         SLT1 = current_candle['move_mean']
         SL1 = self.sl1.value
         SLT2 = current_candle['move_mean_x']
@@ -326,8 +316,8 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
                 logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% - {slt1:.2f}/{sl1:.2f} activated')
                 return SL1
         
-        # Default: Return 1.0 to keep base stoploss active
-        return 1.0
+        # Default: Return base stoploss
+        return self.stoploss
 
     def custom_entry_price(self, pair: str, trade: Optional['Trade'], current_time: datetime, proposed_rate: float,
                            entry_tag: Optional[str], side: str, **kwargs) -> float:
@@ -424,12 +414,13 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         4-Layer Exit System for Shorts (UPDATED):
         
         Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
-        Layer 2: custom_stoploss = ATR + Crash mode trailing
-        Layer 3: custom_exit reversal detection (NEW) = Indicator-based early exits
+        Layer 2: custom_stoploss = ATR + Crash mode trailing (IMMEDIATE activation)
+        Layer 3: custom_exit reversal detection = Indicator-based early exits
         Layer 4: custom_exit unclog/zombie = Time-based cleanup
         
         Logic:
-        - Reversal detection (NEW): Exit losing trades when indicators signal bullish reversal
+        - Reversal detection: Exit losing trades when indicators signal bullish reversal
+        - Profitable trades: Handled by custom_stoploss crash mode (activates immediately)
         - Hours 0-48: No forced time-based exits, but reversal detection active
         - After 48 hours:
           - If losing > 4%: Force exit ('unclog_short')
@@ -450,7 +441,7 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
         
-        # PHASE 2 (NEW): Indicator Reversal Detection (for losing shorts)
+        # PHASE 1: Indicator Reversal Detection (for losing shorts)
         # Exit early when indicators signal bullish reversal
         if current_profit < self.reversal_loss_threshold.value:
             
@@ -472,11 +463,11 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         # Calculate trade duration in hours
         trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
         
-        # Phase 3: First 48 hours - NO forced time-based exits (reversal detection still active above)
+        # PHASE 2: First 48 hours - NO forced time-based exits (reversal detection still active above)
         if trade_duration_hours < 48:
             return None
         
-        # Phase 4: After 48 hours - Unclog losing/zombie trades
+        # PHASE 3: After 48 hours - Unclog losing/zombie trades
         
         # Unclog: Force exit if losing > 4% (worst case scenario)
         if current_profit < -0.04:
