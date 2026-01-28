@@ -191,14 +191,10 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
     unclog_days = IntParameter(1, 5, default=3, space='sell', optimize=True)
     unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
 
-    # Phase 1: ATR-Based Dynamic Stop Loss
+    # ATR-Based Dynamic Stop Loss
     atr_stop_multiplier = DecimalParameter(1.5, 3.0, default=2.0, space='sell', optimize=True)
     max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.15, space='sell', optimize=False)
     min_atr_stop = DecimalParameter(-0.05, -0.02, default=-0.03, space='sell', optimize=False)
-
-    # Phase 2: Reversal Detection (for shorts, use higher RSI threshold)
-    reversal_rsi_threshold = IntParameter(55, 70, default=60, space='sell', optimize=True)
-    reversal_loss_threshold = DecimalParameter(-0.05, -0.01, default=-0.02, space='sell', optimize=True)
 
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
                             time_in_force: str, current_time: datetime, entry_tag: Optional[str],
@@ -411,21 +407,17 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         """
-        4-Layer Exit System for Shorts (UPDATED):
+        2-Layer Exit System for Shorts (SIMPLIFIED):
         
         Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
-        Layer 2: custom_stoploss = ATR + Crash mode trailing (IMMEDIATE activation)
-        Layer 3: custom_exit reversal detection = Indicator-based early exits
-        Layer 4: custom_exit unclog/zombie = Time-based cleanup
+        Layer 2: custom_stoploss = ATR-based stops + Crash mode trailing
+        Layer 3: custom_exit = Time-based cleanup only
         
         Logic:
-        - Reversal detection: Exit losing trades when indicators signal bullish reversal
+        - REMOVED: Reversal detection (too aggressive, causes premature exits)
         - Profitable trades: Handled by custom_stoploss crash mode (activates immediately)
-        - Hours 0-48: No forced time-based exits, but reversal detection active
-        - After 48 hours:
-          - If losing > 4%: Force exit ('unclog_short')
-          - If at breakeven (-0.5% to +0.5%): Force exit ('zombie_short')
-          - Otherwise: Let crash mode handle it
+        - Losing trades: Handled by custom_stoploss ATR-based stops
+        - After 48 hours: Unclog losing/zombie trades that ATR stop didn't catch
         
         Args:
             pair: Trading pair
@@ -437,37 +429,14 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         Returns:
             str: Exit reason or None
         """
-        # Get current candle data
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
-        current_candle = dataframe.iloc[-1].squeeze()
-        
-        # PHASE 1: Indicator Reversal Detection (for losing shorts)
-        # Exit early when indicators signal bullish reversal
-        if current_profit < self.reversal_loss_threshold.value:
-            
-            # 1. RSI Reversal: RSI rises above threshold = bullish momentum returning
-            if current_candle['rsi'] > self.reversal_rsi_threshold.value:
-                logger.info(f"*** {pair} *** SHORT Reversal: RSI {current_candle['rsi']:.2f} > {self.reversal_rsi_threshold.value} at {current_profit*100:.2f}% loss")
-                return 'reversal_rsi_short'
-            
-            # 2. EWO Reversal: EWO crosses above mean = upward momentum
-            if current_candle['EWO'] > current_candle['EWO_MEAN_UP']:
-                logger.info(f"*** {pair} *** SHORT Reversal: EWO {current_candle['EWO']:.2f} > mean {current_candle['EWO_MEAN_UP']:.2f} at {current_profit*100:.2f}% loss")
-                return 'reversal_ewo_short'
-            
-            # 3. HMA Breakout: Price breaks above Hull MA = trend change (bullish for price, bad for short)
-            if current_candle['close'] > current_candle['hma_50']:
-                logger.info(f"*** {pair} *** SHORT Reversal: Price {current_candle['close']:.6f} > HMA50 {current_candle['hma_50']:.6f} at {current_profit*100:.2f}% loss")
-                return 'reversal_hma_short'
-        
         # Calculate trade duration in hours
         trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
         
-        # PHASE 2: First 48 hours - NO forced time-based exits (reversal detection still active above)
+        # First 48 hours - Let ATR stops and crash mode handle everything
         if trade_duration_hours < 48:
             return None
         
-        # PHASE 3: After 48 hours - Unclog losing/zombie trades
+        # After 48 hours - Unclog losing/zombie trades that stops didn't catch
         
         # Unclog: Force exit if losing > 4% (worst case scenario)
         if current_profit < -0.04:
@@ -479,7 +448,7 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
             logger.info(f"*** {pair} *** SHORT Zombie: {current_profit*100:.2f}% (breakeven) after {trade_duration_hours:.1f} hours")
             return 'zombie_short'
         
-        # Profitable trades: Let custom_stoploss (crash mode) handle trailing
+        # Let custom_stoploss handle all other exits
         return None
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float,

@@ -155,14 +155,10 @@ class EI4_t4c0s_V2_2(IStrategy):
     unclog_days = IntParameter(1, 5, default=4, space='sell', optimize=True)
     unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
 
-    # Phase 1: ATR-Based Dynamic Stop Loss
+    # ATR-Based Dynamic Stop Loss
     atr_stop_multiplier = DecimalParameter(1.5, 3.0, default=2.0, space='sell', optimize=True)
     max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.15, space='sell', optimize=False)
     min_atr_stop = DecimalParameter(-0.05, -0.02, default=-0.03, space='sell', optimize=False)
-
-    # Phase 2: Reversal Detection
-    reversal_rsi_threshold = IntParameter(30, 45, default=40, space='sell', optimize=True)
-    reversal_loss_threshold = DecimalParameter(-0.05, -0.01, default=-0.02, space='sell', optimize=True)
 
 
     ### Trailing Stop ###
@@ -291,11 +287,17 @@ class EI4_t4c0s_V2_2(IStrategy):
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         """
-        Custom exit logic with indicator-based reversal detection.
+        2-Layer Exit System for Longs (SIMPLIFIED):
         
-        Exit reasons:
-        1. Reversal detection (NEW): Exit losing trades when indicators signal trend reversal
-        2. Unclog (EXISTING): Time-based exit for stuck losing trades
+        Layer 1: Base stoploss (-0.99) = Safety net (almost never hit)
+        Layer 2: custom_stoploss = ATR-based stops + Moon mode trailing
+        Layer 3: custom_exit = Time-based cleanup only
+        
+        Logic:
+        - REMOVED: Reversal detection (too aggressive, causes premature exits)
+        - Profitable trades: Handled by custom_stoploss moon mode (activates immediately)
+        - Losing trades: Handled by custom_stoploss ATR-based stops
+        - After unclog_days: Force exit stuck losing trades that ATR stop didn't catch
         
         Args:
             pair: Trading pair
@@ -308,34 +310,12 @@ class EI4_t4c0s_V2_2(IStrategy):
         Returns:
             str: Exit reason or None
         """
-        # Get current candle data
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
-        current_candle = dataframe.iloc[-1].squeeze()
-        
-        # PHASE 2: Indicator Reversal Detection (for losing trades)
-        # Exit early when multiple indicators signal trend reversal
-        if current_profit < self.reversal_loss_threshold.value:
-            
-            # 1. RSI Reversal: RSI drops below threshold = weakening momentum
-            if current_candle['rsi'] < self.reversal_rsi_threshold.value:
-                logger.info(f"*** {pair} *** Reversal: RSI {current_candle['rsi']:.2f} < {self.reversal_rsi_threshold.value} at {current_profit*100:.2f}% loss")
-                return 'reversal_rsi'
-            
-            # 2. EWO Reversal: EWO crosses below mean = momentum weakening
-            if current_candle['EWO'] < current_candle['EWO_MEAN_DN']:
-                logger.info(f"*** {pair} *** Reversal: EWO {current_candle['EWO']:.2f} < mean {current_candle['EWO_MEAN_DN']:.2f} at {current_profit*100:.2f}% loss")
-                return 'reversal_ewo'
-            
-            # 3. HMA Breakdown: Price breaks below Hull MA = trend change
-            if current_candle['close'] < current_candle['hma_50']:
-                logger.info(f"*** {pair} *** Reversal: Price {current_candle['close']:.6f} < HMA50 {current_candle['hma_50']:.6f} at {current_profit*100:.2f}% loss")
-                return 'reversal_hma'
-        
-        # EXISTING: Time-based unclog for stuck losing trades
+        # Time-based unclog for stuck losing trades
         if current_profit < -self.unclog.value and (current_time - trade.open_date_utc).days >= self.unclog_days.value:
             logger.info(f"*** {pair} *** Unclog: {current_profit*100:.2f}% loss after {(current_time - trade.open_date_utc).days} days")
             return 'unclog'
         
+        # Let custom_stoploss handle all other exits
         return None
 
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
