@@ -315,6 +315,108 @@ services:
       --strategy-path user_data/strategies/AwesomeEWOLambo
       --strategy AwesomeEWOLambo_Shorts
 
+  # BB_RPB_TSL_RNG_TBS_GOLD Strategy (Longs)
+  freqtrade-bb_rpb_tsl_rng_tbs_gold:
+    <<: *common-settings
+    container_name: freqtrade-bb_rpb_tsl_rng_tbs_gold
+    ports:
+      - "127.0.0.1:8110:8080"
+    env_file:
+      - path: ./env-files/bb_rpb_tsl_rng_tbs_gold.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_rng_tbs_gold-tradesv3.sqlite
+      --log-file user_data/logs/bb_rpb_tsl_rng_tbs_gold.log
+      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy BB_RPB_TSL_RNG_TBS_GOLD
+
+  # BB_RPB_TSL_RNG_TBS_GOLD_Shorts Strategy (Shorts Only)
+  freqtrade-bb_rpb_tsl_rng_tbs_gold_shorts:
+    <<: *common-settings
+    container_name: freqtrade-bb_rpb_tsl_rng_tbs_gold_shorts
+    ports:
+      - "127.0.0.1:8111:8080"
+    env_file:
+      - path: ./env-files/bb_rpb_tsl_rng_tbs_gold_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_rng_tbs_gold_shorts-tradesv3.sqlite
+      --log-file user_data/logs/bb_rpb_tsl_rng_tbs_gold_shorts.log
+      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy BB_RPB_TSL_RNG_TBS_GOLD_Shorts
+
+  # ElliotV5HO Strategy (Longs)
+  freqtrade-elliotv5ho:
+    <<: *common-settings
+    container_name: freqtrade-elliotv5ho
+    ports:
+      - "127.0.0.1:8112:8080"
+    env_file:
+      - path: ./env-files/elliotv5ho.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/elliotv5ho-tradesv3.sqlite
+      --log-file user_data/logs/elliotv5ho.log
+      --strategy-path user_data/strategies/ElliotV5_SMA
+      --strategy ElliotV5HO
+
+  # ElliotV5HO_Shorts Strategy (Shorts Only)
+  freqtrade-elliotv5ho_shorts:
+    <<: *common-settings
+    container_name: freqtrade-elliotv5ho_shorts
+    ports:
+      - "127.0.0.1:8113:8080"
+    env_file:
+      - path: ./env-files/elliotv5ho_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/elliotv5ho_shorts-tradesv3.sqlite
+      --log-file user_data/logs/elliotv5ho_shorts.log
+      --strategy-path user_data/strategies/ElliotV5_SMA
+      --strategy ElliotV5HO_Shorts
+
+  # GeneStrategy_v2 Strategy (Longs)
+  freqtrade-genestrategy_v2:
+    <<: *common-settings
+    container_name: freqtrade-genestrategy_v2
+    ports:
+      - "127.0.0.1:8114:8080"
+    env_file:
+      - path: ./env-files/genestrategy_v2.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/genestrategy_v2-tradesv3.sqlite
+      --log-file user_data/logs/genestrategy_v2.log
+      --strategy-path user_data/strategies/GeneTrader
+      --strategy GeneStrategy_v2
+
+  # GeneStrategy_v2_Shorts Strategy (Shorts Only)
+  freqtrade-genestrategy_v2_shorts:
+    <<: *common-settings
+    container_name: freqtrade-genestrategy_v2_shorts
+    ports:
+      - "127.0.0.1:8115:8080"
+    env_file:
+      - path: ./env-files/genestrategy_v2_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/genestrategy_v2_shorts-tradesv3.sqlite
+      --log-file user_data/logs/genestrategy_v2_shorts.log
+      --strategy-path user_data/strategies/GeneTrader
+      --strategy GeneStrategy_v2_Shorts
+
 networks:
   default:
     name: freqtrade-network
