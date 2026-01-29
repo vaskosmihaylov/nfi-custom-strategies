@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## 📋 Overview
 
 The multi-strategy setup includes:
-- **16 different trading strategies** running in separate Docker containers
+- **21 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -17,7 +17,6 @@ The multi-strategy setup includes:
 ```
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
-                           ├── BandtasticFiboHyper (Port 8082)
                            ├── ElliotV5_SMA (Port 8091)
                            ├── BinClucMadV1 (Port 8092)
                            ├── NASOSv4 (Port 8093)
@@ -29,10 +28,17 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── EI4_t4c0s_V2_2_Shorts (Port 8101)
                            ├── ETCG (Port 8102)
                            ├── ETCG_Shorts (Port 8103)
+                           ├── NASOSv4_Shorts (Port 8104)
                            ├── ClucHAnix_hhll (Port 8106)
                            ├── ClucHAnix_hhll_Shorts (Port 8107)
                            ├── AwesomeEWOLambo (Port 8108)
-                           └── AwesomeEWOLambo_Shorts (Port 8109)
+                           ├── AwesomeEWOLambo_Shorts (Port 8109)
+                           ├── BB_RPB_TSL_RNG_TBS_GOLD (Port 8110)
+                           ├── BB_RPB_TSL_RNG_TBS_GOLD_Shorts (Port 8111)
+                           ├── ElliotV5HO (Port 8112)
+                           ├── ElliotV5HO_Shorts (Port 8113)
+                           ├── GeneStrategy_v2 (Port 8114)
+                           └── GeneStrategy_v2_Shorts (Port 8115)
 ```
 
 ## 📁 Files Created
@@ -47,7 +53,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 ### Environment Files (in `env-files/`)
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
-- `bandtastic.env` - BandtasticFiboHyper strategy (combined longs/shorts)
 - `elliotv5_sma.env` - ElliotV5_SMA strategy (longs-only)
 - `binclucmadv1.env` - BinClucMadV1 strategy
 - `nasosv4.env` - NASOSv4 strategy
@@ -61,6 +66,14 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
 - `cluchanix_hhll.env` - ClucHAnix_hhll strategy (longs-only, 8 positions, Heikin Ashi + BB)
 - `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, 8 positions, Heikin Ashi + BB)
+- `awesomeewolambo.env` - AwesomeEWOLambo strategy (longs-only)
+- `awesomeewolambo_shorts.env` - AwesomeEWOLambo_Shorts strategy (shorts-only)
+- `bb_rpb_tsl_rng_tbs_gold.env` - BB_RPB_TSL_RNG_TBS_GOLD strategy (longs with 3x leverage)
+- `bb_rpb_tsl_rng_tbs_gold_shorts.env` - BB_RPB_TSL_RNG_TBS_GOLD_Shorts strategy (shorts with 3x leverage)
+- `elliotv5ho.env` - ElliotV5HO strategy (longs with 3x leverage)
+- `elliotv5ho_shorts.env` - ElliotV5HO_Shorts strategy (shorts with 3x leverage)
+- `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
+- `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 
 ## 🚀 Quick Start
 
@@ -148,6 +161,12 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
 | **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
+| **BB_RPB_TSL_RNG_TBS_GOLD** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold` | `bb_rpb_tsl_rng_tbs_gold_user` | `bb_rpb_tsl_rng_tbs_gold_secure_password` |
+| **BB_RPB_TSL_RNG_TBS_GOLD_Shorts** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts` | `bb_rpb_tsl_rng_tbs_gold_shorts_user` | `bb_rpb_tsl_rng_tbs_gold_shorts_secure_password` |
+| **ElliotV5HO** | `Vasko_ElliotV5HO` | `http://freq.gaiaderma.com/elliotv5ho` | `elliotv5ho_user` | `elliotv5ho_secure_password` |
+| **ElliotV5HO_Shorts** | `Vasko_ElliotV5HO_Shorts` | `http://freq.gaiaderma.com/elliotv5ho_shorts` | `elliotv5ho_shorts_user` | `elliotv5ho_shorts_secure_password` |
+| **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
+| **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 
 ### ✅ URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/elliotv5_sma`
@@ -188,7 +207,6 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 
 # Individual health checks (direct to containers)
 curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
-curl http://127.0.0.1:8082/api/v1/ping  # Bandtastic
 curl http://127.0.0.1:8091/api/v1/ping  # ElliotV5_SMA
 curl http://127.0.0.1:8092/api/v1/ping  # BinClucMadV1
 curl http://127.0.0.1:8093/api/v1/ping  # NASOSv4
@@ -197,6 +215,20 @@ curl http://127.0.0.1:8097/api/v1/ping  # ElliotV5_SMA_Shorts
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # EI4_t4c0s_V2_2
+curl http://127.0.0.1:8101/api/v1/ping  # EI4_t4c0s_V2_2_Shorts
+curl http://127.0.0.1:8102/api/v1/ping  # ETCG
+curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
+curl http://127.0.0.1:8104/api/v1/ping  # NASOSv4_Shorts
+curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
+curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
+curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
+curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
+curl http://127.0.0.1:8110/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD
+curl http://127.0.0.1:8111/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD_Shorts
+curl http://127.0.0.1:8112/api/v1/ping  # ElliotV5HO
+curl http://127.0.0.1:8113/api/v1/ping  # ElliotV5HO_Shorts
+curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
+curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8101/api/v1/ping  # EI4_t4c0s_V2_2_Shorts
 curl http://127.0.0.1:8102/api/v1/ping  # ETCG
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts

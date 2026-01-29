@@ -63,7 +63,9 @@ show_help() {
     echo "Available strategies:"
     echo "  nfi-x7, elliotv5_sma, binclucmadv1, nasosv4, rsiquiv5,"
     echo "  elliotv5_sma_shorts, e0v1e, e0v1e_shorts, ei4_t4c0s_v2_2, ei4_t4c0s_v2_2_shorts,"
-    echo "  etcg, etcg_shorts, cluchanix-hhll, cluchanix-hhll-shorts"
+    echo "  etcg, etcg_shorts, cluchanix-hhll, cluchanix-hhll-shorts, awesomeewolambo,"
+    echo "  awesomeewolambo_shorts, bb_rpb_tsl_rng_tbs_gold, bb_rpb_tsl_rng_tbs_gold_shorts,"
+    echo "  elliotv5ho, elliotv5ho_shorts, genestrategy_v2, genestrategy_v2_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -90,6 +92,12 @@ show_help() {
     echo "  ClucHAnix_hhll_Shorts: http://freq.gaiaderma.com/cluchanix_hhll_shorts"
     echo "  AwesomeEWOLambo:       http://freq.gaiaderma.com/awesomeewolambo"
     echo "  AwesomeEWOLambo_Shorts: http://freq.gaiaderma.com/awesomeewolambo_shorts"
+    echo "  BB_RPB_TSL_RNG_TBS_GOLD: http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold"
+    echo "  BB_RPB_TSL_RNG_TBS_GOLD_Shorts: http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts"
+    echo "  ElliotV5HO:            http://freq.gaiaderma.com/elliotv5ho"
+    echo "  ElliotV5HO_Shorts:     http://freq.gaiaderma.com/elliotv5ho_shorts"
+    echo "  GeneStrategy_v2:       http://freq.gaiaderma.com/genestrategy_v2"
+    echo "  GeneStrategy_v2_Shorts: http://freq.gaiaderma.com/genestrategy_v2_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -234,6 +242,12 @@ health_check() {
         "cluchanix-hhll-shorts:8107"
         "awesomeewolambo:8108"
         "awesomeewolambo_shorts:8109"
+        "bb_rpb_tsl_rng_tbs_gold:8110"
+        "bb_rpb_tsl_rng_tbs_gold_shorts:8111"
+        "elliotv5ho:8112"
+        "elliotv5ho_shorts:8113"
+        "genestrategy_v2:8114"
+        "genestrategy_v2_shorts:8115"
     )
     
     local healthy=0
