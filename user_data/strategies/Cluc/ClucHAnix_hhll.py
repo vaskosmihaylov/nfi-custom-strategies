@@ -136,11 +136,15 @@ class ClucHAnix_hhll(IStrategy):
     high_offset          = DecimalParameter(0.90, 1.2, default=sell_params['high_offset'], space='sell', optimize = is_optimize_sell)
     high_offset_2        = DecimalParameter(0.90, 1.5, default=sell_params['high_offset_2'], space='sell', optimize = is_optimize_sell)
 
+    # OPTIMIZED Jan 29, 2026: Widened trailing stops to let winners run
+    # Research: 8-15% trailing stops for crypto, 15-20% profit targets (source: bydfi.com, flipster.io)
+    # Previous: PF_1=1.6%, SL_1=1.1% caused exits at ~1-1.5% profit
+    # New: PF_1=3.5%, SL_1=2.5% allows more profit accumulation before trailing
     is_optimize_trailing = False
-    pPF_1 = DecimalParameter(0.011, 0.020, default=0.016, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
-    pSL_1 = DecimalParameter(0.011, 0.020, default=0.011, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
-    pPF_2 = DecimalParameter(0.040, 0.100, default=0.080, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
-    pSL_2 = DecimalParameter(0.020, 0.070, default=0.040, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
+    pPF_1 = DecimalParameter(0.025, 0.045, default=0.035, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
+    pSL_1 = DecimalParameter(0.020, 0.035, default=0.025, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
+    pPF_2 = DecimalParameter(0.100, 0.150, default=0.120, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
+    pSL_2 = DecimalParameter(0.060, 0.100, default=0.080, decimals=3, space='sell', load=True, optimize = is_optimize_trailing)
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()

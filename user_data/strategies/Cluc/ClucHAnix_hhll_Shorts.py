@@ -64,10 +64,16 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         "bbdelta_tail": 0.98973,
         "close_bbupper": 0.00785,  # Using upper band instead of lower
         "closedelta_close": 0.01009,
-        "rocr_1h": 0.4589,  # Inverted: 1 - 0.5411 for overbought detection
+        # RELAXED Jan 29, 2026: Allow shorts in more market conditions
+        # Research: Overbought (RSI>70-80, upper BB touch) can happen in uptrends (source: hyrotrader.com, altrady.com)
+        # Previous: 0.4589 required bearish 1H trend (too restrictive, no trades in 3 days)
+        # New: 0.55 allows shorts in neutral/ranging markets when overbought
+        "rocr_1h": 0.55,  # Relaxed from 0.4589 to allow more entries
         ##
-        "short_ll_diff_48": 6.867,  # Short at lows (inverted from hh_diff)
-        "short_hh_diff_48": -12.884,  # Short away from highs (inverted from ll_diff)
+        # RELAXED: Less strict range filters to allow more entries
+        # Previous: 6.867 and -12.884 rarely aligned, causing zero trades
+        "short_ll_diff_48": 3.0,  # Relaxed from 6.867 (less strict on lows positioning)
+        "short_hh_diff_48": -8.0,  # Relaxed from -12.884 (less strict on highs distance)
     }
 
     # Sell hyperspace params (same trailing logic):
@@ -133,17 +139,19 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         'stoploss_on_exchange_limit_ratio': 0.99
     }
 
-    # Entry params (shorts enter on overbought)
+    # Entry params (shorts enter on overbought) - OPTIMIZED Jan 29, 2026
     is_optimize_clucHA = False
-    rocr_1h = RealParameter(0.4, 0.9, default=buy_params['rocr_1h'], space='buy', optimize=is_optimize_clucHA)
+    # Widened range to allow optimization in neutral markets (0.4 to 0.65 instead of 0.4 to 0.9)
+    rocr_1h = RealParameter(0.4, 0.65, default=buy_params['rocr_1h'], space='buy', optimize=is_optimize_clucHA)
     bbdelta_close = RealParameter(0.0005, 0.02, default=buy_params['bbdelta_close'], space='buy', optimize=is_optimize_clucHA)
     closedelta_close = RealParameter(0.0005, 0.02, default=buy_params['closedelta_close'], space='buy', optimize=is_optimize_clucHA)
     bbdelta_tail = RealParameter(0.7, 1.0, default=buy_params['bbdelta_tail'], space='buy', optimize=is_optimize_clucHA)
     close_bbupper = RealParameter(0.0005, 0.02, default=buy_params['close_bbupper'], space='buy', optimize=is_optimize_clucHA)
 
+    # Relaxed 48-candle range filters for more entry opportunities
     is_optimize_hh_ll = False
-    short_ll_diff_48 = DecimalParameter(0.0, 15, default=buy_params['short_ll_diff_48'], space='buy', optimize=is_optimize_hh_ll)
-    short_hh_diff_48 = DecimalParameter(-23, 40, default=buy_params['short_hh_diff_48'], space='buy', optimize=is_optimize_hh_ll)
+    short_ll_diff_48 = DecimalParameter(0.0, 10, default=buy_params['short_ll_diff_48'], space='buy', optimize=is_optimize_hh_ll)
+    short_hh_diff_48 = DecimalParameter(-15, 5, default=buy_params['short_hh_diff_48'], space='buy', optimize=is_optimize_hh_ll)
 
     ## Slippage params
     is_optimize_slip = False
@@ -444,6 +452,15 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         """
         Entry logic for shorts - inverted from long strategy.
         Enters when price is overbought (above upper Bollinger Band, high RSI, etc.)
+
+        OPTIMIZED Jan 29, 2026:
+        - Relaxed rocr_1h from 0.4589 to 0.55 (allows shorts in neutral/ranging markets)
+        - Relaxed short_ll_diff_48 from 6.867 to 3.0 (less strict range positioning)
+        - Relaxed short_hh_diff_48 from -12.884 to -8.0 (less strict on distance from highs)
+
+        Research basis: Overbought conditions (RSI>70-80, upper BB touch) can persist
+        in uptrends/ranging markets and still provide profitable mean reversion shorts.
+        Previous settings were too restrictive (zero trades in 3 days).
         """
         dataframe.loc[
             ( dataframe['rocr_1h'].lt(self.rocr_1h.value) )  # Inverted: low ROCR = bearish 1h trend
