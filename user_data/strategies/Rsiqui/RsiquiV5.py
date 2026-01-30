@@ -35,10 +35,10 @@ class RsiquiV5(IStrategy):
     exit_profit_only = True
     use_custom_stoploss = True
 
-    # Buy hyperspace params (OPTIMIZED):
+    # Buy hyperspace params (OPTIMIZED Jan 30, 2026):
     buy_params = {
-        "rsi_entry_long": 35,   # Easier to trigger (was 27)
-        "rsi_entry_short": 65,  # Harder to trigger (was 59)
+        "rsi_entry_long": 35,   # Balanced threshold (was 27)
+        "rsi_entry_short": 60,  # Balanced threshold (was 65, originally 59)
         "window": 24,
     }
 
@@ -153,11 +153,14 @@ class RsiquiV5(IStrategy):
         """
         Entry signals based on RSI gradient crosses.
 
-        OPTIMIZED: Balanced RSI thresholds (35/65 instead of 27/59)
-        - Longs: RSI < 35 (easier to trigger than 27)
-        - Shorts: RSI > 65 (harder to trigger than 59)
-
-        This should produce more balanced long/short ratio.
+        OPTIMIZED (Jan 30, 2026): Balanced RSI thresholds for equal long/short opportunity
+        - Longs: RSI < 35 (balanced for oversold conditions)
+        - Shorts: RSI > 60 (balanced for overbought conditions)
+        
+        Previous issue: rsi_entry_short was 65 (too restrictive)
+        Result: Strategy produced mostly longs, very few shorts
+        Fix: Lowered to 60 to compensate for market upward bias
+        Expected: 30-40% increase in short signals
         """
         dataframe.loc[
             (

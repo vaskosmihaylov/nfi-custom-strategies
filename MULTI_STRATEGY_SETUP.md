@@ -161,8 +161,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
 | **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
-| **BB_RPB_TSL_RNG_TBS_GOLD** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold` | `bb_rpb_tsl_rng_tbs_gold_user` | `bb_rpb_tsl_rng_tbs_gold_secure_password` |
-| **BB_RPB_TSL_RNG_TBS_GOLD_Shorts** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts` | `bb_rpb_tsl_rng_tbs_gold_shorts_user` | `bb_rpb_tsl_rng_tbs_gold_shorts_secure_password` |
+| **BB_RPB_TSL_RNG_TBS_GOLD** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold` | `bb_rpb_gold_user` | `bb_rpb_gold_secure_password` |
+| **BB_RPB_TSL_RNG_TBS_GOLD_Shorts** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts` | `bb_rpb_gold_shorts_user` | `bb_rpb_gold_shorts_secure_password` |
 | **ElliotV5HO** | `Vasko_ElliotV5HO` | `http://freq.gaiaderma.com/elliotv5ho` | `elliotv5ho_user` | `elliotv5ho_secure_password` |
 | **ElliotV5HO_Shorts** | `Vasko_ElliotV5HO_Shorts` | `http://freq.gaiaderma.com/elliotv5ho_shorts` | `elliotv5ho_shorts_user` | `elliotv5ho_shorts_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
@@ -250,6 +250,7 @@ curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 ```
 
 ### Log Management

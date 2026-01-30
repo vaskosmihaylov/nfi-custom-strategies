@@ -314,27 +314,25 @@ class ElliotV5_SMA_Shorts(IStrategy):
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
         """
-        Enhanced exit logic with time-based profit locking and unclog mechanism.
+        Simplified exit logic matching E0V1E_Shorts/ETCG_Shorts approach.
 
-        NEW FEATURES:
-        1. Profit Locking: Exit profitable shorts after extended hold (prevents erosion)
-        2. Unclog: Force exit losing positions after N days (frees capital)
-
-        RATIONALE FOR PROFIT LOCKING:
-        - Shorts have LIMITED upside (price can only go to zero)
-        - Longs have UNLIMITED upside (price can 10x, 100x)
-        - Therefore: Lock short profits faster than long profits
-        - Data shows: Many 3-4% profits eroded back to 2% before trailing stop triggered
-
-        Profit Locking Tiers:
-        - 5%+ profit after 4 hours: Exit (exceptional short, lock it)
-        - 3%+ profit after 6 hours: Exit (good short, don't be greedy)
-        - 2%+ profit after 12 hours: Exit (mediocre short, take it before reversal)
-
-        Unclog Logic:
-        - Losing trades > unclog threshold after N days: Force exit
-        - Frees capital from dead positions
-        - Default: -4% after 3 days
+        OPTIMIZATION (Jan 30, 2026):
+        - REMOVED: All time-based profit locking (Tier 1/2/3)
+        - KEPT: Simple unclog mechanism only
+        - RATIONALE: E0V1E_Shorts (most profitable) and ETCG_Shorts use this approach
+        
+        Philosophy Change:
+        OLD: Quick profit-taking to avoid reversals (2% @ 12h, 3% @ 6h, 5% @ 4h)
+        NEW: Let indicators handle exits, only unclog dead positions
+        
+        Research Findings:
+        - Time-based exits cut winners prematurely in trending markets
+        - Trailing stops better for crypto volatility (source: altrady.com, highstrike.com)
+        - Best performers (E0V1E, ETCG) use indicator-based exits, not time-based
+        
+        2-Layer Exit System:
+        Layer 1: custom_stoploss = Indicator-based trailing for PROFITABLE shorts
+        Layer 2: custom_exit (THIS) = Unclog only for LOSING positions
 
         Args:
             pair: Trading pair
@@ -347,33 +345,17 @@ class ElliotV5_SMA_Shorts(IStrategy):
         Returns:
             Optional[Union[str, bool]]: Exit reason string or None
         """
-        # Calculate trade duration in hours
-        trade_duration_hours = (current_time - trade.open_date_utc).total_seconds() / 3600
+        # Calculate trade duration
         trade_duration_days = (current_time - trade.open_date_utc).days
 
-        # PROFIT LOCKING: Time-based exit for profitable shorts
-        # Prevents profit erosion and captures gains before reversal
-
-        # Tier 1: Exceptional short (5%+ profit after 4 hours)
-        if current_profit >= 0.05 and trade_duration_hours >= 4:
-            logger.info(f"{pair} Profit Locking (Tier 1) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
-            return 'profit_lock_tier1'
-
-        # Tier 2: Good short (3%+ profit after 6 hours)
-        if current_profit >= 0.03 and trade_duration_hours >= 6:
-            logger.info(f"{pair} Profit Locking (Tier 2) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
-            return 'profit_lock_tier2'
-
-        # Tier 3: Mediocre short (2%+ profit after 12 hours)
-        if current_profit >= 0.02 and trade_duration_hours >= 12:
-            logger.info(f"{pair} Profit Locking (Tier 3) - {current_profit:.2%} after {trade_duration_hours:.1f}h")
-            return 'profit_lock_tier3'
-
-        # UNCLOG: Sell any short positions at a loss if they are held for more than N days
+        # UNCLOG: Force exit losing positions after N days to free capital
+        # Matches E0V1E_Shorts and ETCG_Shorts approach
         if current_profit < -self.unclog.value and trade_duration_days >= self.unclog_days.value:
             logger.info(f"{pair} Unclog - {current_profit:.2%} after {trade_duration_days} days")
             return 'unclog_short'
 
+        # Let custom_stoploss handle all other exits (profitable trades)
+        # No time-based profit locking - let winners run!
         return None
 
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,

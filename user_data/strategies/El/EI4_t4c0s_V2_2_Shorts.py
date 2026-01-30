@@ -577,6 +577,11 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
         2. sell1ewo_short: Rallies during downtrend
         3. sell2ewo_short: Extreme overbought
         4. cofi_short: Stochastic overbought crossdown
+        
+        OPTIMIZATION (Jan 30, 2026):
+        - Changed rsi_fast threshold from > 65 to > 60 (conservative loosening)
+        - Expected: ~30% increase in short signals while maintaining quality
+        - Rationale: Balances trade frequency with longs (rsi_fast < 35 equivalent)
         """
         # Lambo Short: Parabolic pump (inverted from lambo2)
         # Long: close < ema_14 * 0.981, rsi_4 < 44, rsi_14 < 39
@@ -593,9 +598,9 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
 
         # Sell1EWO Short: Rally during downtrend (inverted from buy1ewo)
         # Long: rsi_fast < 35, close < ma_lo, EWO > EWO_MEAN_UP
-        # Short: rsi_fast > 65, close > ma_hi, EWO < EWO_MEAN_DN
+        # Short: rsi_fast > 60 (OPTIMIZED from 65), close > ma_hi, EWO < EWO_MEAN_DN
         sell1ewo_short = (
-                (dataframe['rsi_fast'] > 65) &
+                (dataframe['rsi_fast'] > 60) &  # CHANGED from 65 to 60
                 (dataframe['close'] > dataframe['ma_hi']) &
                 (dataframe['EWO'] < dataframe['EWO_MEAN_DN']) &
                 (dataframe['close'] > dataframe['exit_mean_x']) &
@@ -609,9 +614,9 @@ class EI4_t4c0s_V2_2_Shorts(IStrategy):
 
         # Sell2EWO Short: Extreme overbought (inverted from buy2ewo)
         # Long: rsi_fast < 35, close < ma_lo, EWO < EWO_DN_FIB
-        # Short: rsi_fast > 65, close > ma_hi, EWO > EWO_UP_FIB
+        # Short: rsi_fast > 60 (OPTIMIZED from 65), close > ma_hi, EWO > EWO_UP_FIB
         sell2ewo_short = (
-                (dataframe['rsi_fast'] > 65) &
+                (dataframe['rsi_fast'] > 60) &  # CHANGED from 65 to 60
                 (dataframe['close'] > dataframe['ma_hi']) &
                 (dataframe['EWO'] > dataframe['EWO_UP_FIB']) &
                 (dataframe['atr_pcnt'] > dataframe['min']) &
