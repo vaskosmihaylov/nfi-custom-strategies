@@ -509,7 +509,7 @@ class TrailingBuyStrat2(BB_RPB_TSL_RNG_TBS_GOLD):
     custom_info_trail_buy = dict()
 
     # Trailing buy parameters
-    trailing_buy_order_enabled = True
+    trailing_buy_order_enabled = False  # Disabled - allow normal entries (Jan 30, 2026)
     trailing_expire_seconds = 1800
 
     # If the current candle goes above min_uptrend_trailing_profit % before trailing_expire_seconds_uptrend seconds, buy the coin

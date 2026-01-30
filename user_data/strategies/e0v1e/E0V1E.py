@@ -141,31 +141,76 @@ class E0V1E(IStrategy):
 
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
+        """
+        Indicator-based trailing stoploss for PROFITABLE longs.
+        Copied from E0V1E_Shorts proven logic with 3x leverage.
 
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        current_candle = dataframe.iloc[-1].squeeze()
+        3-Layer Architecture:
+        Layer 1: Emergency stop (-25%) = Backstop before liquidation (rarely hit)
+        Layer 2: 48-hour protection window = Let trades develop
+        Layer 3: Indicator-based trailing = Lock in profits when overbought
 
-        enter_tag = ''
-        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
-            enter_tag = trade.enter_tag
-        enter_tags = enter_tag.split()
+        Logic:
+        - Emergency: Exit at -25% to prevent liquidations (backstop only)
+        - Hours 0-48: Don't tighten (return 1.0) - protection window
+        - Hours 48+: Trail PROFITABLE longs based on RSI/Stochastic indicators
+          - Uses overbought levels to detect tops (time to take profit)
+          - Tightens stops for EWO entries at high profit levels
+          - Does NOT handle losing trades (custom_exit deadfish does that)
 
-        if "ewo" in enter_tags:
-            if current_profit >= 0.05:
-                return -0.015
+        Args:
+            pair: Trading pair
+            trade: Trade object
+            current_time: Current timestamp
+            current_rate: Current price
+            current_profit: Current profit/loss ratio
+            **kwargs: Additional arguments
 
+        Returns:
+            float: Stoploss percentage or 1.0 to keep base stoploss
+        """
+        # EMERGENCY BACKSTOP: Last resort before liquidation (~-30%)
+        # This should RARELY trigger - indicators and deadfish should catch first
+        if current_profit <= -0.25:
+            logger.warning(f"{trade.pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
+            return -0.26  # Exit immediately
+
+        # Calculate trade duration in hours
+        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+
+        # Phase 1: First 48 hours - PROTECTION WINDOW
+        # Return 1.0 to keep base stoploss (-0.99) without tightening
+        # Gives trades room to develop without premature exits
+        if trade_duration < 48:
+            return 1.0
+
+        # Phase 2: After 48 hours - Trail ONLY profitable longs
+        # Losing/zombie trades are handled by custom_exit (deadfish/unclog)
+
+        # Only apply indicator logic if trade is profitable
         if current_profit > 0.01:
-            if current_candle["fastk"] > self.sell_fastx.value:
-                return -0.003
+            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+            current_candle = dataframe.iloc[-1].squeeze()
 
+            enter_tag = ''
+            if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+                enter_tag = trade.enter_tag
+            enter_tags = enter_tag.split()
+
+            # Tight trailing for EWO entries at 5% profit
+            if "ewo" in enter_tags and current_profit >= 0.05:
+                return -0.015  # 1.5% trailing stop
+
+            # Exit on strong overbought when profitable (price might reverse)
             if current_candle["rsi"] > 80:
-                return -0.003
+                return -0.003  # 0.3% trailing stop
 
-        if current_profit < 0.01:
-            if current_candle["rsi"] > 90:
-                return -0.003
+            if current_candle["fastk"] > self.sell_fastx.value:
+                return -0.003  # 0.3% trailing stop
 
-        return self.stoploss
+        # Default: Return 1.0 to keep base stoploss (-0.99) active
+        # Losing trades will be handled by custom_exit (deadfish) after time passes
+        return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs) -> Optional[Union[str, bool]]:

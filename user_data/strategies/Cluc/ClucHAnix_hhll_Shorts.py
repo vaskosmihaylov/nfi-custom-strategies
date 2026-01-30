@@ -67,13 +67,16 @@ class ClucHAnix_hhll_Shorts(IStrategy):
         # RELAXED Jan 29, 2026: Allow shorts in more market conditions
         # Research: Overbought (RSI>70-80, upper BB touch) can happen in uptrends (source: hyrotrader.com, altrady.com)
         # Previous: 0.4589 required bearish 1H trend (too restrictive, no trades in 3 days)
-        # New: 0.55 allows shorts in neutral/ranging markets when overbought
-        "rocr_1h": 0.55,  # Relaxed from 0.4589 to allow more entries
+        # Jan 29: 0.55 allows shorts in neutral/ranging markets when overbought
+        # Jan 30: 0.65 allows shorts even in mild uptrends (further relaxed)
+        "rocr_1h": 0.65,  # Relaxed from 0.55 → 0.65 to allow more entries
         ##
         # RELAXED: Less strict range filters to allow more entries
         # Previous: 6.867 and -12.884 rarely aligned, causing zero trades
-        "short_ll_diff_48": 3.0,  # Relaxed from 6.867 (less strict on lows positioning)
-        "short_hh_diff_48": -8.0,  # Relaxed from -12.884 (less strict on highs distance)
+        # Jan 29: 3.0 and -8.0 (still too strict, 4 days no trades)
+        # Jan 30: 1.0 and -5.0 (further relaxed for more opportunities)
+        "short_ll_diff_48": 1.0,  # Relaxed from 3.0 → 1.0 (less strict on lows positioning)
+        "short_hh_diff_48": -5.0,  # Relaxed from -8.0 → -5.0 (less strict on highs distance)
     }
 
     # Sell hyperspace params (same trailing logic):
