@@ -890,6 +890,6 @@ def pmax(df, period, multiplier, length, MAtype, src):
     pm = Series(pm_arr)
 
     # Mark the trend direction up/down
-    pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), 'down',  'up'), np.NaN)
+    pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), 'down',  'up'), np.nan)
 
     return pm, pmx
