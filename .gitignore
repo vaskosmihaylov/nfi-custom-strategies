@@ -162,6 +162,7 @@ artifacts/
 # Don't commit configs and csv data files
 config*.json
 *.csv
+scripts/*.sh
 
 # Don't commit any sqlite file which contains your tradings
 *.sqlite
