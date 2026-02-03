@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.3.651"
+    return "v17.3.653"
 
   stoploss = -0.99
 
@@ -19212,6 +19212,8 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h & 4h down move, 4h still high
             & ((df["RSI_3_1h"] > 10.0) | (df["RSI_3_4h"] > 20.0) | (df["AROONU_14_4h"] < 40.0))
             # 1h & 1d down move, 1h still not low enough
+            & ((df["RSI_3_1h"] > 10.0) | (df["RSI_3_1d"] > 15.0) | (df["AROONU_14_1h"] < 20.0))
+            # 1h & 1d down move, 1h still not low enough
             & ((df["RSI_3_1h"] > 10.0) | (df["RSI_3_1d"] > 20.0) | (df["AROONU_14_1h"] < 30.0))
             # 1h down move, 15m downtrend, 1d high
             & ((df["RSI_3_1h"] > 10.0) | (df["CMF_20_15m"] > -0.40) | (df["AROONU_14_1d"] < 70.0))
@@ -20477,6 +20479,8 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append(
             (df["RSI_3_4h"] > 50.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 50.0) | (df["AROONU_14_4h"] < 70.0)
           )
+          # 4h down move, 15m & 1d high
+          long_entry_logic.append((df["RSI_3_4h"] > 50.0) | (df["AROONU_14_15m"] < 70.0) | (df["AROONU_14_1d"] < 90.0))
           # 4h down move, 1d high & overbought
           long_entry_logic.append((df["RSI_3_4h"] > 50.0) | (df["AROONU_14_1d"] < 90.0) | (df["ROC_9_1d"] < 20.0))
           # 4h down move, 15m & 4h high
