@@ -224,6 +224,7 @@ class E0V1E_Shorts(IStrategy):
         """
         Indicator-based trailing stoploss for shorts with 3x leverage.
 
+        EMERGENCY BACKSTOP at -20% prevents liquidations (~-30% with 3x leverage).
         Indicator-based exits (RSI, Stochastic) lock in profits when oversold.
         Shorts exit when price hits bottom (oversold = time to close short).
 
@@ -242,6 +243,12 @@ class E0V1E_Shorts(IStrategy):
         Returns:
             float: Stoploss percentage or 1.0 to keep base stoploss
         """
+        # EMERGENCY BACKSTOP: Last resort before liquidation (~-30% with 3x)
+        # This should RARELY trigger - indicators and unclog should catch first
+        if current_profit <= -0.20:
+            logger.warning(f"{trade.pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
+            return -0.21  # Exit immediately
+
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
 

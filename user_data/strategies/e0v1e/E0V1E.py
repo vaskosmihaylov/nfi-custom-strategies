@@ -162,11 +162,11 @@ class E0V1E(IStrategy):
         Returns:
             float: Stoploss percentage or 1.0 to keep base stoploss
         """
-        # EMERGENCY BACKSTOP: Last resort before liquidation (~-30%)
-        # This should RARELY trigger - indicators and deadfish should catch first
-        if current_profit <= -0.25:
+        # EMERGENCY BACKSTOP: Last resort before liquidation (~-30% with 3x)
+        # Tightened from -25% to -20% for more safety margin
+        if current_profit <= -0.20:
             logger.warning(f"{trade.pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
-            return -0.26  # Exit immediately
+            return -0.21  # Exit immediately
 
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()

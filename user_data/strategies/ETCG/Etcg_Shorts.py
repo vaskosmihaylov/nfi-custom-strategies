@@ -185,9 +185,10 @@ class ETCG_Shorts(IStrategy):
 
     # Exit signal
     use_exit_signal = True
-    exit_profit_only = False
+    exit_profit_only = True  # Only allow exit_signal when profitable (was False - causing -$10,397 in losses)
     exit_profit_offset = 0.01
     ignore_roi_if_entry_signal = False
+    use_custom_stoploss = True
 
     ## Optional order time in force.
     order_time_in_force = {
@@ -227,6 +228,17 @@ class ETCG_Shorts(IStrategy):
             return False
 
         return True
+
+    def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
+                        current_rate: float, current_profit: float, **kwargs) -> float:
+        """
+        Emergency backstop at -20% to prevent liquidation with 3x leverage.
+        Exchange liquidates shorts at ~-30%, so -20% gives safety margin.
+        """
+        if current_profit <= -0.20:
+            logger.warning(f"{pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
+            return -0.21
+        return 1.0  # Keep base stoploss
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         """

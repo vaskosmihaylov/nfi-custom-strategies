@@ -29,7 +29,7 @@ class AwesomeEWOLambo(IStrategy):
     minimal_roi = {"0": 0.02, "20": 0.015, "40": 0.014, "60": 0.012, "180": 0.015, }
     # Optimal stoploss designed for the strategy
     # This attribute will be overridden if the config file contains "stoploss"
-    stoploss = -0.7
+    stoploss = -0.2  # Tightened from -0.7 (was allowing -34% losses)
     # Optimal timeframe for the strategy
     timeframe = '5m'
     # Protection
@@ -154,8 +154,8 @@ class AwesomeEWOLambo(IStrategy):
         new_stoploss = max_reached_price * (1 - trailing_percentage)
         return max(new_stoploss, self.stoploss)  # Ensure it's not below the initial stop loss
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
-        # Sell any positions at a loss if they are held for more than 7 days.
-        if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 10:
+        # Tightened from 10 days to 3 days - with 1x leverage, no reason to hold losers so long
+        if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 3:
             return 'unclog'
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, sell_reason: str,

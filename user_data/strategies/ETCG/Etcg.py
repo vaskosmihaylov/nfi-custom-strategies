@@ -144,7 +144,7 @@ class ETCG(IStrategy):
 
     # Sell signal
     use_exit_signal = True
-    exit_profit_only = False
+    exit_profit_only = True  # Only allow exit_signal when profitable (was False - causing -$8,875 in losses)
     exit_profit_offset = 0.01
     ignore_roi_if_entry_signal = False
 

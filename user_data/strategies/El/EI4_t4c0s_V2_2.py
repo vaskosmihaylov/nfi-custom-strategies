@@ -151,13 +151,13 @@ class EI4_t4c0s_V2_2(IStrategy):
     # Custom Entry
     last_entry_price = None
 
-    # Unclog
-    unclog_days = IntParameter(1, 5, default=4, space='sell', optimize=True)
-    unclog = DecimalParameter(0.01, 0.08, default=0.04, decimals=2, space='sell', optimize=True)
+    # Unclog - tightened: 2 days instead of 4, 3% instead of 4% (with 3x leverage, 4 days = -60%+ loss)
+    unclog_days = IntParameter(1, 5, default=2, space='sell', optimize=True)
+    unclog = DecimalParameter(0.01, 0.08, default=0.03, decimals=2, space='sell', optimize=True)
 
-    # ATR-Based Dynamic Stop Loss
+    # ATR-Based Dynamic Stop Loss - tightened max from -15% to -12%
     atr_stop_multiplier = DecimalParameter(1.5, 3.0, default=2.0, space='sell', optimize=True)
-    max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.15, space='sell', optimize=False)
+    max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.12, space='sell', optimize=False)
     min_atr_stop = DecimalParameter(-0.05, -0.02, default=-0.03, space='sell', optimize=False)
 
 
