@@ -222,19 +222,10 @@ class E0V1E_Shorts(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Indicator-based trailing stoploss for PROFITABLE shorts.
+        Indicator-based trailing stoploss for shorts with 3x leverage.
 
-        3-Layer Architecture:
-        Layer 1: Base stoploss (-0.99) = Safety net
-        Layer 2: custom_stoploss (THIS) = Indicator-based profit taking
-        Layer 3: custom_exit = Time-based unclog + deadfish for losers
-
-        Logic:
-        - Hours 0-48: Don't tighten (return 1.0) - protection window
-        - Hours 48+: Trail PROFITABLE shorts based on RSI/Stochastic indicators
-          - Uses oversold levels to detect bottoms (time to take profit)
-          - Tightens stops for EWO entries at high profit levels
-          - Does NOT handle losing trades (custom_exit does that)
+        Indicator-based exits (RSI, Stochastic) lock in profits when oversold.
+        Shorts exit when price hits bottom (oversold = time to close short).
 
         Note: Indicator logic is INVERTED for shorts:
         - Profitable short = price went DOWN (RSI low, fastk low)
@@ -249,29 +240,18 @@ class E0V1E_Shorts(IStrategy):
             **kwargs: Additional arguments
 
         Returns:
-            float: Stoploss percentage (must be MORE NEGATIVE than base to tighten)
+            float: Stoploss percentage or 1.0 to keep base stoploss
         """
-        # Calculate trade duration in hours
-        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Phase 1: First 48 hours - PROTECTION WINDOW
-        # Return 1.0 to keep base stoploss (-0.99) without tightening
-        if trade_duration < 48:
-            return 1.0
+        enter_tag = ''
+        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+            enter_tag = trade.enter_tag
+        enter_tags = enter_tag.split()
 
-        # Phase 2: After 48 hours - Trail ONLY profitable shorts
-        # Losing/zombie trades are handled by custom_exit
-        
         # Only apply indicator logic if trade is profitable
         if current_profit > 0.01:
-            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-            current_candle = dataframe.iloc[-1].squeeze()
-
-            enter_tag = ''
-            if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
-                enter_tag = trade.enter_tag
-            enter_tags = enter_tag.split()
-
             # Tight trailing for EWO entries at 5% profit
             if "ewo_short" in enter_tags and current_profit >= 0.05:
                 return -0.01  # 1% stop
@@ -283,8 +263,13 @@ class E0V1E_Shorts(IStrategy):
             if current_candle["fastk"] < self.cover_fastx.value:
                 return -0.01  # 1% stop
 
-        # Default: Return 1.0 to keep base stoploss active
-        # Losing trades will be handled by custom_exit after 48h
+        # Losing trades: Exit on extreme oversold (inverted from longs RSI > 90)
+        if current_profit < 0.01:
+            if current_candle["rsi"] < 10:
+                return -0.01  # Cut losses when extremely oversold
+
+        # Default: Keep base stoploss (-0.99)
+        # Losing trades also handled by custom_exit (unclog/zombie/deadfish)
         return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,

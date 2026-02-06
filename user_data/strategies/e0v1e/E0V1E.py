@@ -142,21 +142,14 @@ class E0V1E(IStrategy):
     def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
         """
-        Indicator-based trailing stoploss for PROFITABLE longs.
-        Copied from E0V1E_Shorts proven logic with 3x leverage.
+        Indicator-based trailing stoploss for longs with 3x leverage.
 
-        3-Layer Architecture:
-        Layer 1: Emergency stop (-25%) = Backstop before liquidation (rarely hit)
-        Layer 2: 48-hour protection window = Let trades develop
-        Layer 3: Indicator-based trailing = Lock in profits when overbought
+        Emergency stop at -25% prevents liquidations (~-30% with 3x leverage).
+        Indicator-based exits (RSI, Stochastic) lock in profits when overbought.
+        Stops scaled 3x from original spot strategy to maintain same price tolerance.
 
-        Logic:
-        - Emergency: Exit at -25% to prevent liquidations (backstop only)
-        - Hours 0-48: Don't tighten (return 1.0) - protection window
-        - Hours 48+: Trail PROFITABLE longs based on RSI/Stochastic indicators
-          - Uses overbought levels to detect tops (time to take profit)
-          - Tightens stops for EWO entries at high profit levels
-          - Does NOT handle losing trades (custom_exit deadfish does that)
+        Original stops (-0.001, -0.005) scaled to (-0.003, -0.015) for 3x leverage
+        to maintain same price movement tolerance as the original spot strategy.
 
         Args:
             pair: Trading pair
@@ -175,41 +168,33 @@ class E0V1E(IStrategy):
             logger.warning(f"{trade.pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
             return -0.26  # Exit immediately
 
-        # Calculate trade duration in hours
-        trade_duration = (current_time - trade.open_date_utc).total_seconds() / 3600
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
 
-        # Phase 1: First 48 hours - PROTECTION WINDOW
-        # Return 1.0 to keep base stoploss (-0.99) without tightening
-        # Gives trades room to develop without premature exits
-        if trade_duration < 48:
-            return 1.0
+        enter_tag = ''
+        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+            enter_tag = trade.enter_tag
+        enter_tags = enter_tag.split()
 
-        # Phase 2: After 48 hours - Trail ONLY profitable longs
-        # Losing/zombie trades are handled by custom_exit (deadfish/unclog)
+        # EWO entries: Tight trailing at 5% profit (original: -0.005, scaled 3x: -0.015)
+        if "ewo" in enter_tags:
+            if current_profit >= 0.05:
+                return -0.015
 
-        # Only apply indicator logic if trade is profitable
+        # Profitable trades: Exit on overbought indicators (original: -0.001, scaled 3x: -0.003)
         if current_profit > 0.01:
-            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-            current_candle = dataframe.iloc[-1].squeeze()
-
-            enter_tag = ''
-            if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
-                enter_tag = trade.enter_tag
-            enter_tags = enter_tag.split()
-
-            # Tight trailing for EWO entries at 5% profit
-            if "ewo" in enter_tags and current_profit >= 0.05:
-                return -0.015  # 1.5% trailing stop
-
-            # Exit on strong overbought when profitable (price might reverse)
-            if current_candle["rsi"] > 80:
-                return -0.003  # 0.3% trailing stop
-
             if current_candle["fastk"] > self.sell_fastx.value:
-                return -0.003  # 0.3% trailing stop
+                return -0.003
 
-        # Default: Return 1.0 to keep base stoploss (-0.99) active
-        # Losing trades will be handled by custom_exit (deadfish) after time passes
+            if current_candle["rsi"] > 80:
+                return -0.003
+
+        # Losing trades: Exit on extreme overbought (original: -0.001, scaled 3x: -0.003)
+        if current_profit < 0.01:
+            if current_candle["rsi"] > 90:
+                return -0.003
+
+        # Default: Keep base stoploss (-0.99)
         return 1.0
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
