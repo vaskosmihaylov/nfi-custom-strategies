@@ -19,7 +19,7 @@ from functools import reduce
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
-# ------- Strategie by Mastaaa1987
+# ------- Shorts variant of KamaFama_2_20250115 by Mastaaa1987
 
 def williams_r(dataframe: DataFrame, period: int = 14) -> Series:
     """Williams %R, or just %R, is a technical analysis oscillator showing the current closing price in relation to the high and low
@@ -40,8 +40,10 @@ def williams_r(dataframe: DataFrame, period: int = 14) -> Series:
     return WR * -100
 
 
-class KamaFama_2_20250115(IStrategy):
+class KamaFama_2_20250115_Shorts(IStrategy):
     INTERFACE_VERSION = 2
+
+    can_short = True
 
     @property
     def protections(self):
@@ -68,7 +70,7 @@ class KamaFama_2_20250115(IStrategy):
     stoploss = -0.25
 
     # Sell Params
-    sell_fastx = IntParameter(50, 100, default=84, space='sell', optimize=True)
+    cover_fastx = IntParameter(0, 50, default=16, space='sell', optimize=True)
 
     # Trailing stop:
     trailing_stop = False
@@ -118,6 +120,20 @@ class KamaFama_2_20250115(IStrategy):
         }
     }
 
+    def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
+                           time_in_force: str, current_time: datetime, entry_tag: str,
+                           side: str, **kwargs) -> bool:
+        # Only allow shorts
+        if side == "long":
+            return False
+
+        # Enforce max 8 open shorts
+        open_trades = Trade.get_trades_proxy(is_open=True)
+        if len([t for t in open_trades if t.is_short]) >= 8:
+            return False
+
+        return True
+
     def leverage(self, pair: str, current_time: datetime, current_rate: float,
                  proposed_leverage: float, max_leverage: float, entry_tag: str, side: str,
                  **kwargs) -> float:
@@ -164,27 +180,27 @@ class KamaFama_2_20250115(IStrategy):
         conditions = []
         dataframe.loc[:, 'enter_tag'] = ''
 
-        buy = (
-                (dataframe['kama'] > dataframe['fama']) &
-                (dataframe['fama'] > dataframe['mama'] * 0.981) &
-                (dataframe['r_14'] < -61.3) &
-                (dataframe['mama_diff'] < -0.025) &
-                (dataframe['cti'] < -0.715) &
-                (dataframe['close'].rolling(48).max() >= dataframe['close'] * 1.05) &
-                (dataframe['close'].rolling(288).max() >= dataframe['close'] * 1.125) &
-                (dataframe['rsi_84'] < 60) &
-                (dataframe['rsi_112'] < 60)
+        short = (
+                (dataframe['kama'] < dataframe['fama']) &
+                (dataframe['fama'] < dataframe['mama'] * 1.019) &
+                (dataframe['r_14'] > -38.7) &
+                (dataframe['mama_diff'] > 0.025) &
+                (dataframe['cti'] > 0.715) &
+                (dataframe['close'].rolling(48).min() <= dataframe['close'] * 0.95) &
+                (dataframe['close'].rolling(288).min() <= dataframe['close'] * 0.875) &
+                (dataframe['rsi_84'] > 40) &
+                (dataframe['rsi_112'] > 40)
         )
-        conditions.append(buy)
-        dataframe.loc[buy, 'enter_tag'] += 'buy'
+        conditions.append(short)
+        dataframe.loc[short, 'enter_tag'] += 'short'
 
         if conditions:
-            dataframe.loc[reduce(lambda x, y: x | y, conditions), 'enter_long'] = 1
+            dataframe.loc[reduce(lambda x, y: x | y, conditions), 'enter_short'] = 1
 
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe.loc[:, 'exit_long'] = 0
+        dataframe.loc[:, 'exit_short'] = 0
 
         return dataframe
 
@@ -214,7 +230,6 @@ class KamaFama_2_20250115(IStrategy):
             state[trade.id] = pc
 
         if current_profit > 0:
-            # if min_profit <= -0.015:
             if self.config['runmode'].value in ('live', 'dry_run'):
                 if current_time > pc['date'] + timedelta(minutes=9) + timedelta(seconds=55):
                     df = dataframe.copy()
@@ -222,11 +237,10 @@ class KamaFama_2_20250115(IStrategy):
                     stoch_fast = ta.STOCHF(df, 5, 3, 0, 3, 0)
                     df['fastk'] = stoch_fast['fastk']
                     cc = df.iloc[-1].squeeze()
-                    if cc["fastk"] > self.sell_fastx.value:
-                        return "fastk_profit_sell_2"
+                    if cc["fastk"] < self.cover_fastx.value:
+                        return "fastk_profit_cover_2"
             else:
-                if current_candle["fastk"] > self.sell_fastx.value:
-                    return "fastk_profit_sell"
+                if current_candle["fastk"] < self.cover_fastx.value:
+                    return "fastk_profit_cover"
 
         return None
-

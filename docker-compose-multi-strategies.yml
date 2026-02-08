@@ -297,6 +297,40 @@ services:
       --strategy-path user_data/strategies/GeneTrader
       --strategy GeneStrategy_v2_Shorts
 
+  # KamaFama Strategy (Longs)
+  freqtrade-kamafama:
+    <<: *common-settings
+    container_name: freqtrade-kamafama
+    ports:
+      - "127.0.0.1:8091:8080"
+    env_file:
+      - path: ./env-files/kamafama.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/kamafama-tradesv3.sqlite
+      --log-file user_data/logs/kamafama.log
+      --strategy-path user_data/strategies/KamaFama
+      --strategy KamaFama_2_20250115
+
+  # KamaFama_Shorts Strategy (Shorts Only)
+  freqtrade-kamafama_shorts:
+    <<: *common-settings
+    container_name: freqtrade-kamafama_shorts
+    ports:
+      - "127.0.0.1:8093:8080"
+    env_file:
+      - path: ./env-files/kamafama_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/kamafama_shorts-tradesv3.sqlite
+      --log-file user_data/logs/kamafama_shorts.log
+      --strategy-path user_data/strategies/KamaFama
+      --strategy KamaFama_2_20250115_Shorts
+
 networks:
   default:
     name: freqtrade-network
