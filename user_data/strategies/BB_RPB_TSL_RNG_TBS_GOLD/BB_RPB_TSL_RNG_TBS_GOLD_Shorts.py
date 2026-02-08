@@ -169,7 +169,7 @@ class BB_RPB_TSL_RNG_TBS_GOLD_Shorts(IStrategy):
     sell_is_break_enabled = CategoricalParameter([True, False], default=True, space='sell', optimize=False, load=True)
 
     ## Cover params (shorts exit)
-    cover_btc_safe = IntParameter(-400, -300, default=-389, optimize=True)
+    cover_btc_safe = IntParameter(-400, -300, default=-389, space='buy', optimize=True)
     base_nb_candles_cover = IntParameter(5, 80, default=cover_params['base_nb_candles_cover'], space='buy', optimize=True)
     low_offset = DecimalParameter(0.9, 1.05, default=cover_params['low_offset'], space='buy', optimize=True)
     low_offset_2 = DecimalParameter(0.5, 1.01, default=cover_params['low_offset_2'], space='buy', optimize=True)
