@@ -304,7 +304,7 @@ class BB_RPB_TSL_RNG_TBS_GOLD_Shorts(IStrategy):
         ### Other checks
 
         dataframe['bb_width'] = ((dataframe['bb_upperband2'] - dataframe['bb_lowerband2']) / dataframe['bb_middleband2'])
-        dataframe['bb_delta'] = ((dataframe['bb_upperband2'] - dataframe['bb_upperband3']) / dataframe['bb_upperband2'])  # Inverted: upper instead of lower
+        dataframe['bb_delta'] = ((dataframe['bb_upperband3'] - dataframe['bb_upperband2']) / dataframe['bb_upperband2'])  # Inverted: measures gap between 3-stdev and 2-stdev upper bands
         dataframe['bb_top_cross'] = qtpylib.crossed_above(dataframe['close'], dataframe['bb_upperband3']).astype('int')  # Inverted: crossed_above instead of crossed_below
 
         # CCI hyperopt

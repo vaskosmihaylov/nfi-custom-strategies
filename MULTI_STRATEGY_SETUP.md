@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **16 different trading strategies** running in separate Docker containers
+- **18 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -31,7 +31,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── BB_RPB_TSL_RNG_TBS_GOLD (Port 8110)
                            ├── BB_RPB_TSL_RNG_TBS_GOLD_Shorts (Port 8111)
                            ├── GeneStrategy_v2 (Port 8114)
-                           └── GeneStrategy_v2_Shorts (Port 8115)
+                           ├── GeneStrategy_v2_Shorts (Port 8115)
+                           ├── KamaFama (Port 8091)
+                           └── KamaFama_Shorts (Port 8093)
 ```
 
 ## Files
@@ -61,6 +63,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `bb_rpb_tsl_rng_tbs_gold_shorts.env` - BB_RPB_TSL_RNG_TBS_GOLD_Shorts strategy (shorts with 3x leverage)
 - `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
+- `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
+- `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 
 ## Quick Start
 
@@ -148,6 +152,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **BB_RPB_TSL_RNG_TBS_GOLD_Shorts** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts` | `bb_rpb_gold_shorts_user` | `bb_rpb_gold_shorts_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
+| **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
+| **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -202,6 +208,8 @@ curl http://127.0.0.1:8110/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD
 curl http://127.0.0.1:8111/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD_Shorts
 curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
+curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
+curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -220,6 +228,8 @@ curl http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold/api/v1/ping
 curl http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/kamafama/api/v1/ping
+curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -241,6 +251,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `e0v1e.log`, `e0v1e_shorts.log`
 - `auto_ei_t4c0s.log`, `auto_ei_t4c0s_shorts.log`
 - `etcg.log`, `etcg_shorts.log`
+- `kamafama.log`, `kamafama_shorts.log`
 - etc.
 
 ## Configuration Details
@@ -268,8 +279,10 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8111 | BB_RPB_TSL_RNG_TBS_GOLD_Shorts | Shorts | 3x |
 | 8114 | GeneStrategy_v2 | Longs | 3x |
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
+| 8091 | KamaFama | Longs | 3x |
+| 8093 | KamaFama_Shorts | Shorts | 3x |
 
-**Freed ports** (available for future strategies): 8091, 8093, 8094, 8097, 8104, 8112, 8113
+**Freed ports** (available for future strategies): 8094, 8097, 8104, 8112, 8113
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -289,6 +302,8 @@ Each strategy uses its own SQLite database:
 - `bb_rpb_tsl_rng_tbs_gold_shorts-tradesv3.sqlite`
 - `genestrategy_v2-tradesv3.sqlite`
 - `genestrategy_v2_shorts-tradesv3.sqlite`
+- `kamafama-tradesv3.sqlite`
+- `kamafama_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
