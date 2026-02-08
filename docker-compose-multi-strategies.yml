@@ -2,8 +2,7 @@
 # Multi-Strategy FreqTrade Docker Compose Configuration
 # This file sets up multiple FreqTrade containers for different strategies
 
-x-common-settings:
-  &common-settings
+x-common-settings: &common-settings
   image: freqtradeorg/freqtrade:stable
   build:
     context: .
@@ -43,23 +42,6 @@ services:
       --strategy-path user_data/strategies
       --strategy NostalgiaForInfinityX7
 
-  # ElliotV5_SMA Strategy
-  freqtrade-elliotv5_sma:
-    <<: *common-settings
-    container_name: freqtrade-elliotv5_sma
-    ports:
-      - "127.0.0.1:8091:8080"
-    env_file:
-      - path: ./env-files/elliotv5_sma.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/elliotv5_sma-tradesv3.sqlite
-      --log-file user_data/logs/elliotv5_sma.log
-      --strategy-path user_data/strategies/ElliotV5_SMA
-      --strategy ElliotV5_SMA
-
   # BinClucMadV1 Strategy
   freqtrade-binclucmadv1:
     <<: *common-settings
@@ -76,74 +58,6 @@ services:
       --log-file user_data/logs/binclucmadv1.log
       --strategy-path user_data/strategies/BinClucMadV1
       --strategy BinClucMadV1
-
-  # NASOSv4 Strategy
-  freqtrade-nasosv4:
-    <<: *common-settings
-    container_name: freqtrade-nasosv4
-    ports:
-      - "127.0.0.1:8093:8080"
-    env_file:
-      - path: ./env-files/nasosv4.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/nasosv4-tradesv3.sqlite
-      --log-file user_data/logs/nasosv4.log
-      --strategy-path user_data/strategies/NASOSv4
-      --strategy NASOSv4
-
-  # RsiquiV5 Strategy (Replaces MartyEMA)
-  freqtrade-rsiquiv5:
-    <<: *common-settings
-    container_name: freqtrade-rsiquiv5
-    ports:
-      - "127.0.0.1:8094:8080"
-    env_file:
-      - path: ./env-files/rsiquiv5.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/rsiquiv5-tradesv3.sqlite
-      --log-file user_data/logs/rsiquiv5.log
-      --strategy-path user_data/strategies/Rsiqui
-      --strategy RsiquiV5
-
-  # NASOSv4_Shorts Strategy (Shorts-only with 3x leverage)
-  freqtrade-nasosv4_shorts:
-    <<: *common-settings
-    container_name: freqtrade-nasosv4_shorts
-    ports:
-      - "127.0.0.1:8104:8080"
-    env_file:
-      - path: ./env-files/nasosv4_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/nasosv4_shorts-tradesv3.sqlite
-      --log-file user_data/logs/nasosv4_shorts.log
-      --strategy-path user_data/strategies/NASOSv4
-      --strategy NASOSv4_Shorts
-
-  # ElliotV5_SMA_Shorts Strategy (Shorts-only parallel test)
-  freqtrade-elliotv5_sma_shorts:
-    <<: *common-settings
-    container_name: freqtrade-elliotv5_sma_shorts
-    ports:
-      - "127.0.0.1:8097:8080"
-    env_file:
-      - path: ./env-files/elliotv5_sma_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/elliotv5_sma_shorts-tradesv3.sqlite
-      --log-file user_data/logs/elliotv5_sma_shorts.log
-      --strategy-path user_data/strategies/ElliotV5_SMA
-      --strategy ElliotV5_SMA_Shorts
 
   # E0V1E Strategy (Longs)
   freqtrade-e0v1e:
@@ -179,39 +93,39 @@ services:
       --strategy-path user_data/strategies/e0v1e
       --strategy E0V1E_Shorts
 
-  # EI4_t4c0s_V2_2 Strategy (Longs)
-  freqtrade-ei4_t4c0s_v2_2:
+  # Auto_EI_t4c0s Strategy (Longs - replaces EI4_t4c0s_V2_2)
+  freqtrade-auto_ei_t4c0s:
     <<: *common-settings
-    container_name: freqtrade-ei4_t4c0s_v2_2
+    container_name: freqtrade-auto_ei_t4c0s
     ports:
       - "127.0.0.1:8100:8080"
     env_file:
-      - path: ./env-files/ei4_t4c0s_v2_2.env
+      - path: ./env-files/auto_ei_t4c0s.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/ei4_t4c0s_v2_2-tradesv3.sqlite
-      --log-file user_data/logs/ei4_t4c0s_v2_2.log
+      --db-url sqlite:////freqtrade/user_data/auto_ei_t4c0s-tradesv3.sqlite
+      --log-file user_data/logs/auto_ei_t4c0s.log
       --strategy-path user_data/strategies/El
-      --strategy EI4_t4c0s_V2_2
+      --strategy Auto_EI_t4c0s
 
-  # EI4_t4c0s_V2_2_Shorts Strategy (Shorts-only parallel test)
-  freqtrade-ei4_t4c0s_v2_2_shorts:
+  # Auto_EI_t4c0s_Shorts Strategy (Shorts-only - replaces EI4_t4c0s_V2_2_Shorts)
+  freqtrade-auto_ei_t4c0s_shorts:
     <<: *common-settings
-    container_name: freqtrade-ei4_t4c0s_v2_2_shorts
+    container_name: freqtrade-auto_ei_t4c0s_shorts
     ports:
       - "127.0.0.1:8101:8080"
     env_file:
-      - path: ./env-files/ei4_t4c0s_v2_2_shorts.env
+      - path: ./env-files/auto_ei_t4c0s_shorts.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/ei4_t4c0s_v2_2_shorts-tradesv3.sqlite
-      --log-file user_data/logs/ei4_t4c0s_v2_2_shorts.log
+      --db-url sqlite:////freqtrade/user_data/auto_ei_t4c0s_shorts-tradesv3.sqlite
+      --log-file user_data/logs/auto_ei_t4c0s_shorts.log
       --strategy-path user_data/strategies/El
-      --strategy EI4_t4c0s_V2_2_Shorts
+      --strategy Auto_EI_t4c0s_Shorts
 
   # ETCG Strategy (Longs)
   freqtrade-etcg:
@@ -348,40 +262,6 @@ services:
       --log-file user_data/logs/bb_rpb_tsl_rng_tbs_gold_shorts.log
       --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
       --strategy BB_RPB_TSL_RNG_TBS_GOLD_Shorts
-
-  # ElliotV5HO Strategy (Longs)
-  freqtrade-elliotv5ho:
-    <<: *common-settings
-    container_name: freqtrade-elliotv5ho
-    ports:
-      - "127.0.0.1:8112:8080"
-    env_file:
-      - path: ./env-files/elliotv5ho.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/elliotv5ho-tradesv3.sqlite
-      --log-file user_data/logs/elliotv5ho.log
-      --strategy-path user_data/strategies/ElliotV5_SMA
-      --strategy ElliotV5HO
-
-  # ElliotV5HO_Shorts Strategy (Shorts Only)
-  freqtrade-elliotv5ho_shorts:
-    <<: *common-settings
-    container_name: freqtrade-elliotv5ho_shorts
-    ports:
-      - "127.0.0.1:8113:8080"
-    env_file:
-      - path: ./env-files/elliotv5ho_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/elliotv5ho_shorts-tradesv3.sqlite
-      --log-file user_data/logs/elliotv5ho_shorts.log
-      --strategy-path user_data/strategies/ElliotV5_SMA
-      --strategy ElliotV5HO_Shorts
 
   # GeneStrategy_v2 Strategy (Longs)
   freqtrade-genestrategy_v2:
