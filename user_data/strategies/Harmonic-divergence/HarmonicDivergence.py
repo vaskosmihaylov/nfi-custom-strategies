@@ -279,6 +279,11 @@ class HarmonicDivergence_fix(IStrategy):
     # self.trailing_stop = True
     # return True
 
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag: str,
+                 side: str, **kwargs) -> float:
+        return 3.0
+
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime, current_rate: float, current_profit: float, **kwargs) -> float:
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         stoploss = 999999

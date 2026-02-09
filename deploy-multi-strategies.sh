@@ -66,7 +66,8 @@ show_help() {
     echo "  cluchanix-hhll, cluchanix-hhll-shorts, awesomeewolambo, awesomeewolambo_shorts,"
     echo "  bb_rpb_tsl_rng_tbs_gold, bb_rpb_tsl_rng_tbs_gold_shorts,"
     echo "  genestrategy_v2, genestrategy_v2_shorts,"
-    echo "  kamafama, kamafama_shorts"
+    echo "  kamafama, kamafama_shorts,"
+    echo "  harmonicdivergence, harmonicdivergence_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -95,6 +96,8 @@ show_help() {
     echo "  GeneStrategy_v2_Shorts: http://freq.gaiaderma.com/genestrategy_v2_shorts"
     echo "  KamaFama:              http://freq.gaiaderma.com/kamafama"
     echo "  KamaFama_Shorts:       http://freq.gaiaderma.com/kamafama_shorts"
+    echo "  HarmonicDivergence:    http://freq.gaiaderma.com/harmonicdivergence"
+    echo "  HarmonicDivergence_Shorts: http://freq.gaiaderma.com/harmonicdivergence_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -240,6 +243,8 @@ health_check() {
         "genestrategy_v2_shorts:8115"
         "kamafama:8091"
         "kamafama_shorts:8093"
+        "harmonicdivergence:8116"
+        "harmonicdivergence_shorts:8117"
     )
     
     local healthy=0

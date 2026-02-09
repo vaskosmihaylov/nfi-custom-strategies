@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **18 different trading strategies** running in separate Docker containers
+- **20 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -33,7 +33,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── GeneStrategy_v2 (Port 8114)
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
-                           └── KamaFama_Shorts (Port 8093)
+                           ├── KamaFama_Shorts (Port 8093)
+                           ├── HarmonicDivergence (Port 8116)
+                           └── HarmonicDivergence_Shorts (Port 8117)
 ```
 
 ## Files
@@ -65,6 +67,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
+- `harmonicdivergence.env` - HarmonicDivergence strategy (longs with 3x leverage, divergence-based)
+- `harmonicdivergence_shorts.env` - HarmonicDivergence_Shorts strategy (shorts with 3x leverage, bearish divergence)
 
 ## Quick Start
 
@@ -154,6 +158,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
+| **HarmonicDivergence** | `Vasko_HarmonicDivergence` | `http://freq.gaiaderma.com/harmonicdivergence` | `harmonicdivergence_user` | `harmonicdivergence_secure_password` |
+| **HarmonicDivergence_Shorts** | `Vasko_HarmonicDivergence_Shorts` | `http://freq.gaiaderma.com/harmonicdivergence_shorts` | `harmonicdivergence_shorts_user` | `harmonicdivergence_shorts_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -210,6 +216,8 @@ curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
+curl http://127.0.0.1:8116/api/v1/ping  # HarmonicDivergence
+curl http://127.0.0.1:8117/api/v1/ping  # HarmonicDivergence_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -230,6 +238,8 @@ curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/harmonicdivergence/api/v1/ping
+curl http://freq.gaiaderma.com/harmonicdivergence_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -252,6 +262,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `auto_ei_t4c0s.log`, `auto_ei_t4c0s_shorts.log`
 - `etcg.log`, `etcg_shorts.log`
 - `kamafama.log`, `kamafama_shorts.log`
+- `harmonicdivergence.log`, `harmonicdivergence_shorts.log`
 - etc.
 
 ## Configuration Details
@@ -281,8 +292,10 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
+| 8116 | HarmonicDivergence | Longs | 3x |
+| 8117 | HarmonicDivergence_Shorts | Shorts | 3x |
 
-**Freed ports** (available for future strategies): 8094, 8097, 8104, 8112, 8113
+**Freed ports** (available for future strategies): 8094, 8097, 8104, 8112, 8113, 8118+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -304,6 +317,8 @@ Each strategy uses its own SQLite database:
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
+- `harmonicdivergence-tradesv3.sqlite`
+- `harmonicdivergence_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
@@ -420,4 +435,4 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 **Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`.
 
-**Last Updated**: February 8, 2026
+**Last Updated**: February 9, 2026
