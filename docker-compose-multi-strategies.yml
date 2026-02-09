@@ -42,22 +42,39 @@ services:
       --strategy-path user_data/strategies
       --strategy NostalgiaForInfinityX7
 
-  # BinClucMadV1 Strategy
-  freqtrade-binclucmadv1:
+  # FalconTrader Strategy (Longs with DCA)
+  freqtrade-falcontrader:
     <<: *common-settings
-    container_name: freqtrade-binclucmadv1
+    container_name: freqtrade-falcontrader
     ports:
       - "127.0.0.1:8092:8080"
     env_file:
-      - path: ./env-files/binclucmadv1.env
+      - path: ./env-files/falcontrader.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/binclucmadv1-tradesv3.sqlite
-      --log-file user_data/logs/binclucmadv1.log
-      --strategy-path user_data/strategies/BinClucMadV1
-      --strategy BinClucMadV1
+      --db-url sqlite:////freqtrade/user_data/falcontrader-tradesv3.sqlite
+      --log-file user_data/logs/falcontrader.log
+      --strategy-path user_data/strategies/FalconTrader
+      --strategy newstrategy53
+
+  # FalconTrader_Short Strategy (Shorts with 3x leverage and DCA)
+  freqtrade-falcontrader_short:
+    <<: *common-settings
+    container_name: freqtrade-falcontrader_short
+    ports:
+      - "127.0.0.1:8094:8080"
+    env_file:
+      - path: ./env-files/falcontrader_short.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/falcontrader_short-tradesv3.sqlite
+      --log-file user_data/logs/falcontrader_short.log
+      --strategy-path user_data/strategies/FalconTrader
+      --strategy newstrategy53_shorts
 
   # E0V1E Strategy (Longs)
   freqtrade-e0v1e:
