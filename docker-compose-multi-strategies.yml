@@ -382,6 +382,23 @@ services:
       --strategy-path user_data/strategies/Harmonic-divergence
       --strategy HarmonicDivergence_Shorts
 
+  # FrankenStrat_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-frankenstrat_shorts:
+    <<: *common-settings
+    container_name: freqtrade-frankenstrat_shorts
+    ports:
+      - "127.0.0.1:8118:8080"
+    env_file:
+      - path: ./env-files/frankenstrat_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/frankenstrat_shorts-tradesv3.sqlite
+      --log-file user_data/logs/frankenstrat_shorts.log
+      --strategy-path user_data/strategies/Frankie
+      --strategy FrankenStrat_Shorts
+
 networks:
   default:
     name: freqtrade-network
