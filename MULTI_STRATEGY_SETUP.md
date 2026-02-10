@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **21 different trading strategies** running in separate Docker containers
+- **22 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -37,6 +37,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KamaFama_Shorts (Port 8093)
                            ├── HarmonicDivergence (Port 8116)
                            ├── HarmonicDivergence_Shorts (Port 8117)
+                           ├── FrankenStrat (Port 8119)
                            └── FrankenStrat_Shorts (Port 8118)
 ```
 
@@ -72,6 +73,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 - `harmonicdivergence.env` - HarmonicDivergence strategy (longs with 3x leverage, divergence-based)
 - `harmonicdivergence_shorts.env` - HarmonicDivergence_Shorts strategy (shorts with 3x leverage, bearish divergence)
+- `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
 
 ## Quick Start
@@ -165,6 +167,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **HarmonicDivergence** | `Vasko_HarmonicDivergence` | `http://freq.gaiaderma.com/harmonicdivergence` | `harmonicdivergence_user` | `harmonicdivergence_secure_password` |
 | **HarmonicDivergence_Shorts** | `Vasko_HarmonicDivergence_Shorts` | `http://freq.gaiaderma.com/harmonicdivergence_shorts` | `harmonicdivergence_shorts_user` | `harmonicdivergence_shorts_secure_password` |
+| **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
 
 ### URL Flow Example:
@@ -225,6 +228,7 @@ curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8116/api/v1/ping  # HarmonicDivergence
 curl http://127.0.0.1:8117/api/v1/ping  # HarmonicDivergence_Shorts
+curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
 
 # Test through NGINX
@@ -249,6 +253,7 @@ curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/harmonicdivergence/api/v1/ping
 curl http://freq.gaiaderma.com/harmonicdivergence_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
 ```
 
@@ -306,8 +311,9 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8116 | HarmonicDivergence | Longs | 3x |
 | 8117 | HarmonicDivergence_Shorts | Shorts | 3x |
 | 8118 | FrankenStrat_Shorts | Shorts | 3x |
+| 8119 | FrankenStrat | Longs | 3x |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8113, 8119+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8113, 8120+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -332,6 +338,7 @@ Each strategy uses its own SQLite database:
 - `kamafama_shorts-tradesv3.sqlite`
 - `harmonicdivergence-tradesv3.sqlite`
 - `harmonicdivergence_shorts-tradesv3.sqlite`
+- `frankenstrat-tradesv3.sqlite`
 - `frankenstrat_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
@@ -452,7 +459,9 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 **Last Updated**: February 10, 2026
 
 ## Recent Changes (February 10, 2026)
+- **Added**: FrankenStrat (longs, port 8119) - Multi-signal dip buyer with 3x leverage, SSL/MACD/EWO-based entries
 - **Added**: FrankenStrat_Shorts (shorts, port 8118) - Shorts-only variant of FrankenStrat with 7 inverted signals, 3x leverage, -20% emergency backstop
+- **Fixed**: `np.NAN` → `np.nan` in both FrankenStrat files (NumPy 2.x compatibility)
 
 ## Recent Changes (February 9, 2026)
 - **Removed**: BinClucMadV1 strategy (port 8092) - replaced by FalconTrader

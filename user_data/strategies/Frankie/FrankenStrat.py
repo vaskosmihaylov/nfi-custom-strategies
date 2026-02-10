@@ -60,7 +60,7 @@ def SSLChannels(dataframe, length = 7):
     df['ATR'] = ta.ATR(df, timeperiod=14)
     df['smaHigh'] = df['high'].rolling(length).mean() + df['ATR']
     df['smaLow'] = df['low'].rolling(length).mean() - df['ATR']
-    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.NAN))
+    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.nan))
     df['hlv'] = df['hlv'].ffill()
     df['sslDown'] = np.where(df['hlv'] < 0, df['smaHigh'], df['smaLow'])
     df['sslUp'] = np.where(df['hlv'] < 0, df['smaLow'], df['smaHigh'])
@@ -310,5 +310,10 @@ class FrankenStrat(IStrategy):
                 reduce(lambda x, y: x | y, conditions),
                 'sell'
             ]=1
-            
+
         return dataframe
+
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag: str,
+                 side: str, **kwargs) -> float:
+        return 3.0
