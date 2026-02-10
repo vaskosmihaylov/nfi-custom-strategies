@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+HYPEROPT_GUIDE.md
 # C extensions
 *.so
 
@@ -172,3 +173,4 @@ scripts/*.sh
 sync-local.sh
 
 .worktrees/
+

@@ -39,11 +39,11 @@ docker compose -f docker-compose-multi-strategies.yml run --rm \
 
 # === STEP 2: Run hyperopt ===
 docker compose -f docker-compose-multi-strategies.yml run --rm \
-  freqtrade-harmonicdivergence \
+  freqtrade-e0v1e \
   hyperopt \
   --config user_data/strategies/config-hyperopt.json \
-  --strategy HarmonicDivergence_fix \
-  --strategy-path user_data/strategies/Harmonic-divergence \
+  --strategy E0V1E \
+  --strategy-path user_data/strategies/E0V1E \
   --hyperopt-loss SharpeHyperOptLossDaily \
   --spaces roi stoploss trailing \
   --timerange 20251101-20260201 \
