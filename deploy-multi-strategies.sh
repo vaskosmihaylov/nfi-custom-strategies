@@ -68,7 +68,8 @@ show_help() {
     echo "  genestrategy_v2, genestrategy_v2_shorts,"
     echo "  kamafama, kamafama_shorts,"
     echo "  harmonicdivergence, harmonicdivergence_shorts,"
-    echo "  frankenstrat, frankenstrat_shorts"
+    echo "  frankenstrat, frankenstrat_shorts,"
+    echo "  bigz04_tsl4, bigz04_tsl4_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -102,6 +103,8 @@ show_help() {
     echo "  HarmonicDivergence_Shorts: http://freq.gaiaderma.com/harmonicdivergence_shorts"
     echo "  FrankenStrat:          http://freq.gaiaderma.com/frankenstrat"
     echo "  FrankenStrat_Shorts:   http://freq.gaiaderma.com/frankenstrat_shorts"
+    echo "  BigZ04_TSL4:           http://freq.gaiaderma.com/bigz04_tsl4"
+    echo "  BigZ04_TSL4_Shorts:    http://freq.gaiaderma.com/bigz04_tsl4_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -252,6 +255,8 @@ health_check() {
         "harmonicdivergence_shorts:8117"
         "frankenstrat:8119"
         "frankenstrat_shorts:8118"
+        "bigz04_tsl4:8120"
+        "bigz04_tsl4_shorts:8121"
     )
     
     local healthy=0

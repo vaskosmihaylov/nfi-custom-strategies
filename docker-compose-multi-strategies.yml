@@ -416,6 +416,40 @@ services:
       --strategy-path user_data/strategies/Frankie
       --strategy FrankenStrat_Shorts
 
+  # BigZ04_TSL4 Strategy (Longs with 3x leverage)
+  freqtrade-bigz04_tsl4:
+    <<: *common-settings
+    container_name: freqtrade-bigz04_tsl4
+    ports:
+      - "127.0.0.1:8120:8080"
+    env_file:
+      - path: ./env-files/bigz04_tsl4.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bigz04_tsl4-tradesv3.sqlite
+      --log-file user_data/logs/bigz04_tsl4.log
+      --strategy-path user_data/strategies/BigZ
+      --strategy BigZ04_TSL4
+
+  # BigZ04_TSL4_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-bigz04_tsl4_shorts:
+    <<: *common-settings
+    container_name: freqtrade-bigz04_tsl4_shorts
+    ports:
+      - "127.0.0.1:8121:8080"
+    env_file:
+      - path: ./env-files/bigz04_tsl4_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bigz04_tsl4_shorts-tradesv3.sqlite
+      --log-file user_data/logs/bigz04_tsl4_shorts.log
+      --strategy-path user_data/strategies/BigZ
+      --strategy BigZ04_TSL4_Shorts
+
 networks:
   default:
     name: freqtrade-network

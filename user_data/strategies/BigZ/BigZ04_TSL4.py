@@ -204,6 +204,11 @@ class BigZ04_TSL4(IStrategy):
     pSL_2 = DecimalParameter(0.020, 0.070, default=0.040, decimals=3, space='sell', optimize=False, load=True)
 
 
+    def leverage(self, pair: str, current_time: datetime, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag: str,
+                 side: str, **kwargs) -> float:
+        return 3.0
+
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, sell_reason: str, **kwargs) -> bool:
         return True
