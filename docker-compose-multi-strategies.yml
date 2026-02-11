@@ -416,6 +416,74 @@ services:
       --strategy-path user_data/strategies/BigZ
       --strategy BigZ04_TSL4_Shorts
 
+  # BB_RPB_TSL Strategy (Longs with 3x leverage)
+  freqtrade-bb_rpb_tsl:
+    <<: *common-settings
+    container_name: freqtrade-bb_rpb_tsl
+    ports:
+      - "127.0.0.1:8122:8080"
+    env_file:
+      - path: ./env-files/bb_rpb_tsl.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl-tradesv3.sqlite
+      --log-file user_data/logs/bb_rpb_tsl.log
+      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy BB_RPB_TSL
+
+  # BB_RPB_TSL_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-bb_rpb_tsl_shorts:
+    <<: *common-settings
+    container_name: freqtrade-bb_rpb_tsl_shorts
+    ports:
+      - "127.0.0.1:8123:8080"
+    env_file:
+      - path: ./env-files/bb_rpb_tsl_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_shorts-tradesv3.sqlite
+      --log-file user_data/logs/bb_rpb_tsl_shorts.log
+      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy BB_RPB_TSL_Shorts
+
+  # SimpleRSI Strategy (Longs with 3x leverage)
+  freqtrade-simplersi:
+    <<: *common-settings
+    container_name: freqtrade-simplersi
+    ports:
+      - "127.0.0.1:8124:8080"
+    env_file:
+      - path: ./env-files/simplersi.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/simplersi-tradesv3.sqlite
+      --log-file user_data/logs/simplersi.log
+      --strategy-path user_data/strategies/SimpleRSI
+      --strategy SimpleRSI
+
+  # SimpleRSI_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-simplersi_shorts:
+    <<: *common-settings
+    container_name: freqtrade-simplersi_shorts
+    ports:
+      - "127.0.0.1:8125:8080"
+    env_file:
+      - path: ./env-files/simplersi_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/simplersi_shorts-tradesv3.sqlite
+      --log-file user_data/logs/simplersi_shorts.log
+      --strategy-path user_data/strategies/SimpleRSI
+      --strategy SimpleRSI_Shorts
+
 networks:
   default:
     name: freqtrade-network

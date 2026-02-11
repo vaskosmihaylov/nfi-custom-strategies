@@ -68,7 +68,9 @@ show_help() {
     echo "  genestrategy_v2, genestrategy_v2_shorts,"
     echo "  kamafama, kamafama_shorts,"
     echo "  frankenstrat, frankenstrat_shorts,"
-    echo "  bigz04_tsl4, bigz04_tsl4_shorts"
+    echo "  bigz04_tsl4, bigz04_tsl4_shorts,"
+    echo "  bb_rpb_tsl, bb_rpb_tsl_shorts,"
+    echo "  simplersi, simplersi_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -102,6 +104,10 @@ show_help() {
     echo "  FrankenStrat_Shorts:   http://freq.gaiaderma.com/frankenstrat_shorts"
     echo "  BigZ04_TSL4:           http://freq.gaiaderma.com/bigz04_tsl4"
     echo "  BigZ04_TSL4_Shorts:    http://freq.gaiaderma.com/bigz04_tsl4_shorts"
+    echo "  BB_RPB_TSL:            http://freq.gaiaderma.com/bb_rpb_tsl"
+    echo "  BB_RPB_TSL_Shorts:     http://freq.gaiaderma.com/bb_rpb_tsl_shorts"
+    echo "  SimpleRSI:             http://freq.gaiaderma.com/simplersi"
+    echo "  SimpleRSI_Shorts:      http://freq.gaiaderma.com/simplersi_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -252,6 +258,10 @@ health_check() {
         "frankenstrat_shorts:8118"
         "bigz04_tsl4:8120"
         "bigz04_tsl4_shorts:8121"
+        "bb_rpb_tsl:8122"
+        "bb_rpb_tsl_shorts:8123"
+        "simplersi:8124"
+        "simplersi_shorts:8125"
     )
     
     local healthy=0

@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **24 different trading strategies** running in separate Docker containers
+- **28 different trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -38,7 +38,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── FrankenStrat (Port 8119)
                            ├── FrankenStrat_Shorts (Port 8118)
                            ├── BigZ04_TSL4 (Port 8120)
-                           └── BigZ04_TSL4_Shorts (Port 8121)
+                           ├── BigZ04_TSL4_Shorts (Port 8121)
+                           ├── BB_RPB_TSL (Port 8122)
+                           ├── BB_RPB_TSL_Shorts (Port 8123)
+                           ├── SimpleRSI (Port 8124)
+                           └── SimpleRSI_Shorts (Port 8125)
 ```
 
 ## Files
@@ -75,6 +79,10 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
 - `bigz04_tsl4.env` - BigZ04_TSL4 strategy (longs with 3x leverage, BB/EMA dip buyer with trailing stoploss)
 - `bigz04_tsl4_shorts.env` - BigZ04_TSL4_Shorts strategy (shorts with 3x leverage, inverted BB/EMA signals)
+- `bb_rpb_tsl.env` - BB_RPB_TSL strategy (longs with 3x leverage, 19-signal BB/EWO dip buyer)
+- `bb_rpb_tsl_shorts.env` - BB_RPB_TSL_Shorts strategy (shorts with 3x leverage, inverted 19-signal rally shorter)
+- `simplersi.env` - SimpleRSI strategy (longs with 3x leverage, RSI momentum breakout on 1d)
+- `simplersi_shorts.env` - SimpleRSI_Shorts strategy (shorts with 3x leverage, RSI momentum breakdown on 1d)
 
 ## Quick Start
 
@@ -169,6 +177,10 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
 | **BigZ04_TSL4** | `Vasko_BigZ04_TSL4` | `http://freq.gaiaderma.com/bigz04_tsl4` | `bigz04_tsl4_user` | `bigz04_tsl4_secure_password` |
 | **BigZ04_TSL4_Shorts** | `Vasko_BigZ04_TSL4_Shorts` | `http://freq.gaiaderma.com/bigz04_tsl4_shorts` | `bigz04_tsl4_shorts_user` | `bigz04_tsl4_shorts_secure_password` |
+| **BB_RPB_TSL** | `Vasko_BB_RPB_TSL` | `http://freq.gaiaderma.com/bb_rpb_tsl` | `bb_rpb_tsl_user` | `bb_rpb_tsl_secure_password` |
+| **BB_RPB_TSL_Shorts** | `Vasko_BB_RPB_TSL_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_shorts` | `bb_rpb_tsl_shorts_user` | `bb_rpb_tsl_shorts_secure_password` |
+| **SimpleRSI** | `Vasko_SimpleRSI` | `http://freq.gaiaderma.com/simplersi` | `simplersi_user` | `simplersi_secure_password` |
+| **SimpleRSI_Shorts** | `Vasko_SimpleRSI_Shorts` | `http://freq.gaiaderma.com/simplersi_shorts` | `simplersi_shorts_user` | `simplersi_shorts_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -230,6 +242,10 @@ curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
 curl http://127.0.0.1:8120/api/v1/ping  # BigZ04_TSL4
 curl http://127.0.0.1:8121/api/v1/ping  # BigZ04_TSL4_Shorts
+curl http://127.0.0.1:8122/api/v1/ping  # BB_RPB_TSL
+curl http://127.0.0.1:8123/api/v1/ping  # BB_RPB_TSL_Shorts
+curl http://127.0.0.1:8124/api/v1/ping  # SimpleRSI
+curl http://127.0.0.1:8125/api/v1/ping  # SimpleRSI_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -255,6 +271,10 @@ curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/bigz04_tsl4/api/v1/ping
 curl http://freq.gaiaderma.com/bigz04_tsl4_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/bb_rpb_tsl/api/v1/ping
+curl http://freq.gaiaderma.com/bb_rpb_tsl_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/simplersi/api/v1/ping
+curl http://freq.gaiaderma.com/simplersi_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -311,8 +331,12 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8119 | FrankenStrat | Longs | 3x |
 | 8120 | BigZ04_TSL4 | Longs | 3x |
 | 8121 | BigZ04_TSL4_Shorts | Shorts | 3x |
+| 8122 | BB_RPB_TSL | Longs | 3x |
+| 8123 | BB_RPB_TSL_Shorts | Shorts | 3x |
+| 8124 | SimpleRSI | Longs | 3x |
+| 8125 | SimpleRSI_Shorts | Shorts | 3x |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8113, 8122+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8113, 8126+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -339,6 +363,10 @@ Each strategy uses its own SQLite database:
 - `frankenstrat_shorts-tradesv3.sqlite`
 - `bigz04_tsl4-tradesv3.sqlite`
 - `bigz04_tsl4_shorts-tradesv3.sqlite`
+- `bb_rpb_tsl-tradesv3.sqlite`
+- `bb_rpb_tsl_shorts-tradesv3.sqlite`
+- `simplersi-tradesv3.sqlite`
+- `simplersi_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
@@ -458,6 +486,10 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 **Last Updated**: February 11, 2026
 
 ## Recent Changes (February 11, 2026)
+- **Added**: BB_RPB_TSL (longs, port 8122) - 19-signal BB/EWO dip buyer with custom trailing stoploss, 3x leverage
+- **Added**: BB_RPB_TSL_Shorts (shorts, port 8123) - Shorts-only variant with inverted 19 entry signals, 3x leverage, max 4 shorts
+- **Added**: SimpleRSI (longs, port 8124) - RSI momentum breakout on 1d timeframe, 3x leverage
+- **Added**: SimpleRSI_Shorts (shorts, port 8125) - Shorts-only RSI momentum breakdown, 3x leverage, max 4 shorts
 - **Added**: BigZ04_TSL4 (longs, port 8120) - BB/EMA dip buyer with trailing stoploss, 11 entry signals, 3x leverage
 - **Added**: BigZ04_TSL4_Shorts (shorts, port 8121) - Shorts-only variant with inverted BB/EMA signals, 3x leverage, max 4 shorts
 
