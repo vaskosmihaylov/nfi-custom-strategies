@@ -52,17 +52,17 @@ class E0V1E(IStrategy):
     use_custom_stoploss = True
 
     is_optimize_ewo = True
-    buy_rsi_fast = IntParameter(35, 60, default=45, space='buy', optimize=is_optimize_ewo)
-    buy_rsi = IntParameter(15, 50, default=35, space='buy', optimize=is_optimize_ewo)
-    buy_ewo = DecimalParameter(-6.0, 5, default=-5.585, space='buy', optimize=is_optimize_ewo)
-    buy_ema_low = DecimalParameter(0.9, 0.998, default=0.942, space='buy', optimize=is_optimize_ewo)
-    buy_ema_high = DecimalParameter(0.95, 1.2, default=1.084, space='buy', optimize=is_optimize_ewo)
+    buy_rsi_fast = IntParameter(35, 60, default=55, space='buy', optimize=is_optimize_ewo)
+    buy_rsi = IntParameter(15, 50, default=42, space='buy', optimize=is_optimize_ewo)
+    buy_ewo = DecimalParameter(-6.0, 5, default=2.058, space='buy', optimize=is_optimize_ewo)
+    buy_ema_low = DecimalParameter(0.9, 0.998, default=0.909, space='buy', optimize=is_optimize_ewo)
+    buy_ema_high = DecimalParameter(0.95, 1.2, default=1.082, space='buy', optimize=is_optimize_ewo)
 
     is_optimize_32 = True
-    buy_rsi_fast_32 = IntParameter(20, 70, default=46, space='buy', optimize=is_optimize_32)
-    buy_rsi_32 = IntParameter(15, 50, default=19, space='buy', optimize=is_optimize_32)
-    buy_sma15_32 = DecimalParameter(0.900, 1, default=0.942, decimals=3, space='buy', optimize=is_optimize_32)
-    buy_cti_32 = DecimalParameter(-1, 0, default=-0.86, decimals=2, space='buy', optimize=is_optimize_32)
+    buy_rsi_fast_32 = IntParameter(20, 70, default=33, space='buy', optimize=is_optimize_32)
+    buy_rsi_32 = IntParameter(15, 50, default=47, space='buy', optimize=is_optimize_32)
+    buy_sma15_32 = DecimalParameter(0.900, 1, default=0.995, decimals=3, space='buy', optimize=is_optimize_32)
+    buy_cti_32 = DecimalParameter(-1, 0, default=-0.67, decimals=2, space='buy', optimize=is_optimize_32)
 
     is_optimize_deadfish = True
     sell_deadfish_bb_width = DecimalParameter(0.03, 0.75, default=0.05, space='sell', optimize=is_optimize_deadfish)
