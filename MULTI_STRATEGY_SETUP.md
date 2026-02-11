@@ -35,8 +35,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
                            ├── KamaFama_Shorts (Port 8093)
-                           ├── HarmonicDivergence (Port 8116)
-                           ├── HarmonicDivergence_Shorts (Port 8117)
                            ├── FrankenStrat (Port 8119)
                            ├── FrankenStrat_Shorts (Port 8118)
                            ├── BigZ04_TSL4 (Port 8120)
@@ -73,8 +71,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
-- `harmonicdivergence.env` - HarmonicDivergence strategy (longs with 3x leverage, divergence-based)
-- `harmonicdivergence_shorts.env` - HarmonicDivergence_Shorts strategy (shorts with 3x leverage, bearish divergence)
 - `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
 - `bigz04_tsl4.env` - BigZ04_TSL4 strategy (longs with 3x leverage, BB/EMA dip buyer with trailing stoploss)
@@ -169,8 +165,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
-| **HarmonicDivergence** | `Vasko_HarmonicDivergence` | `http://freq.gaiaderma.com/harmonicdivergence` | `harmonicdivergence_user` | `harmonicdivergence_secure_password` |
-| **HarmonicDivergence_Shorts** | `Vasko_HarmonicDivergence_Shorts` | `http://freq.gaiaderma.com/harmonicdivergence_shorts` | `harmonicdivergence_shorts_user` | `harmonicdivergence_shorts_secure_password` |
 | **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
 | **BigZ04_TSL4** | `Vasko_BigZ04_TSL4` | `http://freq.gaiaderma.com/bigz04_tsl4` | `bigz04_tsl4_user` | `bigz04_tsl4_secure_password` |
@@ -232,8 +226,6 @@ curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
-curl http://127.0.0.1:8116/api/v1/ping  # HarmonicDivergence
-curl http://127.0.0.1:8117/api/v1/ping  # HarmonicDivergence_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
 curl http://127.0.0.1:8120/api/v1/ping  # BigZ04_TSL4
@@ -259,8 +251,6 @@ curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/harmonicdivergence/api/v1/ping
-curl http://freq.gaiaderma.com/harmonicdivergence_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/bigz04_tsl4/api/v1/ping
@@ -287,7 +277,6 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `auto_ei_t4c0s.log`, `auto_ei_t4c0s_shorts.log`
 - `etcg.log`, `etcg_shorts.log`
 - `kamafama.log`, `kamafama_shorts.log`
-- `harmonicdivergence.log`, `harmonicdivergence_shorts.log`
 - etc.
 
 ## Configuration Details
@@ -318,8 +307,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
-| 8116 | HarmonicDivergence | Longs | 3x |
-| 8117 | HarmonicDivergence_Shorts | Shorts | 3x |
 | 8118 | FrankenStrat_Shorts | Shorts | 3x |
 | 8119 | FrankenStrat | Longs | 3x |
 | 8120 | BigZ04_TSL4 | Longs | 3x |
@@ -348,8 +335,6 @@ Each strategy uses its own SQLite database:
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
-- `harmonicdivergence-tradesv3.sqlite`
-- `harmonicdivergence_shorts-tradesv3.sqlite`
 - `frankenstrat-tradesv3.sqlite`
 - `frankenstrat_shorts-tradesv3.sqlite`
 - `bigz04_tsl4-tradesv3.sqlite`

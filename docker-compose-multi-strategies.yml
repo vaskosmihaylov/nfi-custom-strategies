@@ -348,40 +348,6 @@ services:
       --strategy-path user_data/strategies/KamaFama
       --strategy KamaFama_2_20250115_Shorts
 
-  # HarmonicDivergence Strategy (Longs)
-  freqtrade-harmonicdivergence:
-    <<: *common-settings
-    container_name: freqtrade-harmonicdivergence
-    ports:
-      - "127.0.0.1:8116:8080"
-    env_file:
-      - path: ./env-files/harmonicdivergence.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/harmonicdivergence-tradesv3.sqlite
-      --log-file user_data/logs/harmonicdivergence.log
-      --strategy-path user_data/strategies/Harmonic-divergence
-      --strategy HarmonicDivergence_fix
-
-  # HarmonicDivergence_Shorts Strategy (Shorts Only)
-  freqtrade-harmonicdivergence_shorts:
-    <<: *common-settings
-    container_name: freqtrade-harmonicdivergence_shorts
-    ports:
-      - "127.0.0.1:8117:8080"
-    env_file:
-      - path: ./env-files/harmonicdivergence_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/harmonicdivergence_shorts-tradesv3.sqlite
-      --log-file user_data/logs/harmonicdivergence_shorts.log
-      --strategy-path user_data/strategies/Harmonic-divergence
-      --strategy HarmonicDivergence_Shorts
-
   # FrankenStrat Strategy (Longs with 3x leverage)
   freqtrade-frankenstrat:
     <<: *common-settings
