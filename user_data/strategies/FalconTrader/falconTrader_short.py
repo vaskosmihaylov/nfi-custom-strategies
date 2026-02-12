@@ -673,7 +673,7 @@ class newstrategy53_shorts(IStrategy):
         dataframe.loc[
                 (
 
-                (dataframe["close"] > dataframe["vwap_high"]) &
+                (dataframe["close"] > dataframe["vwap_upperband"]) &
                 (dataframe["tcp_percent_4"] < -0.053) &
                 (dataframe["cti"] > 0.8) &
                 (dataframe["rsi"] > 65) &
