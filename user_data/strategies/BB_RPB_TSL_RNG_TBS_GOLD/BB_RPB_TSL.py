@@ -230,8 +230,8 @@ class BB_RPB_TSL(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
-    # Option B stoploss: tight base stoploss with custom trailing
-    stoploss = -0.05
+    # Base stoploss for non-DCA batch strategies
+    stoploss = -0.20
 
     startup_candle_count: int = 605
 
@@ -453,14 +453,23 @@ class BB_RPB_TSL(IStrategy):
 
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
-        # Emergency backstop - absolute max loss protection
-        if current_profit <= -0.20:
-            return -0.21
-        # Trailing stop: once profit >= 4%, trail at 2% from current price
-        if current_profit >= 0.04:
-            return -0.02
-        # Below 4% profit: rely on base stoploss (-0.05)
-        return -0.99
+        HSL = self.pHSL.value
+        PF_1 = self.pPF_1.value
+        SL_1 = self.pSL_1.value
+        PF_2 = self.pPF_2.value
+        SL_2 = self.pSL_2.value
+
+        if current_profit > PF_2:
+            sl_profit = SL_2 + (current_profit - PF_2)
+        elif current_profit > PF_1:
+            sl_profit = SL_1 + ((current_profit - PF_1) * (SL_2 - SL_1) / (PF_2 - PF_1))
+        else:
+            sl_profit = HSL
+
+        if sl_profit >= current_profit:
+            return -0.99
+
+        return stoploss_from_open(sl_profit, current_profit)
 
     # From NFIX
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
