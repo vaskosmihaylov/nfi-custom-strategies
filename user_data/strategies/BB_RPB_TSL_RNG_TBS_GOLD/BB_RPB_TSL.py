@@ -213,9 +213,7 @@ class BB_RPB_TSL(IStrategy):
     }
 
     minimal_roi = {
-        "0": 0.205,
-        "81": 0.038,
-        "292": 0.005,
+        "0": 0.10,
     }
     
     order_types = {
@@ -232,8 +230,8 @@ class BB_RPB_TSL(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
-    # Disabled
-    stoploss = -0.99
+    # Option B stoploss: tight base stoploss with custom trailing
+    stoploss = -0.05
 
     startup_candle_count: int = 605
 
@@ -455,22 +453,14 @@ class BB_RPB_TSL(IStrategy):
 
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
-        # Emergency backstop: prevent liquidation at 3x leverage
+        # Emergency backstop - absolute max loss protection
         if current_profit <= -0.20:
             return -0.21
-
-        sl_new = 1
-
-        if (current_profit > 0.2):
-            sl_new = 0.05
-        elif (current_profit > 0.1):
-            sl_new = 0.03
-        elif (current_profit > 0.06):
-            sl_new = 0.02
-        elif (current_profit > 0.03):
-            sl_new = 0.015
-
-        return sl_new
+        # Trailing stop: once profit >= 4%, trail at 2% from current price
+        if current_profit >= 0.04:
+            return -0.02
+        # Below 4% profit: rely on base stoploss (-0.05)
+        return -0.99
 
     # From NFIX
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,

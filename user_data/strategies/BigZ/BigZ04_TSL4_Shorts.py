@@ -36,10 +36,10 @@ class BigZ04_TSL4_Shorts(IStrategy):
     can_short = True
 
     minimal_roi = {
-        "0": 100.0
+        "0": 0.10,
     }
 
-    stoploss = -0.99  # effectively disabled.
+    stoploss = -0.05  # Option B: tight base stoploss with custom trailing
 
     timeframe = '5m'
     inf_1h = '1h'
@@ -200,22 +200,14 @@ class BigZ04_TSL4_Shorts(IStrategy):
     # Same trailing stoploss logic as longs - current_profit is already adjusted for shorts by Freqtrade
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
-
-        # hard stoploss profit
-        HSL = self.pHSL.value
-        PF_1 = self.pPF_1.value
-        SL_1 = self.pSL_1.value
-        PF_2 = self.pPF_2.value
-        SL_2 = self.pSL_2.value
-
-        if (current_profit > PF_2):
-            sl_profit = SL_2 + (current_profit - PF_2)
-        elif (current_profit > PF_1):
-            sl_profit = SL_1 + ((current_profit - PF_1) * (SL_2 - SL_1) / (PF_2 - PF_1))
-        else:
-            sl_profit = HSL
-
-        return stoploss_from_open(sl_profit, current_profit, is_short=trade.is_short)
+        # Emergency backstop - absolute max loss protection
+        if current_profit <= -0.20:
+            return -0.21
+        # Trailing stop: once profit >= 4%, trail at 2% from current price
+        if current_profit >= 0.04:
+            return -0.02
+        # Below 4% profit: rely on base stoploss (-0.05)
+        return -0.99
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
