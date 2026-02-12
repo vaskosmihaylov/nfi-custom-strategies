@@ -108,7 +108,7 @@ class BB_RPB_TSL_RNG_TBS_GOLD(IStrategy):
     inf_1h = '1h'
 
     # Base stoploss for non-DCA batch strategies
-    stoploss = -0.20
+    stoploss = -0.36
 
     # Custom stoploss
     use_custom_stoploss = True

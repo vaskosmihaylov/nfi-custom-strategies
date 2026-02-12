@@ -39,7 +39,7 @@ class BigZ04_TSL4_Shorts(IStrategy):
         "0": 0.10,
     }
 
-    stoploss = -0.20
+    stoploss = -0.36
 
     timeframe = '5m'
     inf_1h = '1h'

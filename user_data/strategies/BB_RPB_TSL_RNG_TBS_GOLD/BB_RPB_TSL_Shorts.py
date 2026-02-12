@@ -230,7 +230,7 @@ class BB_RPB_TSL_Shorts(IStrategy):
   process_only_new_candles = True
 
   # Base stoploss for non-DCA batch strategies
-  stoploss = -0.20
+  stoploss = -0.36
 
   startup_candle_count: int = 605
 
