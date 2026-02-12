@@ -26,9 +26,10 @@
     "force_entry": "limit",
     "force_exit": "limit",
     "stoploss": "limit",
-    "stoploss_on_exchange": false,
+    "stoploss_on_exchange": true,
     "stoploss_on_exchange_interval": 60,
-    "stoploss_on_exchange_limit_ratio": 0.99
+    "stoploss_on_exchange_limit_ratio": 0.99,
+    "stoploss_price_type": "mark"
   },
   "entry_pricing": {
     "price_side": "other",
