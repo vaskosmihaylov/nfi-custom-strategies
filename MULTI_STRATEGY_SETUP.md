@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **28 different trading strategies** running in separate Docker containers
+- **23 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -29,16 +29,12 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ClucHAnix_hhll_Shorts (Port 8107)
                            ├── AwesomeEWOLambo (Port 8108)
                            ├── AwesomeEWOLambo_Shorts (Port 8109)
-                           ├── BB_RPB_TSL_RNG_TBS_GOLD (Port 8110)
-                           ├── BB_RPB_TSL_RNG_TBS_GOLD_Shorts (Port 8111)
                            ├── GeneStrategy_v2 (Port 8114)
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
                            ├── KamaFama_Shorts (Port 8093)
                            ├── FrankenStrat (Port 8119)
                            ├── FrankenStrat_Shorts (Port 8118)
-                           ├── BigZ04_TSL4 (Port 8120)
-                           ├── BigZ04_TSL4_Shorts (Port 8121)
                            ├── BB_RPB_TSL (Port 8122)
                            ├── BB_RPB_TSL_Shorts (Port 8123)
                            ├── SimpleRSI (Port 8124)
@@ -69,16 +65,12 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, Heikin Ashi + BB)
 - `awesomeewolambo.env` - AwesomeEWOLambo strategy (longs-only)
 - `awesomeewolambo_shorts.env` - AwesomeEWOLambo_Shorts strategy (shorts-only)
-- `bb_rpb_tsl_rng_tbs_gold.env` - BB_RPB_TSL_RNG_TBS_GOLD strategy (longs with 3x leverage)
-- `bb_rpb_tsl_rng_tbs_gold_shorts.env` - BB_RPB_TSL_RNG_TBS_GOLD_Shorts strategy (shorts with 3x leverage)
 - `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 - `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
-- `bigz04_tsl4.env` - BigZ04_TSL4 strategy (longs with 3x leverage, BB/EMA dip buyer with trailing stoploss)
-- `bigz04_tsl4_shorts.env` - BigZ04_TSL4_Shorts strategy (shorts with 3x leverage, inverted BB/EMA signals)
 - `bb_rpb_tsl.env` - BB_RPB_TSL strategy (longs with 3x leverage, 19-signal BB/EWO dip buyer)
 - `bb_rpb_tsl_shorts.env` - BB_RPB_TSL_Shorts strategy (shorts with 3x leverage, inverted 19-signal rally shorter)
 - `simplersi.env` - SimpleRSI strategy (longs with 3x leverage, RSI momentum breakout on 1d)
@@ -167,16 +159,12 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
 | **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
-| **BB_RPB_TSL_RNG_TBS_GOLD** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold` | `bb_rpb_gold_user` | `bb_rpb_gold_secure_password` |
-| **BB_RPB_TSL_RNG_TBS_GOLD_Shorts** | `Vasko_BB_RPB_TSL_RNG_TBS_GOLD_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts` | `bb_rpb_gold_shorts_user` | `bb_rpb_gold_shorts_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
-| **BigZ04_TSL4** | `Vasko_BigZ04_TSL4` | `http://freq.gaiaderma.com/bigz04_tsl4` | `bigz04_tsl4_user` | `bigz04_tsl4_secure_password` |
-| **BigZ04_TSL4_Shorts** | `Vasko_BigZ04_TSL4_Shorts` | `http://freq.gaiaderma.com/bigz04_tsl4_shorts` | `bigz04_tsl4_shorts_user` | `bigz04_tsl4_shorts_secure_password` |
 | **BB_RPB_TSL** | `Vasko_BB_RPB_TSL` | `http://freq.gaiaderma.com/bb_rpb_tsl` | `bb_rpb_tsl_user` | `bb_rpb_tsl_secure_password` |
 | **BB_RPB_TSL_Shorts** | `Vasko_BB_RPB_TSL_Shorts` | `http://freq.gaiaderma.com/bb_rpb_tsl_shorts` | `bb_rpb_tsl_shorts_user` | `bb_rpb_tsl_shorts_secure_password` |
 | **SimpleRSI** | `Vasko_SimpleRSI` | `http://freq.gaiaderma.com/simplersi` | `simplersi_user` | `simplersi_secure_password` |
@@ -232,16 +220,12 @@ curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
 curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
 curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
-curl http://127.0.0.1:8110/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD
-curl http://127.0.0.1:8111/api/v1/ping  # BB_RPB_TSL_RNG_TBS_GOLD_Shorts
 curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
-curl http://127.0.0.1:8120/api/v1/ping  # BigZ04_TSL4
-curl http://127.0.0.1:8121/api/v1/ping  # BigZ04_TSL4_Shorts
 curl http://127.0.0.1:8122/api/v1/ping  # BB_RPB_TSL
 curl http://127.0.0.1:8123/api/v1/ping  # BB_RPB_TSL_Shorts
 curl http://127.0.0.1:8124/api/v1/ping  # SimpleRSI
@@ -261,16 +245,12 @@ curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold/api/v1/ping
-curl http://freq.gaiaderma.com/bb_rpb_tsl_rng_tbs_gold_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/bigz04_tsl4/api/v1/ping
-curl http://freq.gaiaderma.com/bigz04_tsl4_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/bb_rpb_tsl/api/v1/ping
 curl http://freq.gaiaderma.com/bb_rpb_tsl_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/simplersi/api/v1/ping
@@ -321,16 +301,12 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8107 | ClucHAnix_hhll_Shorts | Shorts | - |
 | 8108 | AwesomeEWOLambo | Longs | - |
 | 8109 | AwesomeEWOLambo_Shorts | Shorts | - |
-| 8110 | BB_RPB_TSL_RNG_TBS_GOLD | Longs | 3x |
-| 8111 | BB_RPB_TSL_RNG_TBS_GOLD_Shorts | Shorts | 3x |
 | 8114 | GeneStrategy_v2 | Longs | 3x |
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
 | 8118 | FrankenStrat_Shorts | Shorts | 3x |
 | 8119 | FrankenStrat | Longs | 3x |
-| 8120 | BigZ04_TSL4 | Longs | 3x |
-| 8121 | BigZ04_TSL4_Shorts | Shorts | 3x |
 | 8122 | BB_RPB_TSL | Longs | 3x |
 | 8123 | BB_RPB_TSL_Shorts | Shorts | 3x |
 | 8124 | SimpleRSI | Longs | 3x |
@@ -353,16 +329,12 @@ Each strategy uses its own SQLite database:
 - `cluchanix_hhll_shorts-tradesv3.sqlite`
 - `awesomeewolambo-tradesv3.sqlite`
 - `awesomeewolambo_shorts-tradesv3.sqlite`
-- `bb_rpb_tsl_rng_tbs_gold-tradesv3.sqlite`
-- `bb_rpb_tsl_rng_tbs_gold_shorts-tradesv3.sqlite`
 - `genestrategy_v2-tradesv3.sqlite`
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
 - `frankenstrat-tradesv3.sqlite`
 - `frankenstrat_shorts-tradesv3.sqlite`
-- `bigz04_tsl4-tradesv3.sqlite`
-- `bigz04_tsl4_shorts-tradesv3.sqlite`
 - `bb_rpb_tsl-tradesv3.sqlite`
 - `bb_rpb_tsl_shorts-tradesv3.sqlite`
 - `simplersi-tradesv3.sqlite`
@@ -490,8 +462,6 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 - **Added**: BB_RPB_TSL_Shorts (shorts, port 8123) - Shorts-only variant with inverted 19 entry signals, 3x leverage, max 4 shorts
 - **Added**: SimpleRSI (longs, port 8124) - RSI momentum breakout on 1d timeframe, 3x leverage
 - **Added**: SimpleRSI_Shorts (shorts, port 8125) - Shorts-only RSI momentum breakdown, 3x leverage, max 4 shorts
-- **Added**: BigZ04_TSL4 (longs, port 8120) - BB/EMA dip buyer with trailing stoploss, 11 entry signals, 3x leverage
-- **Added**: BigZ04_TSL4_Shorts (shorts, port 8121) - Shorts-only variant with inverted BB/EMA signals, 3x leverage, max 4 shorts
 
 ## Recent Changes (February 10, 2026)
 - **Added**: FrankenStrat (longs, port 8119) - Multi-signal dip buyer with 3x leverage, SSL/MACD/EWO-based entries

@@ -246,40 +246,6 @@ services:
       --strategy-path user_data/strategies/AwesomeEWOLambo
       --strategy AwesomeEWOLambo_Shorts
 
-  # BB_RPB_TSL_RNG_TBS_GOLD Strategy (Longs)
-  freqtrade-bb_rpb_tsl_rng_tbs_gold:
-    <<: *common-settings
-    container_name: freqtrade-bb_rpb_tsl_rng_tbs_gold
-    ports:
-      - "127.0.0.1:8110:8080"
-    env_file:
-      - path: ./env-files/bb_rpb_tsl_rng_tbs_gold.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_rng_tbs_gold-tradesv3.sqlite
-      --log-file user_data/logs/bb_rpb_tsl_rng_tbs_gold.log
-      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
-      --strategy BB_RPB_TSL_RNG_TBS_GOLD
-
-  # BB_RPB_TSL_RNG_TBS_GOLD_Shorts Strategy (Shorts Only)
-  freqtrade-bb_rpb_tsl_rng_tbs_gold_shorts:
-    <<: *common-settings
-    container_name: freqtrade-bb_rpb_tsl_rng_tbs_gold_shorts
-    ports:
-      - "127.0.0.1:8111:8080"
-    env_file:
-      - path: ./env-files/bb_rpb_tsl_rng_tbs_gold_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_rng_tbs_gold_shorts-tradesv3.sqlite
-      --log-file user_data/logs/bb_rpb_tsl_rng_tbs_gold_shorts.log
-      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
-      --strategy BB_RPB_TSL_RNG_TBS_GOLD_Shorts
-
   # GeneStrategy_v2 Strategy (Longs)
   freqtrade-genestrategy_v2:
     <<: *common-settings
@@ -381,40 +347,6 @@ services:
       --log-file user_data/logs/frankenstrat_shorts.log
       --strategy-path user_data/strategies/Frankie
       --strategy FrankenStrat_Shorts
-
-  # BigZ04_TSL4 Strategy (Longs with 3x leverage)
-  freqtrade-bigz04_tsl4:
-    <<: *common-settings
-    container_name: freqtrade-bigz04_tsl4
-    ports:
-      - "127.0.0.1:8120:8080"
-    env_file:
-      - path: ./env-files/bigz04_tsl4.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/bigz04_tsl4-tradesv3.sqlite
-      --log-file user_data/logs/bigz04_tsl4.log
-      --strategy-path user_data/strategies/BigZ
-      --strategy BigZ04_TSL4
-
-  # BigZ04_TSL4_Shorts Strategy (Shorts with 3x leverage)
-  freqtrade-bigz04_tsl4_shorts:
-    <<: *common-settings
-    container_name: freqtrade-bigz04_tsl4_shorts
-    ports:
-      - "127.0.0.1:8121:8080"
-    env_file:
-      - path: ./env-files/bigz04_tsl4_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/bigz04_tsl4_shorts-tradesv3.sqlite
-      --log-file user_data/logs/bigz04_tsl4_shorts.log
-      --strategy-path user_data/strategies/BigZ
-      --strategy BigZ04_TSL4_Shorts
 
   # BB_RPB_TSL Strategy (Longs with 3x leverage)
   freqtrade-bb_rpb_tsl:
