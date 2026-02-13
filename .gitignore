@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 HYPEROPT_GUIDE.md
+AGENTS.md
 
 # C extensions
 *.so

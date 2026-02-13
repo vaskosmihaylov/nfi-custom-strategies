@@ -18,7 +18,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# @Rallipanos # changes by IcHiAT taken from https://github.com/XinuxC/Ft-things/blob/main/strategies/Etcg.py
+# @Rallipanos # changes by IcHiAT
 
 
 def EWO(dataframe, ema_length=5, ema2_length=3):
@@ -104,8 +104,8 @@ class ETCG(IStrategy):
             }
         ]
 
-    # Hard risk cap for longs. With 3x leverage this prevents deep portfolio drawdowns.
-    stoploss = -0.20
+    # Stoploss:
+    stoploss = -0.99
 
     # SMAOffset
     base_nb_candles_buy = IntParameter(8, 20, default=buy_params['base_nb_candles_buy'], space='buy', optimize=False)
@@ -129,8 +129,8 @@ class ETCG(IStrategy):
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.005  # 0.5% - increased from 0.1% to let winners run
-    trailing_stop_positive_offset = 0.03  # 3% - increased from 1.2% to capture bigger moves
+    trailing_stop_positive = 0.001
+    trailing_stop_positive_offset = 0.012
     trailing_only_offset_is_reached = True
 
     #cofi
@@ -144,7 +144,7 @@ class ETCG(IStrategy):
 
     # Sell signal
     use_exit_signal = True
-    exit_profit_only = True  # Only allow exit_signal when profitable (was False - causing -$8,875 in losses)
+    exit_profit_only = False
     exit_profit_offset = 0.01
     ignore_roi_if_entry_signal = False
 
@@ -174,15 +174,6 @@ class ETCG(IStrategy):
         if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 4:
             return 'unclog'
 
-    def leverage(self, pair: str, current_time: datetime, current_rate: float,
-                 proposed_leverage: float, max_leverage: float, entry_tag: str, side: str,
-                 **kwargs) -> float:
-        """
-        Customize leverage for each trade.
-
-        Returns fixed 3x leverage for all trades.
-        """
-        return 3.0
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
@@ -474,3 +465,4 @@ class EI3v2_tag_cofi_dca_green(ETCG):
                     return None
 
         return None
+
