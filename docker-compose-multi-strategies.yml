@@ -362,7 +362,7 @@ services:
       --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl-tradesv3.sqlite
       --log-file user_data/logs/bb_rpb_tsl.log
-      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy-path user_data/strategies/BB_RPB_TSL
       --strategy BB_RPB_TSL
 
   # BB_RPB_TSL_Shorts Strategy (Shorts with 3x leverage)
@@ -379,7 +379,7 @@ services:
       --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl_shorts-tradesv3.sqlite
       --log-file user_data/logs/bb_rpb_tsl_shorts.log
-      --strategy-path user_data/strategies/BB_RPB_TSL_RNG_TBS_GOLD
+      --strategy-path user_data/strategies/BB_RPB_TSL
       --strategy BB_RPB_TSL_Shorts
 
   # SimpleRSI Strategy (Longs with 3x leverage)
