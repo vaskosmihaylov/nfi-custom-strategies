@@ -145,7 +145,9 @@ class GeneStrategy_v2(IStrategy):
     
     
     # Custom stoploss
-    use_custom_stoploss = False
+    use_custom_stoploss = True
+    # Keep emergency stop a small buffer away from liquidation.
+    emergency_liq_buffer = 0.03
 
     process_only_new_candles = True
     startup_candle_count = 168
@@ -352,33 +354,33 @@ class GeneStrategy_v2(IStrategy):
             
 
 
-    # come from BB_RPB_TSL
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, **kwargs) -> float:
+        if (
+            trade.liquidation_price is None
+            or trade.liquidation_price <= 0
+            or trade.open_rate is None
+            or trade.open_rate <= 0
+            or trade.leverage is None
+            or trade.leverage <= 0
+        ):
+            return 1.0
 
-        # hard stoploss profit
-        HSL = self.pHSL.value
-        PF_1 = self.pPF_1.value
-        SL_1 = self.pSL_1.value
-        PF_2 = self.pPF_2.value
-        SL_2 = self.pSL_2.value
-
-        # For profits between PF_1 and PF_2 the stoploss (sl_profit) used is linearly interpolated
-        # between the values of SL_1 and SL_2. For all profits above PL_2 the sl_profit value
-        # rises linearly with current profit, for profits below PF_1 the hard stoploss profit is used.
-
-        if current_profit > PF_2:
-            sl_profit = SL_2 + (current_profit - PF_2)
-        elif current_profit > PF_1:
-            sl_profit = SL_1 + ((current_profit - PF_1) * (SL_2 - SL_1) / (PF_2 - PF_1))
+        if trade.is_short:
+            emergency_rate = trade.liquidation_price * (1.0 - self.emergency_liq_buffer)
+            emergency_profit = ((trade.open_rate / emergency_rate) - 1.0) * trade.leverage
         else:
-            sl_profit = HSL
+            emergency_rate = trade.liquidation_price * (1.0 + self.emergency_liq_buffer)
+            emergency_profit = ((emergency_rate / trade.open_rate) - 1.0) * trade.leverage
 
-        # Only for hyperopt invalid return
-        if sl_profit >= current_profit:
-            return -0.99
+        # If emergency threshold is already breached, force immediate protection.
+        if current_profit <= emergency_profit:
+            return 0.001
 
-        return stoploss_from_open(sl_profit, current_profit)
+        try:
+            return stoploss_from_open(emergency_profit, current_profit, is_short=trade.is_short)
+        except TypeError:
+            return stoploss_from_open(emergency_profit, current_profit)
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
