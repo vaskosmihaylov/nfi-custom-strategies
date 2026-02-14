@@ -344,9 +344,9 @@ class newstrategy53_shorts(IStrategy):
 
 
             # Trailing stops (inverted logic for shorts - tighter on profit)
-            if (current_profit > self.sell_trail_profit_min_1.value) & (current_profit < self.sell_trail_profit_max_1.value) & (((trade.open_rate - trade.min_rate) / 100) > (current_profit + self.sell_trail_down_1.value)):
+            if (current_profit > self.sell_trail_profit_min_1.value) & (current_profit < self.sell_trail_profit_max_1.value) & ((((trade.open_rate - trade.min_rate) / trade.open_rate) > (current_profit + self.sell_trail_down_1.value))):
                 return "trail_target_1_short"
-            elif (current_profit > self.sell_trail_profit_min_2.value) & (current_profit < self.sell_trail_profit_max_2.value) & (((trade.open_rate - trade.min_rate) / 100) > (current_profit + self.sell_trail_down_2.value)):
+            elif (current_profit > self.sell_trail_profit_min_2.value) & (current_profit < self.sell_trail_profit_max_2.value) & ((((trade.open_rate - trade.min_rate) / trade.open_rate) > (current_profit + self.sell_trail_down_2.value))):
                 return "trail_target_2_short"
             elif (current_profit > 3) & (last_candle["rsi"] < 15):
                  return "RSI-15 target short"
@@ -1020,7 +1020,6 @@ def pmax(df, period, multiplier, length, MAtype, src):
     pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), "down",  "up"), None)
 
     return pm, pmx
-
 
 
 
