@@ -1,0 +1,26 @@
+{
+  "stake_currency": "USDT",
+  "exchange": {
+    "name": "bybit",
+    "pair_whitelist": [
+      "AAVE/USDT:USDT",
+      "CLO/USDT:USDT",
+      "COMP/USDT:USDT",
+      "CTC/USDT:USDT",
+      "DEEP/USDT:USDT",
+      "DYM/USDT:USDT",
+      "LINEA/USDT:USDT",
+      "MOODENG/USDT:USDT",
+      "RECALL/USDT:USDT",
+      "SOMI/USDT:USDT",
+      "TNSR/USDT:USDT",
+      "VVV/USDT:USDT",
+      "ZRO/USDT:USDT"
+    ]
+  },
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ]
+}

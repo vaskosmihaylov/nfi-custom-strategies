@@ -175,3 +175,6 @@ sync-local.sh
 
 .worktrees/
 
+
+# Local backtest experiment configs/artifacts
+configs/backtest_profiles/_experiments/

@@ -1,0 +1,10 @@
+{
+  "strategy": "FrankenStrat",
+  "add_config_files": [
+    "../trading_mode-futures.json",
+    "../blacklist-bybit.json",
+    "../exampleconfig.json",
+    "../exampleconfig_secret.json",
+    "../pairlist-backtest-static-bybit-futures-usdt.json"
+  ]
+}
