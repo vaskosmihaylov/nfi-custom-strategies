@@ -71,7 +71,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     minimal_roi = {"0": 0.07, "20": 0.05, "40": 0.03, "60": 0.015}
 
     # Tighter stoploss for shorts
-    stoploss = -0.189
+    stoploss = -0.12
 
     # Optimal timeframe for the strategy
     timeframe = '5m'
@@ -92,9 +92,9 @@ class AwesomeEWOLambo_Shorts(IStrategy):
         "low_offset_2": 1.058,  # 2 - 0.942 = 1.058
         "ewo_low": 2.289,  # Inverted sign
         "rsi_sell": 42,  # 100 - 58 = 42
-        "lambo2_ema_14_factor": 1.019,  # 2 - 0.981 = 1.019
-        "lambo2_rsi_14_limit": 61,  # 100 - 39 = 61
-        "lambo2_rsi_4_limit": 56,  # 100 - 44 = 56
+        "lambo2_ema_14_factor": 1.03,
+        "lambo2_rsi_14_limit": 66,
+        "lambo2_rsi_4_limit": 70,
     }
 
     # Exit hyperspace params (INVERTED from sell_params of longs)
@@ -112,8 +112,8 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     high_offset = DecimalParameter(0.985, 0.995, default=cover_params['high_offset'], space='sell', optimize=True)
     high_offset_2 = DecimalParameter(0.980, 0.990, default=cover_params['high_offset_2'], space='sell', optimize=True)
 
-    ewo_low = DecimalParameter(8.0, 20.0, default=sell_params['ewo_low'], space='sell', optimize=True)
-    ewo_high = DecimalParameter(-3.4, -3.0, default=sell_params['ewo_high'], space='sell', optimize=True)
+    ewo_low = DecimalParameter(0.0, 20.0, default=sell_params['ewo_low'], space='sell', optimize=True)
+    ewo_high = DecimalParameter(-5.0, 0.0, default=sell_params['ewo_high'], space='sell', optimize=True)
     rsi_sell = IntParameter(30, 70, default=sell_params['rsi_sell'], space='sell', optimize=False)
     ewo_high_2 = DecimalParameter(-12.0, 6.0, default=sell_params['ewo_high_2'], space='sell', optimize=False)
 
@@ -125,8 +125,8 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     # trailing stoploss
     trailing_stop = True
     trailing_only_offset_is_reached = True
-    trailing_stop_positive = 0.001
-    trailing_stop_positive_offset = 0.012
+    trailing_stop_positive = 0.004
+    trailing_stop_positive_offset = 0.015
 
     # run "populate_indicators" only for new candle
     process_only_new_candles = True
@@ -420,30 +420,30 @@ class AwesomeEWOLambo_Shorts(IStrategy):
 
         # Obtain pair dataframe
         dataframe, _ = self.dp.get_analyzed_dataframe(trade.pair, self.timeframe)
-        # Only add to position when it seems it's climbing back up
+        # For shorts, add only after upward spike starts reverting down.
         last_candle = dataframe.iloc[-1].squeeze()
         previous_candle = dataframe.iloc[-2].squeeze()
-        if last_candle['close'] < previous_candle['close']:
+        if last_candle['close'] > previous_candle['close']:
             return None
 
-        count_of_buys = 0
+        count_of_entries = 0
         for order in trade.orders:
-            if order.ft_is_open or order.ft_order_side != 'buy':
+            if order.ft_is_open or order.ft_order_side != 'sell':
                 continue
             if order.status == "closed":
-                count_of_buys += 1
+                count_of_entries += 1
 
-        if 1 <= count_of_buys <= self.max_safety_orders:
-            safety_order_trigger = abs(self.initial_safety_order_trigger) + (abs(self.initial_safety_order_trigger) * self.safety_order_step_scale * (math.pow(self.safety_order_step_scale,(count_of_buys - 1)) - 1) / (self.safety_order_step_scale - 1))
+        if 1 <= count_of_entries <= self.max_safety_orders:
+            safety_order_trigger = abs(self.initial_safety_order_trigger) + (abs(self.initial_safety_order_trigger) * self.safety_order_step_scale * (math.pow(self.safety_order_step_scale,(count_of_entries - 1)) - 1) / (self.safety_order_step_scale - 1))
             if current_profit <= (-1 * abs(safety_order_trigger)):
                 try:
                     stake_amount = self.wallets.get_trade_stake_amount(trade.pair, None)
-                    stake_amount = stake_amount * math.pow(self.safety_order_volume_scale,(count_of_buys - 1))
-                    amount = stake_amount / current_rate
-                    logger.info(f"Initiating safety order buy #{count_of_buys} for {trade.pair} with stake amount of {stake_amount} which equals {amount}")
-                    return stake_amount
                 except Exception as exception:
-                    logger.info(f'Error occured while trying to get stake amount for {trade.pair}: {str(exception)}')
-                    return None
+                    # Backtesting can provide no live rate for wallet stake calculation.
+                    logger.info(f'Fallback stake sizing for {trade.pair} after wallet stake error: {str(exception)}')
+                    stake_amount = trade.stake_amount
+                stake_amount = stake_amount * math.pow(self.safety_order_volume_scale,(count_of_entries - 1))
+                logger.info(f"Initiating safety order short add #{count_of_entries} for {trade.pair} with stake amount {stake_amount}")
+                return stake_amount
 
         return None

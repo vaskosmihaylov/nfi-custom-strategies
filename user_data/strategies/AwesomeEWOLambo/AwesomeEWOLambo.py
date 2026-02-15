@@ -388,11 +388,11 @@ class AwesomeEWOLambo(IStrategy):
             if current_profit <= (-1 * abs(safety_order_trigger)):
                 try:
                     stake_amount = self.wallets.get_trade_stake_amount(trade.pair, None)
-                    stake_amount = stake_amount * math.pow(self.safety_order_volume_scale,(count_of_buys - 1))
-                    amount = stake_amount / current_rate
-                    logger.info(f"Initiating safety order buy #{count_of_buys} for {trade.pair} with stake amount of {stake_amount} which equals {amount}")
-                    return stake_amount
                 except Exception as exception:
-                    logger.info(f'Error occured while trying to get stake amount for {trade.pair}: {str(exception)}')
-                    return None
+                    # Backtesting can provide no live rate for wallet stake calculation.
+                    logger.info(f'Fallback stake sizing for {trade.pair} after wallet stake error: {str(exception)}')
+                    stake_amount = trade.stake_amount
+                stake_amount = stake_amount * math.pow(self.safety_order_volume_scale,(count_of_buys - 1))
+                logger.info(f"Initiating safety order buy #{count_of_buys} for {trade.pair} with stake amount {stake_amount}")
+                return stake_amount
         return None
