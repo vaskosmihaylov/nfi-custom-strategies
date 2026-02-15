@@ -297,23 +297,6 @@ services:
       --strategy-path user_data/strategies/AlexNexusForgeV7
       --strategy AlexNexusForgeV8AIV2
 
-  # AlexNexusForgeV7 Strategy (Long + Short capable)
-  freqtrade-alexnexusforgev7:
-    <<: *common-settings
-    container_name: freqtrade-alexnexusforgev7
-    ports:
-      - "127.0.0.1:8113:8080"
-    env_file:
-      - path: ./env-files/alexnexusforgev7.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/alexnexusforgev7-tradesv3.sqlite
-      --log-file user_data/logs/alexnexusforgev7.log
-      --strategy-path user_data/strategies/AlexNexusForgeV7
-      --strategy AlexNexusForgeV7
-
   # KamaFama Strategy (Longs)
   freqtrade-kamafama:
     <<: *common-settings

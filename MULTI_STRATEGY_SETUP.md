@@ -30,7 +30,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── AwesomeEWOLambo (Port 8108)
                            ├── AwesomeEWOLambo_Shorts (Port 8109)
                            ├── AlexNexusForgeV8AIV2 (Port 8112)
-                           ├── AlexNexusForgeV7 (Port 8113)
                            ├── GeneStrategy_v2 (Port 8114)
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
@@ -68,7 +67,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `awesomeewolambo.env` - AwesomeEWOLambo strategy (longs-only)
 - `awesomeewolambo_shorts.env` - AwesomeEWOLambo_Shorts strategy (shorts-only)
 - `alexnexusforgev8aiv2.env` - AlexNexusForgeV8AIV2 strategy (long + short capable)
-- `alexnexusforgev7.env` - AlexNexusForgeV7 strategy (long + short capable)
 - `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
@@ -164,7 +162,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
 | **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
 | **AlexNexusForgeV8AIV2** | `Vasko_AlexNexusForgeV8AIV2` | `http://freq.gaiaderma.com/alexnexusforgev8aiv2` | `alexnexusforgev8aiv2_user` | `alexnexusforgev8aiv2_secure_password` |
-| **AlexNexusForgeV7** | `Vasko_AlexNexusForgeV7` | `http://freq.gaiaderma.com/alexnexusforgev7` | `alexnexusforgev7_user` | `alexnexusforgev7_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
@@ -227,7 +224,6 @@ curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
 curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
 curl http://127.0.0.1:8112/api/v1/ping  # AlexNexusForgeV8AIV2
-curl http://127.0.0.1:8113/api/v1/ping  # AlexNexusForgeV7
 curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
@@ -254,7 +250,6 @@ curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/alexnexusforgev8aiv2/api/v1/ping
-curl http://freq.gaiaderma.com/alexnexusforgev7/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
@@ -312,7 +307,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8108 | AwesomeEWOLambo | Longs | - |
 | 8109 | AwesomeEWOLambo_Shorts | Shorts | - |
 | 8112 | AlexNexusForgeV8AIV2 | Long + Shorts | - |
-| 8113 | AlexNexusForgeV7 | Long + Shorts | - |
 | 8114 | GeneStrategy_v2 | Longs | 3x |
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
@@ -342,7 +336,6 @@ Each strategy uses its own SQLite database:
 - `awesomeewolambo-tradesv3.sqlite`
 - `awesomeewolambo_shorts-tradesv3.sqlite`
 - `alexnexusforgev8aiv2-tradesv3.sqlite`
-- `alexnexusforgev7-tradesv3.sqlite`
 - `genestrategy_v2-tradesv3.sqlite`
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
@@ -445,7 +438,7 @@ The following strategies were removed due to poor performance in bear market con
 | NASOSv4_Shorts | 8104 | Removed with parent |
 | RsiquiV5 | 8094 | Poor performance |
 | ElliotV5HO | 8112 | Poor performance (port now reused by AlexNexusForgeV8AIV2) |
-| ElliotV5HO_Shorts | 8113 | Short counterpart underperforming (port now reused by AlexNexusForgeV7) |
+| ElliotV5HO_Shorts | 8113 | Short counterpart underperforming |
 | EI4_t4c0s_V2_2 | 8100 | Replaced by Auto_EI_t4c0s |
 | EI4_t4c0s_V2_2_Shorts | 8101 | Replaced by Auto_EI_t4c0s_Shorts |
 
