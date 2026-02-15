@@ -364,6 +364,14 @@ class BB_RPB_TSL_Shorts(IStrategy):
   sell_cti_r_cti = DecimalParameter(0.55, 1, default=0.5 , optimize = is_optimize_cti_r)
   sell_cti_r_r = DecimalParameter(-15, 0, default=-20 , optimize = is_optimize_cti_r)
 
+  # Make early bull-cover exit less aggressive so trades can progress toward ROI.
+  is_optimize_cover_bull = False
+  sell_cover_bull_profit_min = DecimalParameter(0.010, 0.030, default=0.018, decimals=3, optimize=is_optimize_cover_bull)
+  sell_cover_bull_profit_max = DecimalParameter(0.015, 0.050, default=0.030, decimals=3, optimize=is_optimize_cover_bull)
+  sell_cover_bull_pullback = DecimalParameter(0.005, 0.030, default=0.015, decimals=3, optimize=is_optimize_cover_bull)
+  sell_cover_bull_rsi = DecimalParameter(60.0, 80.0, default=70.0, decimals=1, optimize=is_optimize_cover_bull)
+  sell_cover_bull_cmf = DecimalParameter(0.0, 0.4, default=0.12, decimals=2, optimize=is_optimize_cover_bull)
+
   ############################################################################
 
   def informative_pairs(self):
@@ -538,10 +546,14 @@ class BB_RPB_TSL_Shorts(IStrategy):
 
     # cover bull (inverted: close < ema_200 -> close > ema_200, rsi inverted, cmf inverted)
     if last_candle['close'] > last_candle['ema_200']:
-      if 0.02 > current_profit >= 0.01:
-        if (last_candle['rsi'] > 66.0) and (last_candle['cmf'] > 0.0):
+      if self.sell_cover_bull_profit_max.value > current_profit >= self.sell_cover_bull_profit_min.value:
+        if (
+                (max_profit > (current_profit + self.sell_cover_bull_pullback.value))
+                and (last_candle['rsi'] > self.sell_cover_bull_rsi.value)
+                and (last_candle['cmf'] > self.sell_cover_bull_cmf.value)
+            ):
           return f"cover_profit_u_bull_1_1( {buy_tag})"
-        elif (last_candle['rsi'] > 56.0) and (last_candle['cmf'] > 0.4):
+        elif (last_candle['rsi'] > 60.0) and (last_candle['cmf'] > 0.4):
           return f"cover_profit_u_bull_1_2( {buy_tag})"
 
     # cover quick (inverted RSI: rsi > 80 -> rsi < 20)

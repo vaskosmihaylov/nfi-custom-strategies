@@ -203,9 +203,9 @@ class BB_RPB_TSL(IStrategy):
         "sell_ema": 0.988,
         "sell_ema_close_delta": 0.022,
         ##
-        "sell_deadfish_profit": -0.063,
+        "sell_deadfish_profit": -0.04,
         "sell_deadfish_bb_factor": 0.954,
-        "sell_deadfish_bb_width": 0.043,
+        "sell_deadfish_bb_width": 0.06,
         "sell_deadfish_volume_factor": 2.37,
         ##
         "sell_cti_r_cti": 0.844,
@@ -231,7 +231,7 @@ class BB_RPB_TSL(IStrategy):
     process_only_new_candles = True
 
     # Base stoploss for non-DCA batch strategies
-    stoploss = -0.36
+    stoploss = -0.30
 
     startup_candle_count: int = 605
 
@@ -351,10 +351,21 @@ class BB_RPB_TSL(IStrategy):
     sell_ema = DecimalParameter(0.97, 0.99, default=0.987 , optimize = is_optimize_sell_stoploss)
 
     is_optimize_deadfish = False
-    sell_deadfish_bb_width = DecimalParameter(0.03, 0.75, default=0.05 , optimize = is_optimize_deadfish)
-    sell_deadfish_profit = DecimalParameter(-0.15, -0.05, default=-0.05 , optimize = is_optimize_deadfish)
+    sell_deadfish_bb_width = DecimalParameter(0.03, 0.75, default=0.06 , optimize = is_optimize_deadfish)
+    sell_deadfish_profit = DecimalParameter(-0.15, -0.03, default=-0.04 , optimize = is_optimize_deadfish)
     sell_deadfish_bb_factor = DecimalParameter(0.90, 1.20, default=1.0 , optimize = is_optimize_deadfish)
     sell_deadfish_volume_factor = DecimalParameter(1, 2.5, default=1.0 , optimize = is_optimize_deadfish)
+
+    is_optimize_loss_guard = False
+    sell_loss_guard_profit = DecimalParameter(-0.08, -0.02, default=-0.03, decimals=3, optimize=is_optimize_loss_guard)
+    sell_loss_guard_hours = IntParameter(8, 36, default=16, optimize=is_optimize_loss_guard)
+    sell_loss_guard_rsi_1h = IntParameter(35, 55, default=48, optimize=is_optimize_loss_guard)
+    sell_loss_guard_cmf_1h = DecimalParameter(-0.2, 0.1, default=-0.02, decimals=2, optimize=is_optimize_loss_guard)
+
+    is_optimize_bear_gate = False
+    buy_bear_gate_ema_buffer = DecimalParameter(0.985, 1.000, default=0.995, decimals=3, optimize=is_optimize_bear_gate)
+    buy_bear_gate_rsi_1h = IntParameter(35, 55, default=48, optimize=is_optimize_bear_gate)
+    buy_bear_gate_cmf_1h = DecimalParameter(-0.2, 0.1, default=-0.02, decimals=2, optimize=is_optimize_bear_gate)
 
     is_optimize_bleeding = False
     sell_bleeding_cti = DecimalParameter(-0.9, -0.0, default=-0.5 , optimize = is_optimize_bleeding)
@@ -488,6 +499,16 @@ class BB_RPB_TSL(IStrategy):
         if hasattr(trade, 'buy_tag') and trade.buy_tag is not None:
             buy_tag = trade.buy_tag
         buy_tags = buy_tag.split()
+
+        trade_age_hours = (current_time - trade.open_date_utc).total_seconds() / 3600.0
+        if (
+                (trade_age_hours >= self.sell_loss_guard_hours.value)
+                and (current_profit <= self.sell_loss_guard_profit.value)
+                and (last_candle['close'] < last_candle['ema_200'])
+                and (last_candle['rsi_1h'] < self.sell_loss_guard_rsi_1h.value)
+                and (last_candle['cmf_1h'] < self.sell_loss_guard_cmf_1h.value)
+            ):
+            return f"sell_loss_guard_time( {buy_tag})"
 
         # sell trail
         if 0.012 > current_profit >= 0.0:
@@ -1061,11 +1082,20 @@ class BB_RPB_TSL(IStrategy):
         conditions.append(is_nfi7_37)                                              # ~0.46 / 92.6% / 17.05%      D
         dataframe.loc[is_nfi7_37, 'buy_tag'] += 'nfi7_37 '
 
+        is_bearish_regime = (
+                (dataframe['close'] < dataframe['ema_200'] * self.buy_bear_gate_ema_buffer.value)
+                & (dataframe['ema_200_1h'] < dataframe['ema_200_1h'].shift(6))
+                & (dataframe['rsi_1h'] < self.buy_bear_gate_rsi_1h.value)
+                & (dataframe['cmf_1h'] < self.buy_bear_gate_cmf_1h.value)
+            )
+
         if conditions:
             dataframe.loc[
                             is_additional_check
                             &
                             reduce(lambda x, y: x | y, conditions)
+                            &
+                            ~is_bearish_regime
 
                         , 'enter_long' ] = 1
 

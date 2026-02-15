@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 HYPEROPT_GUIDE.md
 AGENTS.md
+configs/backtest_profiles
 
 # C extensions
 *.so
