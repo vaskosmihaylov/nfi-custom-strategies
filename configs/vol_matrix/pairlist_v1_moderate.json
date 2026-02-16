@@ -1,0 +1,39 @@
+{
+  "stake_currency": "USDT",
+  "exchange": {
+    "name": "bybit",
+    "pair_whitelist": [
+      "0G/USDT:USDT",
+      "1000TOSHI/USDT:USDT",
+      "AAVE/USDT:USDT",
+      "AKE/USDT:USDT",
+      "BCH/USDT:USDT",
+      "COAI/USDT:USDT",
+      "COMP/USDT:USDT",
+      "CTC/USDT:USDT",
+      "DEEP/USDT:USDT",
+      "DOGE/USDT:USDT",
+      "DYM/USDT:USDT",
+      "ETH/USDT:USDT",
+      "HBAR/USDT:USDT",
+      "KITE/USDT:USDT",
+      "LINEA/USDT:USDT",
+      "LPT/USDT:USDT",
+      "ME/USDT:USDT",
+      "MON/USDT:USDT",
+      "MOODENG/USDT:USDT",
+      "SOMI/USDT:USDT",
+      "TAO/USDT:USDT",
+      "TNSR/USDT:USDT",
+      "TON/USDT:USDT",
+      "VVV/USDT:USDT",
+      "ZKC/USDT:USDT",
+      "ZRO/USDT:USDT"
+    ]
+  },
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ]
+}
