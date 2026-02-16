@@ -67,7 +67,6 @@ show_help() {
     echo "  genestrategy_v2, genestrategy_v2_shorts, alexnexusforgev8aiv2,"
     echo "  kamafama, kamafama_shorts,"
     echo "  frankenstrat, frankenstrat_shorts,"
-    echo "  bb_rpb_tsl, bb_rpb_tsl_shorts,"
     echo "  simplersi, simplersi_shorts"
     echo ""
     echo "Examples:"
@@ -100,7 +99,6 @@ show_help() {
     echo "  FrankenStrat:          http://freq.gaiaderma.com/frankenstrat"
     echo "  FrankenStrat_Shorts:   http://freq.gaiaderma.com/frankenstrat_shorts"
     echo "  BB_RPB_TSL:            http://freq.gaiaderma.com/bb_rpb_tsl"
-    echo "  BB_RPB_TSL_Shorts:     http://freq.gaiaderma.com/bb_rpb_tsl_shorts"
     echo "  SimpleRSI:             http://freq.gaiaderma.com/simplersi"
     echo "  SimpleRSI_Shorts:      http://freq.gaiaderma.com/simplersi_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
@@ -251,7 +249,6 @@ health_check() {
         "frankenstrat:8119"
         "frankenstrat_shorts:8118"
         "bb_rpb_tsl:8122"
-        "bb_rpb_tsl_shorts:8123"
         "simplersi:8124"
         "simplersi_shorts:8125"
     )
