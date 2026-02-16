@@ -406,8 +406,10 @@ class Auto_EI_t4c0s(IStrategy):
         dataframe['zero'] = 0
         # Elliot
         dataframe['EWO'] = EWO(dataframe, self.fast_ewo, self.slow_ewo)
-        dataframe['EWO_UP'] = np.where(dataframe['EWO'] > 0, dataframe['EWO'], np.nan)
-        dataframe['EWO_DN'] = np.where(dataframe['EWO'] < 0, dataframe['EWO'], np.nan)
+        dataframe.loc[dataframe['EWO'] > 0, "EWO_UP"] = dataframe['EWO']
+        dataframe.loc[dataframe['EWO'] < 0, "EWO_DN"] = dataframe['EWO']
+        dataframe['EWO_UP'].ffill()
+        dataframe['EWO_DN'].ffill()
         dataframe['EWO_MEAN_UP'] = dataframe['EWO_UP'].mean()
         dataframe['EWO_MEAN_DN'] = dataframe['EWO_DN'].mean()
         dataframe['EWO_UP_FIB'] = dataframe['EWO_MEAN_UP'] * 1.618
@@ -479,141 +481,149 @@ class Auto_EI_t4c0s(IStrategy):
         dataframe['enter_mean_xL'] = rolling_max_x * (1 - dataframe['move_mean_xl'])
 
         ### Buying Weights & Signals ###
-        dataframe['buy0'] = np.where(
-            dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value), 1.0, 0.0)
-        dataframe['buy1'] = np.where(
-            dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value), 1.0, 0.0)
-        dataframe['buy2'] = np.where(
-            dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value), 1.0, 0.0)
-        dataframe['buy3'] = np.where(dataframe['atr_pcnt'] > dataframe['min_l'], 1.0, 0.0)
-        dataframe['buy4'] = np.where(dataframe['rsi'] < self.rsi_buy.value, 1.0, 0.0)
+        dataframe.loc[(dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value)), 'buy0'] = 1
+        dataframe.loc[(dataframe['close'] > (dataframe['ema_14'] * self.lambo2_ema_14_factor.value)), 'buy0'] = 0
+        dataframe.loc[(dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value)), 'buy1'] = 1
+        dataframe.loc[(dataframe['rsi_4'] > int(self.lambo2_rsi_4_limit.value)), 'buy1'] = 0
+        dataframe.loc[(dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value)), 'buy2'] = 1
+        dataframe.loc[(dataframe['rsi_14'] > int(self.lambo2_rsi_14_limit.value)), 'buy2'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min_l']), 'buy3'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min_l']), 'buy3'] = 0 
+        dataframe.loc[(dataframe['rsi']<self.rsi_buy.value), 'buy4'] = 1
+        dataframe.loc[(dataframe['rsi']>self.rsi_buy.value), 'buy4'] = 0
 
         dataframe['lambo_weight'] = (
-            (dataframe['buy0'] + dataframe['buy1'] + dataframe['buy2']
-                + dataframe['buy3'] + dataframe['buy4']) / 5) * self.x01.value
+            (dataframe['buy0']+dataframe['buy1']+dataframe['buy2']+dataframe['buy3']+dataframe['buy4'])/5) * self.x01.value
 
-        dataframe['buy10'] = np.where(dataframe['rsi_fast'] < 35, 1.0, 0.0)
-        dataframe['buy11'] = np.where(dataframe['close'] < dataframe['ma_lo'], 1.0, 0.0)
-        dataframe['buy12'] = np.where(
-            dataframe['close'] < dataframe['enter_mean_x'], 1.0, 0.0)
-        dataframe['buy13'] = np.where(
-            dataframe['close'].shift() < dataframe['enter_mean_x'].shift(), 1.0, 0.0)
-        dataframe['buy14'] = np.where(dataframe['rsi'] < self.rsi_buy.value, 1.0, 0.0)
-        dataframe['buy15'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
-        dataframe['buy16'] = np.where(
-            dataframe['EWO'] > dataframe['EWO_MEAN_UP'], 1.0, 0.0)
+        dataframe.loc[(dataframe['rsi_fast'] < 35), 'buy10'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] > 35), 'buy10'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['ma_lo']), 'buy11'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['ma_lo']), 'buy11'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['enter_mean_x']), 'buy12'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['enter_mean_x']), 'buy12'] = 0
+        dataframe.loc[(dataframe['close'].shift() < dataframe['enter_mean_x'].shift()), 'buy13'] = 1
+        dataframe.loc[(dataframe['close'].shift() > dataframe['enter_mean_x'].shift()), 'buy13'] = 0 
+        dataframe.loc[(dataframe['rsi'] < self.rsi_buy.value), 'buy14'] = 1
+        dataframe.loc[(dataframe['rsi'] > self.rsi_buy.value), 'buy14'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy15'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy15'] = 0
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_MEAN_UP']), 'buy16'] = 1
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_MEAN_UP']), 'buy16'] = 0 
 
         dataframe['buy1ewo_weight'] = (
-            (dataframe['buy10'] + dataframe['buy11'] + dataframe['buy12'] + dataframe['buy13']
-                + dataframe['buy14'] + dataframe['buy15'] + dataframe['buy16']) / 7
-        ) * self.x02.value
+            (dataframe['buy10']+dataframe['buy11']+dataframe['buy12']+dataframe['buy13']
+                +dataframe['buy14']+dataframe['buy15']+dataframe['buy16'])/7) * self.x02.value
 
-        dataframe['buy20'] = np.where(dataframe['rsi_fast'] < 35, 1.0, 0.0)
-        dataframe['buy21'] = np.where(dataframe['close'] < dataframe['ma_lo'], 1.0, 0.0)
-        dataframe['buy22'] = np.where(
-            dataframe['EWO'] < dataframe['EWO_DN_FIB'], 1.0, 0.0)
-        dataframe['buy23'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
+        dataframe.loc[(dataframe['rsi_fast'] < 35), 'buy20'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] > 35), 'buy20'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['ma_lo']), 'buy21'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['ma_lo']), 'buy21'] = 0
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_DN_FIB']), 'buy22'] = 1
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_DN_FIB']), 'buy22'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy23'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy23'] = 0
 
         dataframe['buy2ewo_weight'] = (
-            (dataframe['buy20'] + dataframe['buy21'] + dataframe['buy22']
-                + dataframe['buy23']) / 4) * self.x03.value
+            (dataframe['buy20']+dataframe['buy21']+dataframe['buy22']+dataframe['buy23'])/4) * self.x03.value
 
-        dataframe['buy30'] = np.where(
-            dataframe['open'] < dataframe['ema_8'] * self.buy_ema_cofi.value, 1.0, 0.0)
-        dataframe['buy31'] = np.where(
-            qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 1.0, 0.0)
-        dataframe['buy32'] = np.where(
-            dataframe['fastk'] < self.buy_fastk.value, 1.0, 0.0)
-        dataframe['buy33'] = np.where(
-            dataframe['fastd'] < self.buy_fastd.value, 1.0, 0.0)
-        dataframe['buy34'] = np.where(dataframe['adx'] > self.buy_adx.value, 1.0, 0.0)
-        dataframe['buy35'] = np.where(
-            dataframe['EWO'] > dataframe['EWO_MEAN_UP'], 1.0, 0.0)
-        dataframe['buy36'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
+
+        dataframe.loc[(dataframe['open'] < dataframe['ema_8'] * self.buy_ema_cofi.value), 'buy30'] = 1
+        dataframe.loc[(dataframe['open'] > dataframe['ema_8'] * self.buy_ema_cofi.value), 'buy30'] = 0
+        dataframe['buy31'] = 0 
+        dataframe.loc[qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 'buy31'] = 1
+        dataframe.loc[(dataframe['fastk'] < self.buy_fastk.value), 'buy32'] = 1
+        dataframe.loc[(dataframe['fastk'] > self.buy_fastk.value), 'buy32'] = 0
+        dataframe.loc[(dataframe['fastd'] < self.buy_fastd.value), 'buy33'] = 1
+        dataframe.loc[(dataframe['fastd'] > self.buy_fastd.value), 'buy33'] = 0
+        dataframe.loc[(dataframe['adx'] > self.buy_adx.value), 'buy34'] = 1
+        dataframe.loc[(dataframe['adx'] < self.buy_adx.value), 'buy34'] = 0
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_MEAN_UP']), 'buy35'] = 1
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_MEAN_UP']), 'buy35'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy36'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy36'] = 0
+
 
         dataframe['cofi_weight'] = (
-            (dataframe['buy30'] + dataframe['buy31'] + dataframe['buy32'] + dataframe['buy33']
-                + dataframe['buy34'] + dataframe['buy35'] + dataframe['buy36']) / 7
-        ) * self.x04.value
+            (dataframe['buy30']+dataframe['buy31']+dataframe['buy32']+dataframe['buy33']+dataframe['buy34']+dataframe['buy35']+dataframe['buy36'])/7) * self.x04.value
 
-        dataframe['buy_weight'] = ta.SMA(
-            ((dataframe['lambo_weight'] + dataframe['buy1ewo_weight']
-                + dataframe['buy2ewo_weight'] + dataframe['cofi_weight']) / 4)
-            * self.x05.value, timeperiod=5)
+        dataframe['buy_weight'] = ta.SMA(((dataframe['lambo_weight'] + dataframe['buy1ewo_weight'] + dataframe['buy2ewo_weight'] + dataframe['cofi_weight']) / 4) * self.x05.value, timeperiod=5)
 
         ### General Indicators ###
-        dataframe['gen1'] = np.where(
-            dataframe['fastk'] < self.buy_fastk.value, 1.0, -1.0)
-        dataframe['gen2'] = np.where(
-            dataframe['fastd'] < self.buy_fastd.value, 1.0, -1.0)
-        dataframe['gen3'] = np.where(dataframe['adx'] > self.buy_adx.value, 1.0, -1.0)
-        crossed_up_kd = qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd'])
-        crossed_dn_kd = qtpylib.crossed_below(dataframe['fastk'], dataframe['fastd'])
-        dataframe['gen4'] = np.where(crossed_up_kd, 1.0, np.where(crossed_dn_kd, -1.0, 0.0))
+        dataframe.loc[(dataframe['fastk'] < self.buy_fastk.value), 'gen1'] = 1
+        dataframe.loc[(dataframe['fastk'] > self.buy_fastk.value), 'gen1'] = -1
+        dataframe.loc[(dataframe['fastd'] < self.buy_fastd.value), 'gen2'] = 1
+        dataframe.loc[(dataframe['fastd'] > self.buy_fastd.value), 'gen2'] = -1
+        dataframe.loc[(dataframe['adx'] > self.buy_adx.value), 'gen3'] = 1
+        dataframe.loc[(dataframe['adx'] < self.buy_adx.value), 'gen3'] = -1
+        dataframe['gen4'] = 0
+        dataframe.loc[qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 'gen4'] = 1
+        dataframe.loc[qtpylib.crossed_below(dataframe['fastk'], dataframe['fastd']), 'gen4'] = -1
 
         # Distance from min and max summed for different ranges. Selling it will go negative.
-        dataframe['gen5'] = (
-            (dataframe['max'] + dataframe['max_l'] + dataframe['max_x'])
-            - (dataframe['min'] + dataframe['min_l'] + dataframe['min_x']))
+        dataframe['gen5'] = (dataframe['max']+dataframe['max_l']+dataframe['max_x']) - (dataframe['min']+dataframe['min_l']+dataframe['min_x'])
 
-        crossed_up_ema = qtpylib.crossed_above(dataframe['ema_8'], dataframe['ema_14'])
-        crossed_dn_ema = qtpylib.crossed_below(dataframe['ema_8'], dataframe['ema_14'])
-        dataframe['gen6'] = np.where(
-            crossed_up_ema, 1.0, np.where(crossed_dn_ema, -1.0, 0.0))
+        dataframe['gen6'] = 0
+        dataframe.loc[qtpylib.crossed_above(dataframe['ema_8'], dataframe['ema_14']), 'gen6'] = 1
+        dataframe.loc[qtpylib.crossed_below(dataframe['ema_8'], dataframe['ema_14']), 'gen6'] = -1
 
-        dataframe['general_weight'] = (
-            (dataframe['gen1'] + dataframe['gen2'] + dataframe['gen3']
-                + dataframe['gen4'] + dataframe['gen5'] + dataframe['gen6']) / 6)
+        dataframe['general_weight'] = ((dataframe['gen1']+dataframe['gen2']+dataframe['gen3']+dataframe['gen4']+dataframe['gen5']+dataframe['gen6'])/6) 
 
-        gw = dataframe['general_weight']
-        gw_move = gw * (1 + dataframe['move'])
-        dataframe['gen_buy'] = np.where(gw > 0, gw_move, 0.0)
-        dataframe['gen_sell'] = np.where(gw < 0, gw_move.abs(), 0.0)
+        dataframe.loc[(dataframe['general_weight'] > 0), 'gen_buy'] = dataframe['general_weight'] * (1 + dataframe['move']) 
+        dataframe.loc[(dataframe['general_weight'] < 0), 'gen_buy'] = 0
+        dataframe.loc[(dataframe['general_weight'] < 0), 'gen_sell'] = abs(dataframe['general_weight'] * (1 + dataframe['move'])) 
+        dataframe.loc[(dataframe['general_weight'] > 0), 'gen_sell'] = 0     
+
 
         ### SELLING Weights & Signals ###
-        dataframe['sell0'] = np.where(dataframe['close'] > dataframe['hma_50'], 1.0, 0.0)
-        dataframe['sell1'] = np.where(
-            dataframe['close'] > dataframe['ma_hi_2'], 1.0, 0.0)
-        dataframe['sell2'] = np.where(dataframe['max_l'] != 0, 1.0, 0.0)
-        dataframe['sell3'] = np.where(
-            dataframe['close'] > dataframe['exit_mean_x'], 1.0, 0.0)
-        dataframe['sell4'] = np.where(dataframe['rsi'] > 50, 1.0, 0.0)
-        dataframe['sell5'] = np.where(
-            dataframe['rsi_fast'] > dataframe['rsi_slow'], 1.0, 0.0)
+        dataframe.loc[(dataframe['close'] > dataframe['hma_50']), 'sell0'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['hma_50']), 'sell0'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['ma_hi_2']), 'sell1'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['ma_hi_2']), 'sell1'] = 0
+        dataframe.loc[(dataframe['max_l'] != 0), 'sell2'] = 1
+        dataframe.loc[(dataframe['max_l'] == 0), 'sell2'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['exit_mean_x']), 'sell3'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['exit_mean_x']), 'sell3'] = 0
+        dataframe.loc[(dataframe['rsi'] > 50), 'sell4'] = 1
+        dataframe.loc[(dataframe['rsi'] < 50), 'sell4'] = 0
+        dataframe.loc[(dataframe['rsi_fast'] > dataframe['rsi_slow']), 'sell5'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] < dataframe['rsi_slow']), 'sell5'] = 0
 
         dataframe['hi2_weight'] = (
-            (dataframe['sell0'] + dataframe['sell1'] + dataframe['sell2']
-                + dataframe['sell3'] + dataframe['sell4'] + dataframe['sell5']) / 6
-        ) * self.y01.value
+            (dataframe['sell0']+dataframe['sell1']+dataframe['sell2']+dataframe['sell3']+dataframe['sell4']+dataframe['sell5'])/6) * self.y01.value
 
-        dataframe['sell10'] = np.where(
-            dataframe['close'] < dataframe['hma_50'], 1.0, 0.0)
-        dataframe['sell11'] = np.where(
-            dataframe['close'] > dataframe['ma_hi'], 1.0, 0.0)
-        dataframe['sell12'] = np.where(dataframe['max_l'] != 0, 1.0, 0.0)
-        dataframe['sell13'] = np.where(
-            dataframe['rsi_fast'] > dataframe['rsi_slow'], 1.0, 0.0)
+        dataframe.loc[(dataframe['close'] < dataframe['hma_50']), 'sell10'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['hma_50']), 'sell10'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['ma_hi']), 'sell11'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['ma_hi']), 'sell11'] = 0
+        dataframe.loc[(dataframe['max_l'] != 0), 'sell12'] = 1
+        dataframe.loc[(dataframe['max_l'] == 0), 'sell12'] = 0
+        dataframe.loc[(dataframe['rsi_fast'] > dataframe['rsi_slow']), 'sell13'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] < dataframe['rsi_slow']), 'sell13'] = 0
 
         dataframe['hi_weight'] = (
-            (dataframe['sell10'] + dataframe['sell11'] + dataframe['sell12']
-                + dataframe['sell13']) / 4) * self.y02.value
+            (dataframe['sell10']+dataframe['sell11']+dataframe['sell12']+dataframe['sell13'])/4) * self.y02.value
 
-        dataframe['sell_weight'] = ta.SMA(
-            ((dataframe['hi_weight'] + dataframe['hi2_weight']) / 2)
-            * self.y03.value, timeperiod=5)
+        dataframe['sell_weight'] = ta.SMA(((dataframe['hi_weight'] + dataframe['hi2_weight']) / 2) * self.y03.value, timeperiod=5)
+
 
         dataframe['buy_decision'] = dataframe['buy_weight'] - dataframe['sell_weight']
         dataframe['sell_decision'] = dataframe['sell_weight'] - dataframe['buy_weight']
 
-        min_b = min(self.b01.value, self.b02.value, self.b03.value,
-                    self.b04.value, self.b05.value, self.b06.value)
-        dataframe['Gen Buy Above'] = np.where(
-            dataframe['gen_buy'] > min_b, 1, 0)
+        dataframe['Gen Buy Above'] = 0
+        dataframe.loc[(dataframe['gen_buy'] > self.b01.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b02.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b03.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b04.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b05.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b06.value), 'Gen Buy Above'] = 1
 
-        min_s = min(self.s01.value, self.s02.value, self.s03.value,
-                    self.s04.value, self.s05.value, self.s06.value)
-        dataframe['Gen Sell Above'] = np.where(
-            dataframe['gen_sell'] > min_s, 1, 0)
+        dataframe['Gen Sell Above'] = 0
+        dataframe.loc[(dataframe['gen_sell'] > self.s01.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s02.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s03.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s04.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s05.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s06.value), 'Gen Sell Above'] = 1
 
         return dataframe
 
@@ -674,8 +684,8 @@ class Auto_EI_t4c0s(IStrategy):
                 (dataframe['gen_buy'] > self.b06.value) &
                 (dataframe['volume'] > 0) 
             )
-        dataframe.loc[ewo_zero_up, 'enter_long'] = 1
-        dataframe.loc[ewo_zero_up, 'enter_tag'] = 'ewo_zero_up'
+        dataframe.loc[ewo_zero_dn, 'enter_long'] = 1
+        dataframe.loc[ewo_zero_dn, 'enter_tag'] = 'ewo_zero_dn'
 
         return dataframe
 
@@ -737,15 +747,14 @@ class Auto_EI_t4c0s(IStrategy):
                 (dataframe['gen_sell'] > self.s06.value) &
                 (dataframe['volume'] > 0) 
             )
-        dataframe.loc[ewo_zero_ups, 'exit_long'] = 1
-        dataframe.loc[ewo_zero_ups, 'exit_tag'] = 'ewo_zero_ups'
+        dataframe.loc[ewo_zero_dns, 'exit_long'] = 1
+        dataframe.loc[ewo_zero_dns, 'exit_tag'] = 'ewo_zero_dns'
 
         return dataframe
 
 
 def pct_change(a, b):
     return (b - a) / a
-
 
 
 

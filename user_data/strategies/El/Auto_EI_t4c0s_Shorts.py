@@ -1,36 +1,3 @@
-"""
-Auto_EI_t4c0s_Shorts Strategy
-
-A shorts-only variant of the Auto_EI_t4c0s strategy, designed to profit in bear markets
-and during overbought conditions. Uses the same weighted scoring system but inverts
-entry/exit logic for short positions.
-
-Original Auto_EI_t4c0s Strategy (Longs):
-- Uses weighted buy/sell scoring system with multiple signal groups
-- 4 buy signal groups: lambo, buy1ewo, buy2ewo, cofi
-- 2 sell signal groups: hi2, hi
-- General directional weight for confirmation
-- Dynamic stoploss with movement-based trailing
-- Multiple unclog timers
-
-Strategy Concept for Shorts:
-- Entry: Uses sell_decision (sell_weight > buy_weight) with gen_sell confirmation
-- Exit: Uses buy_decision (buy_weight > sell_weight) with gen_buy confirmation
-- Crash mode stoploss: Tightens when making new lows (shorts profitable)
-- ATR-based stop for losing trades
-
-Key Differences from Long Strategy:
-- Entry uses sell_decision + gen_sell instead of buy_decision + gen_buy
-- Exit uses buy_decision + gen_buy instead of sell_decision + gen_sell
-- Stoploss uses min_l (distance from lows) instead of max_l (distance from highs)
-- Tighter unclog timers (3 days max vs 8 days)
-- Emergency backstop at -20% (prevents liquidation at 3x leverage)
-- Max 8 short positions via confirm_trade_entry()
-
-Author: Derived from Auto_EI_t4c0s
-Version: 1.0.0
-"""
-
 # --- Do not remove these libs ---
 from freqtrade.strategy.interface import IStrategy
 from typing import Dict, List
@@ -52,752 +19,745 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# @Rallipanos # changes by IcHiAT
+
 
 def EWO(dataframe, ema_length=5, ema2_length=3):
-  df = dataframe.copy()
-  ema1 = ta.EMA(df, timeperiod=ema_length)
-  ema2 = ta.EMA(df, timeperiod=ema2_length)
-  emadif = (ema1 - ema2) / df['close'] * 100
-  return emadif
+    df = dataframe.copy()
+    ema1 = ta.EMA(df, timeperiod=ema_length)
+    ema2 = ta.EMA(df, timeperiod=ema2_length)
+    emadif = (ema1 - ema2) / df['close'] * 100
+    return emadif
+
 
 
 class Auto_EI_t4c0s_Shorts(IStrategy):
 
-  INTERFACE_VERSION = 3
-  can_short = True
+    can_short = True
 
-  # Buy hyperspace params (same as longs - indicators are shared):
-  buy_params = {
-    "atr_length": 23,
-    "b01": 0.5,
-    "b02": 0.5,
-    "b03": 0.5,
-    "b04": 0.5,
-    "b05": 0.5,
-    "b06": 0.5,
-    "base_nb_candles_buy": 17,
-    "buy_adx": 28,
-    "buy_ema_cofi": 0.969,
-    "buy_ewo_high": 5.687,
-    "buy_fastd": 23,
-    "buy_fastk": 30,
-    "fib_dn": 2.5,
-    "fib_up": 9.5,
-    "increment": 1.0007,
-    "lambo2_ema_14_factor": 0.967,
-    "lambo2_rsi_14_limit": 27,
-    "lambo2_rsi_4_limit": 32,
-    "low_offset": 0.995,
-    "mean_dn": 1.6,
-    "mean_up": 3.3,
-    "rsi_buy": 54,
-    "window": 30,
-    "x01": 4.2,
-    "x02": 1.3,
-    "x03": 1.2,
-    "x04": 1.3,
-    "x05": 4.2,
-    "z01": 2.1,
-    "zero_dn": 4.1,
-    "zero_up": 6.6,
-  }
+    '''
+          ______   __          __              __    __   ______   __    __        __     __    __             ______            
+     /      \ /  |       _/  |            /  |  /  | /      \ /  \  /  |      /  |   /  |  /  |           /      \           
+    /$$$$$$  |$$ |____  / $$ |    _______ $$ | /$$/ /$$$$$$  |$$  \ $$ |     _$$ |_  $$ |  $$ |  _______ /$$$$$$  |  _______ 
+    $$ |  $$/ $$      \ $$$$ |   /       |$$ |/$$/  $$ ___$$ |$$$  \$$ |    / $$   | $$ |__$$ | /       |$$$  \$$ | /       |
+    $$ |      $$$$$$$  |  $$ |  /$$$$$$$/ $$  $$<     /   $$< $$$$  $$ |    $$$$$$/  $$    $$ |/$$$$$$$/ $$$$  $$ |/$$$$$$$/ 
+    $$ |   __ $$ |  $$ |  $$ |  $$ |      $$$$$  \   _$$$$$  |$$ $$ $$ |      $$ | __$$$$$$$$ |$$ |      $$ $$ $$ |$$      \ 
+    $$ \__/  |$$ |  $$ | _$$ |_ $$ \_____ $$ |$$  \ /  \__$$ |$$ |$$$$ |      $$ |/  |     $$ |$$ \_____ $$ \$$$$ | $$$$$$  |
+    $$    $$/ $$ |  $$ |/ $$   |$$       |$$ | $$  |$$    $$/ $$ | $$$ |______$$  $$/      $$ |$$       |$$   $$$/ /     $$/ 
+     $$$$$$/  $$/   $$/ $$$$$$/  $$$$$$$/ $$/   $$/  $$$$$$/  $$/   $$//      |$$$$/       $$/  $$$$$$$/  $$$$$$/  $$$$$$$/  
+                                                                       $$$$$$/                                               
+                                                                                                                             
+    '''                                                                        
 
-  # Sell hyperspace params:
-  sell_params = {
-    "base_nb_candles_sell": 14,
-    "day1": 1,
-    "day2": 2,
-    "day3": 3,
-    "fib_dns": 2.3,
-    "fib_ups": 1.6,
-    "high_offset": 1.012,
-    "high_offset_2": 1.014,
-    "mean_dns": 2.2,
-    "mean_ups": 5.4,
-    "s01": 0.5,
-    "s02": 0.5,
-    "s03": 0.5,
-    "s04": 0.5,
-    "s05": 0.5,
-    "s06": 0.5,
-    "unclog1": 0.10,
-    "unclog2": 0.10,
-    "unclog3": 0.08,
-    "y01": 3.6,
-    "y02": 3.4,
-    "y03": 2.6,
-    "zero_dns": 7.3,
-    "zero_ups": 1.8,
-  }
+    ### 3-13-2023 ###
+    # WIP - V1
+    # No hyper-opt using just defaults from orig EI3 strat, you need to try and hyper-opt this file -
+    # Will suggest adding in an roi table.
+    ###
 
-  # ROI table (effectively disabled, let signals/stops control)
-  minimal_roi = {
-    "0": 0.243,
-    "46": 0.035,
-    "127": 0.015,
-    "237": 0
-  }
 
-  @property
-  def protections(self):
-    return [
-      {
-        "method": "CooldownPeriod",
-        "stop_duration_candles": 5
-      },
-      {
-        "method": "MaxDrawdown",
-        "lookback_period_candles": 48,
-        "trade_limit": 20,
-        "stop_duration_candles": 4,
-        "max_allowed_drawdown": 0.2
-      },
-      {
-        "method": "StoplossGuard",
-        "lookback_period_candles": 24,
-        "trade_limit": 4,
-        "stop_duration_candles": 2,
-        "only_per_pair": False
-      },
-      {
-        "method": "LowProfitPairs",
-        "lookback_period_candles": 6,
-        "trade_limit": 2,
-        "stop_duration_candles": 60,
-        "required_profit": 0.02
-      },
-      {
-        "method": "LowProfitPairs",
-        "lookback_period_candles": 24,
-        "trade_limit": 4,
-        "stop_duration_candles": 2,
-        "required_profit": 0.01
-      }
-    ]
+    # Buy hyperspace params:
+    buy_params = {
+        "atr_length": 23,
+        "b01": 0.5,
+        "b02": 0.5,
+        "b03": 0.5,
+        "b04": 0.5,
+        "b05": 0.5,
+        "b06": 0.5,
+        "base_nb_candles_buy": 17,
+        "buy_adx": 28,
+        "buy_ema_cofi": 0.969,
+        "buy_ewo_high": 5.687,
+        "buy_fastd": 23,
+        "buy_fastk": 30,
+        "fib_dn": 2.5,
+        "fib_up": 9.5,
+        "increment": 1.0007,
+        "lambo2_ema_14_factor": 0.967,
+        "lambo2_rsi_14_limit": 27,
+        "lambo2_rsi_4_limit": 32,
+        "low_offset": 0.995,
+        "mean_dn": 1.6,
+        "mean_up": 3.3,
+        "rsi_buy": 54,
+        "window": 30,
+        "x01": 4.2,
+        "x02": 1.3,
+        "x03": 1.2,
+        "x04": 1.3,
+        "x05": 4.2,
+        "z01": 2.1,
+        "zero_dn": 4.1,
+        "zero_up": 6.6,
+    }
 
-  # Stoploss - Unclog (tighter for shorts: 3 days max vs 8)
-  stoploss = -0.99
-  unclog1 = DecimalParameter(0.06, 0.15, default=0.10, decimals=2, space='sell', optimize=True)
-  unclog2 = DecimalParameter(0.06, 0.15, default=0.10, decimals=2, space='sell', optimize=True)
-  unclog3 = DecimalParameter(0.05, 0.12, default=0.08, decimals=2, space='sell', optimize=True)
-  day1 = IntParameter(1, 2, default=1, space='sell', optimize=True)
-  day2 = IntParameter(1, 3, default=2, space='sell', optimize=True)
-  day3 = IntParameter(2, 4, default=3, space='sell', optimize=True)
+    # Sell hyperspace params:
+    sell_params = {
+        "base_nb_candles_sell": 14,
+        "day1": 1,
+        "day2": 4,
+        "day3": 5,
+        "day4": 8,
+        "fib_dns": 2.3,
+        "fib_ups": 1.6,
+        "high_offset": 1.012,
+        "high_offset_2": 1.014,
+        "mean_dns": 2.2,
+        "mean_ups": 5.4,
+        "moon": 0.004,
+        "s01": 0.5,
+        "s02": 0.5,
+        "s03": 0.5,
+        "s04": 0.5,
+        "s05": 0.5,
+        "s06": 0.5,
+        "unclog1": 0.15,
+        "unclog2": 0.16,
+        "unclog3": 0.12,
+        "unclog4": 0.18,
+        "y01": 3.6,
+        "y02": 3.4,
+        "y03": 2.6,
+        "zero_dns": 7.3,
+        "zero_ups": 1.8,
+    }
 
-  # SMAOffset
-  base_nb_candles_buy = IntParameter(8, 20, default=buy_params['base_nb_candles_buy'], space='buy', optimize=True)
-  base_nb_candles_sell = IntParameter(8, 20, default=sell_params['base_nb_candles_sell'], space='sell', optimize=True)
-  low_offset = DecimalParameter(0.985, 0.995, default=buy_params['low_offset'], space='buy', optimize=True)
-  high_offset = DecimalParameter(1.005, 1.015, default=sell_params['high_offset'], space='sell', optimize=True)
-  high_offset_2 = DecimalParameter(1.010, 1.020, default=sell_params['high_offset_2'], space='sell', optimize=True)
+    # ROI table:
+    minimal_roi = {
+        "0": 0.243,
+        "46": 0.035,
+        "127": 0.015,
+        "237": 0
+    }
 
-  # lambo2
-  lambo2_ema_14_factor = DecimalParameter(0.8, 1.2, decimals=3, default=buy_params['lambo2_ema_14_factor'], space='buy', optimize=True)
-  lambo2_rsi_4_limit = IntParameter(5, 60, default=buy_params['lambo2_rsi_4_limit'], space='buy', optimize=True)
-  lambo2_rsi_14_limit = IntParameter(5, 60, default=buy_params['lambo2_rsi_14_limit'], space='buy', optimize=True)
 
-  # Protection
-  fast_ewo = 50
-  slow_ewo = 200
+    @property
+    def protections(self):
+        return [
+            {
+                "method": "CooldownPeriod",
+                "stop_duration_candles": 5
+            },
+            {
+                "method": "MaxDrawdown",
+                "lookback_period_candles": 48,
+                "trade_limit": 20,
+                "stop_duration_candles": 4,
+                "max_allowed_drawdown": 0.2
+            },
+            {
+                "method": "StoplossGuard",
+                "lookback_period_candles": 24,
+                "trade_limit": 4,
+                "stop_duration_candles": 2,
+                "only_per_pair": False
+            },
+            {
+                "method": "LowProfitPairs",
+                "lookback_period_candles": 6,
+                "trade_limit": 2,
+                "stop_duration_candles": 60,
+                "required_profit": 0.02
+            },
+            {
+                "method": "LowProfitPairs",
+                "lookback_period_candles": 24,
+                "trade_limit": 4,
+                "stop_duration_candles": 2,
+                "required_profit": 0.01
+            }
+        ]
 
-  locked_stoploss = {}
 
-  rsi_buy = IntParameter(30, 70, default=buy_params['rsi_buy'], space='buy', optimize=True)
-  window = IntParameter(12, 70, default=48, space='buy', optimize=True)
+    # Stoploss - Unclog
+    stoploss = -0.99
+    moon = DecimalParameter(0.001, 0.004, default=0.35,  decimals=3, space='sell', optimize=True)
+    unclog1 = DecimalParameter(0.1, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
+    unclog2 = DecimalParameter(0.08, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
+    unclog3 = DecimalParameter(0.10, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
+    unclog4 = DecimalParameter(0.14, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
+    day1 = IntParameter(1, 4, default=1, space='sell', optimize=True)
+    day2 = IntParameter(2, 5, default=2, space='sell', optimize=True)
+    day3 = IntParameter(3, 6, default=3, space='sell', optimize=True)
+    day4 = IntParameter(4, 10, default=4, space='sell', optimize=True)
 
-  # cofi
-  is_optimize_cofi = True
-  buy_ema_cofi = DecimalParameter(0.96, 0.98, default=0.97, optimize=is_optimize_cofi)
-  buy_fastk = IntParameter(20, 30, default=20, optimize=is_optimize_cofi)
-  buy_fastd = IntParameter(20, 30, default=20, optimize=is_optimize_cofi)
-  buy_adx = IntParameter(20, 30, default=30, optimize=is_optimize_cofi)
-  buy_ewo_high = DecimalParameter(2, 12, default=3.553, optimize=is_optimize_cofi)
 
-  atr_length = IntParameter(10, 30, default=14, space='buy', optimize=True)
-  increment = DecimalParameter(low=1.0005, high=1.001, default=1.0007, decimals=4, space='buy', optimize=True, load=True)
-
-  ###  Buy Weight Multipliers ###
-  x01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-  x02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-  x03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-  x04 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-  x05 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-
-  ###  Sell Weight Multipliers ###
-  y01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-  y02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-  y03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-
-  ###  General Weight Multipliers ###
-  z01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-  z02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-
-  ### Entry / Exit Thresholds ###
-  b01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-  b02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-  b03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-  b04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-  b05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-  b06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-
-  s01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-  s02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-  s03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-  s04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-  s05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-  s06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-
-  fib_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-  mean_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-  zero_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-  zero_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-  mean_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-  fib_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-
-  fib_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-  mean_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-  zero_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-  zero_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-  mean_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-  fib_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-
-  # ATR-Based Dynamic Stop Loss (for losing trades)
-  atr_stop_multiplier = DecimalParameter(1.5, 3.0, default=2.0, space='sell', optimize=True)
-  max_atr_stop = DecimalParameter(-0.20, -0.10, default=-0.15, space='sell', optimize=False)
-  min_atr_stop = DecimalParameter(-0.05, -0.02, default=-0.03, space='sell', optimize=False)
-
-  use_custom_stoploss = True
-  process_only_new_candles = True
-  # Custom Entry
-  last_entry_price = None
-
-  # Max short positions
-  max_short_trades = 8
-
-  def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
-                          time_in_force: str, current_time: datetime, entry_tag: Optional[str],
-                          side: str, **kwargs) -> bool:
-    # Only allow shorts in this strategy
-    if side == "long":
-      return False
-
-    # Count current open short positions
-    short_count = 0
-    trades = Trade.get_trades_proxy(is_open=True)
-    for trade in trades:
-      if trade.is_short:
-        short_count += 1
-
-    if short_count >= self.max_short_trades:
-      return False
-
-    return True
-
-  ### Trailing Stop with Crash Mode ###
-  def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
-                      current_rate: float, current_profit: float, **kwargs) -> float:
-    # Emergency backstop: prevent liquidation at 3x leverage
-    if current_profit <= -0.20:
-      return -0.21
-
-    dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
-    current_candle = dataframe.iloc[-1].squeeze()
-
-    # PHASE 1: ATR-Based Dynamic Stop Loss (for losing trades)
-    if current_profit < 0:
-      atr_stop = -1 * self.atr_stop_multiplier.value * current_candle['atr_pcnt']
-      atr_stop = max(atr_stop, self.max_atr_stop.value)
-      atr_stop = min(atr_stop, self.min_atr_stop.value)
-      return atr_stop
-
-    # PHASE 2: Crash Mode Trailing Stop (for profitable shorts)
-    SLT1 = current_candle['move_mean']
-    SL1 = current_candle['move_mean'] * 0.5
-    SLT2 = current_candle['move_mean_x']
-    SL2 = current_candle['move_mean_x'] - current_candle['move_mean']
-    display_profit = current_profit * 100
-
-    # Crash mode: When making new lows (min_l < 0.003), short is very profitable
-    # Tighten stops to protect profit
-    if current_candle['min_l'] < .003:
-      if pair not in self.locked_stoploss:
-        if SLT1 is not None and current_profit > SLT1:
-          self.locked_stoploss[pair] = SL1
-          self.dp.send_msg(f'*** {pair} *** SHORT Crash Mode: Profit {display_profit:.2f}% locked at {SL1:.4f}')
-          logger.info(f'*** {pair} *** SHORT Crash Mode: Profit {display_profit:.2f}% locked at {SL1:.4f}')
-          return SL1
-        else:
-          return self.stoploss
-      else:
-        return self.locked_stoploss[pair]
-
-    # Rally mode: Not making new lows, allow wider trailing
-    else:
-      if pair not in self.locked_stoploss:
-        if SLT2 is not None and current_profit > SLT2:
-          self.locked_stoploss[pair] = SL2
-          self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% locked at {SL2:.4f}')
-          logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% locked at {SL2:.4f}')
-          return SL2
-        elif SLT1 is not None and current_profit > SLT1:
-          self.locked_stoploss[pair] = SL1
-          self.dp.send_msg(f'*** {pair} *** SHORT Profit {display_profit:.2f}% locked at {SL1:.4f}')
-          logger.info(f'*** {pair} *** SHORT Profit {display_profit:.2f}% locked at {SL1:.4f}')
-          return SL1
-        else:
-          return self.stoploss
-      else:
-        return self.locked_stoploss[pair]
-
-    if current_profit < -.01:
-      if pair in self.locked_stoploss:
-        del self.locked_stoploss[pair]
-
-    return self.stoploss
-
-  def custom_entry_price(self, pair: str, trade: Optional['Trade'], current_time: datetime, proposed_rate: float,
-                         entry_tag: Optional[str], side: str, **kwargs) -> float:
-    dataframe, last_updated = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
-
-    entry_price = (dataframe['close'].iat[-1] + dataframe['open'].iat[-1] + proposed_rate + proposed_rate) / 4
-    logger.info(f"{pair} SHORT Using Entry Price: {entry_price} | close: {dataframe['close'].iat[-1]} open: {dataframe['open'].iat[-1]} proposed_rate: {proposed_rate}")
-
-    if self.last_entry_price is not None and abs(entry_price - self.last_entry_price) < 0.0001:
-      entry_price *= self.increment.value
-      logger.info(f"{pair} SHORT: Incremented entry price: {entry_price} based on previous entry price: {self.last_entry_price}.")
-
-    self.last_entry_price = entry_price
-    return entry_price
-
-  def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
-                         rate: float, time_in_force: str, exit_reason: str,
-                         current_time: datetime, **kwargs) -> bool:
-    dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-    last_candle = dataframe.iloc[-1].squeeze()
-
-    # Block ROI exit if making new lows (short is profitable, let it run)
-    # min_l < 0.003 = price near lows = short very profitable
-    if exit_reason == 'roi' and (last_candle['min_l'] < 0.003):
-      return False
-
-    if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.003:
-      logger.info(f"{trade.pair} ROI is below 0.3%")
-      self.dp.send_msg(f'{trade.pair} ROI is below 0.3%')
-      return False
-
-    if exit_reason == 'partial_exit' and trade.calc_profit_ratio(rate) < 0:
-      logger.info(f"{trade.pair} partial exit is below 0")
-      self.dp.send_msg(f'{trade.pair} partial exit is below 0')
-      return False
-
-    if exit_reason == 'trailing_stop_loss' and trade.calc_profit_ratio(rate) < 0:
-      logger.info(f"{trade.pair} trailing stop price is below 0")
-      self.dp.send_msg(f'{trade.pair} trailing stop price is below 0')
-      return False
-
-    return True
-
-  def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
-    # Tighter unclog for shorts (3 days max vs 8 for longs)
-    if current_profit < -self.unclog3.value and (current_time - trade.open_date_utc).days >= self.day3.value:
-      return 'unclog_short_3'
-    if current_profit < -self.unclog2.value and (current_time - trade.open_date_utc).days >= self.day2.value:
-      return 'unclog_short_2'
-    if current_profit < -self.unclog1.value and (current_time - trade.open_date_utc).days >= self.day1.value:
-      return 'unclog_short_1'
-
-  def leverage(self, pair: str, current_time: datetime, current_rate: float,
-               proposed_leverage: float, max_leverage: float, side: str, **kwargs) -> float:
-    return 3.0
-
-  # Exit signal
-  use_exit_signal = True
-  exit_profit_only = True
-  exit_profit_offset = 0.01
-  ignore_roi_if_entry_signal = False
-  ## Optional order time in force.
-  order_time_in_force = {'entry': 'gtc', 'exit': 'gtc'}
-  # Optimal timeframe for the strategy
-  timeframe = '5m'
-
-  position_adjustment_enable = False
-  process_only_new_candles = True
-  startup_candle_count = 200
-
-  def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-    # Same indicators as longs - the weighted system computes both buy and sell weights
-
-    # Calculate all ma_buy values
-    for val in self.base_nb_candles_buy.range:
-      dataframe[f'ma_buy_{val}'] = ta.EMA(dataframe, timeperiod=val)
-
-    # Calculate all ma_sell values
-    for val in self.base_nb_candles_sell.range:
-      dataframe[f'ma_sell_{val}'] = ta.EMA(dataframe, timeperiod=val)
-
-    dataframe['ma_lo'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.low_offset.value)
-    dataframe['ma_hi'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.high_offset.value)
-    dataframe['ma_hi_2'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.high_offset_2.value)
-
-    dataframe['hma_50'] = qtpylib.hull_moving_average(dataframe['close'], window=50)
-    # HMA-BUY SQUEEZE
-    dataframe['HMA_SQZ'] = (((dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] - dataframe['hma_50'])
-      / dataframe[f'ma_buy_{self.base_nb_candles_buy.value}']) * 100)
-
-    dataframe['zero'] = 0
-    # Elliot
-    dataframe['EWO'] = EWO(dataframe, self.fast_ewo, self.slow_ewo)
-    dataframe['EWO_UP'] = np.where(dataframe['EWO'] > 0, dataframe['EWO'], np.nan)
-    dataframe['EWO_DN'] = np.where(dataframe['EWO'] < 0, dataframe['EWO'], np.nan)
-    dataframe['EWO_MEAN_UP'] = dataframe['EWO_UP'].mean()
-    dataframe['EWO_MEAN_DN'] = dataframe['EWO_DN'].mean()
-    dataframe['EWO_UP_FIB'] = dataframe['EWO_MEAN_UP'] * 1.618
-    dataframe['EWO_DN_FIB'] = dataframe['EWO_MEAN_DN'] * 1.618
-
-    # RSI
-    dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
-    dataframe['rsi_fast'] = ta.RSI(dataframe, timeperiod=4)
-    dataframe['rsi_slow'] = ta.RSI(dataframe, timeperiod=20)
+    # SMAOffset
+    base_nb_candles_buy = IntParameter(8, 20, default=buy_params['base_nb_candles_buy'], space='buy', optimize=True)
+    base_nb_candles_sell = IntParameter(8, 20, default=sell_params['base_nb_candles_sell'], space='sell', optimize=True)
+    low_offset = DecimalParameter(0.985, 0.995, default=buy_params['low_offset'], space='buy', optimize=True)
+    high_offset = DecimalParameter(1.005, 1.015, default=sell_params['high_offset'], space='sell', optimize=True)
+    high_offset_2 = DecimalParameter(1.010, 1.020, default=sell_params['high_offset_2'], space='sell', optimize=True)
 
     # lambo2
-    dataframe['ema_14'] = ta.EMA(dataframe, timeperiod=14)
-    dataframe['rsi_4'] = ta.RSI(dataframe, timeperiod=4)
-    dataframe['rsi_14'] = ta.RSI(dataframe, timeperiod=14)
+    lambo2_ema_14_factor = DecimalParameter(0.8, 1.2, decimals=3,  default=buy_params['lambo2_ema_14_factor'], space='buy', optimize=True)
+    lambo2_rsi_4_limit = IntParameter(5, 60, default=buy_params['lambo2_rsi_4_limit'], space='buy', optimize=True)
+    lambo2_rsi_14_limit = IntParameter(5, 60, default=buy_params['lambo2_rsi_14_limit'], space='buy', optimize=True)
 
-    # Cofi
-    stoch_fast = ta.STOCHF(dataframe, 5, 3, 0, 3, 0)
-    dataframe['fastd'] = stoch_fast['fastd']
-    dataframe['fastk'] = stoch_fast['fastk']
-    dataframe['adx'] = ta.ADX(dataframe)
-    dataframe['ema_8'] = ta.EMA(dataframe, timeperiod=8)
+    # Protection
+    fast_ewo = 50
+    slow_ewo = 200
 
-    dataframe['OHLC4'] = (dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
+    locked_stoploss = {}
 
-    # Check how far we are from min and max
-    dataframe['max'] = dataframe['OHLC4'].rolling(4).max() / dataframe['OHLC4'] - 1
-    dataframe['min'] = abs(dataframe['OHLC4'].rolling(4).min() / dataframe['OHLC4'] - 1)
+    rsi_buy = IntParameter(30, 70, default=buy_params['rsi_buy'], space='buy', optimize=True)
+    window = IntParameter(12, 70, default=48, space='buy', optimize=True)
 
-    dataframe['max_l'] = dataframe['OHLC4'].rolling(48).max() / dataframe['OHLC4'] - 1
-    dataframe['min_l'] = abs(dataframe['OHLC4'].rolling(48).min() / dataframe['OHLC4'] - 1)
+    #cofi
+    is_optimize_cofi = True
+    buy_ema_cofi = DecimalParameter(0.96, 0.98, default=0.97 , optimize = is_optimize_cofi)
+    buy_fastk = IntParameter(20, 30, default=20, optimize = is_optimize_cofi)
+    buy_fastd = IntParameter(20, 30, default=20, optimize = is_optimize_cofi)
+    buy_adx = IntParameter(20, 30, default=30, optimize = is_optimize_cofi)
+    buy_ewo_high = DecimalParameter(2, 12, default=3.553, optimize = is_optimize_cofi)
 
-    dataframe['max_x'] = dataframe['OHLC4'].rolling(336).max() / dataframe['OHLC4'] - 1
-    dataframe['min_x'] = abs(dataframe['OHLC4'].rolling(336).min() / dataframe['OHLC4'] - 1)
+    atr_length = IntParameter(10, 30, default=14, space='buy', optimize=True)
+    increment = DecimalParameter(low=1.0005, high=1.001, default=1.0007, decimals=4 ,space='buy', optimize=True, load=True)
 
-    # Apply rolling window operation to the 'OHLC4' column
-    rolling_window = dataframe['OHLC4'].rolling(self.window.value)
-    rolling_max = rolling_window.max()
-    rolling_min = rolling_window.min()
+    ###  Buy Weight Mulitpliers ###
+    x01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    x02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    x03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    x04 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    x05 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
 
-    # Calculate the peak-to-peak value on the resulting rolling window data
-    ptp_value = rolling_window.apply(lambda x: np.ptp(x))
+    ###  Sell Weight Mulitpliers ###
+    y01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
+    y02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
+    y03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
 
-    # Assign the calculated peak-to-peak value to the DataFrame column
-    dataframe['move'] = ptp_value / dataframe['OHLC4']
-    dataframe['move_mean'] = dataframe['move'].mean()
-    dataframe['move_mean_x'] = dataframe['move'].mean() * 1.6
-    dataframe['exit_mean'] = rolling_min * (1 + dataframe['move_mean'])
-    dataframe['exit_mean_x'] = rolling_min * (1 + dataframe['move_mean_x'])
-    dataframe['enter_mean'] = rolling_max * (1 - dataframe['move_mean'])
-    dataframe['enter_mean_x'] = rolling_max * (1 - dataframe['move_mean_x'])
-    dataframe['atr_pcnt'] = (ta.ATR(dataframe, timeperiod=5) / dataframe['OHLC4'])
+    ###  General Weight Mulitpliers ###
+    z01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    z02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
 
-    # Apply rolling window operation to the 'OHLC4' column
-    rolling_window_x = dataframe['OHLC4'].rolling(200)
-    rolling_max_x = rolling_window_x.max()
-    rolling_min_x = rolling_window_x.min()
+    ### Entry / Exit Thresholds ###
+    b01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
 
-    # Calculate the peak-to-peak value on the resulting rolling window data
-    ptp_value_x = rolling_window_x.apply(lambda x: np.ptp(x))
+    s01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
 
-    # Assign the calculated peak-to-peak value to the DataFrame column
-    dataframe['move_l'] = ptp_value_x / dataframe['OHLC4']
-    dataframe['move_mean_l'] = dataframe['move_l'].mean()
-    dataframe['move_mean_xl'] = dataframe['move_l'].mean() * 1.6
-    dataframe['exit_mean_l'] = rolling_min_x * (1 + dataframe['move_mean_l'])
-    dataframe['exit_mean_xl'] = rolling_min_x * (1 + dataframe['move_mean_xl'])
-    dataframe['enter_mean_l'] = rolling_max_x * (1 - dataframe['move_mean_l'])
-    dataframe['enter_mean_xL'] = rolling_max_x * (1 - dataframe['move_mean_xl'])
+    fib_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    mean_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    zero_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    zero_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    mean_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    fib_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
 
-    ### Buying Weights & Signals (same computation as longs) ###
-    dataframe['buy0'] = np.where(
-      dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value), 1.0, 0.0)
-    dataframe['buy1'] = np.where(
-      dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value), 1.0, 0.0)
-    dataframe['buy2'] = np.where(
-      dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value), 1.0, 0.0)
-    dataframe['buy3'] = np.where(dataframe['atr_pcnt'] > dataframe['min_l'], 1.0, 0.0)
-    dataframe['buy4'] = np.where(dataframe['rsi'] < self.rsi_buy.value, 1.0, 0.0)
+    fib_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    mean_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    zero_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    zero_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    mean_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    fib_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
 
-    dataframe['lambo_weight'] = (
-      (dataframe['buy0'] + dataframe['buy1'] + dataframe['buy2']
-        + dataframe['buy3'] + dataframe['buy4']) / 5) * self.x01.value
 
-    dataframe['buy10'] = np.where(dataframe['rsi_fast'] < 35, 1.0, 0.0)
-    dataframe['buy11'] = np.where(dataframe['close'] < dataframe['ma_lo'], 1.0, 0.0)
-    dataframe['buy12'] = np.where(
-      dataframe['close'] < dataframe['enter_mean_x'], 1.0, 0.0)
-    dataframe['buy13'] = np.where(
-      dataframe['close'].shift() < dataframe['enter_mean_x'].shift(), 1.0, 0.0)
-    dataframe['buy14'] = np.where(dataframe['rsi'] < self.rsi_buy.value, 1.0, 0.0)
-    dataframe['buy15'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
-    dataframe['buy16'] = np.where(
-      dataframe['EWO'] > dataframe['EWO_MEAN_UP'], 1.0, 0.0)
+    use_custom_stoploss = True
+    process_only_new_candles = True
+    # Custom Entry
+    last_entry_price = None
 
-    dataframe['buy1ewo_weight'] = (
-      (dataframe['buy10'] + dataframe['buy11'] + dataframe['buy12'] + dataframe['buy13']
-        + dataframe['buy14'] + dataframe['buy15'] + dataframe['buy16']) / 7
-    ) * self.x02.value
+    ### Trailing Stop (Mirrored for shorts) ###
+    def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
+                        current_rate: float, current_profit: float, **kwargs) -> float:
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        current_candle = dataframe.iloc[-1].squeeze()
+        SLT1 = current_candle['move_mean']
+        SL1 = current_candle['move_mean'] * 0.5
+        SLT2 = current_candle['move_mean_x']
+        SL2 = current_candle['move_mean_x'] - current_candle['move_mean']
+        display_profit = current_profit * 100
+        slt1 = SLT1 * 100
+        sl1 = SL1 * 100
+        slt2 = SLT2 * 100
+        sl2 = SL2 * 100
+        # if len(self.locked_stoploss) > 0:
+        #     print(self.locked_stoploss)
 
-    dataframe['buy20'] = np.where(dataframe['rsi_fast'] < 35, 1.0, 0.0)
-    dataframe['buy21'] = np.where(dataframe['close'] < dataframe['ma_lo'], 1.0, 0.0)
-    dataframe['buy22'] = np.where(
-      dataframe['EWO'] < dataframe['EWO_DN_FIB'], 1.0, 0.0)
-    dataframe['buy23'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
+        if current_candle['min_l'] != 0:  # ignore stoploss if setting new lows
+            if pair not in self.locked_stoploss:  # No locked stoploss for this pair yet
+                if SLT2 is not None and current_profit > SLT2:
+                    self.locked_stoploss[pair] = SL2
+                    self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% - {slt2:.3f}%/{sl2:.3f}% activated')
+                    logger.info(f'*** {pair} *** Profit {display_profit:.3f}% - {slt2:.3f}%/{sl2:.3f}% activated')
+                    return SL2
+                elif SLT1 is not None and current_profit > SLT1:
+                    self.locked_stoploss[pair] = SL1
+                    self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% - {slt1:.3f}%/{sl1:.3f}% activated')
+                    logger.info(f'*** {pair} *** Profit {display_profit:.3f}% - {slt1:.3f}%/{sl1:.3f}% activated')
+                    return SL1
+                else:
+                    return self.stoploss
+            else:  # Stoploss has been locked for this pair
+                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% stoploss locked at {self.locked_stoploss[pair]:.4f}')
+                logger.info(f'*** {pair} *** Profit {display_profit:.3f}% stoploss locked at {self.locked_stoploss[pair]:.4f}')
+                return self.locked_stoploss[pair]
+        if current_profit < -.01:
+            if pair in self.locked_stoploss:
+                del self.locked_stoploss[pair]
+                self.dp.send_msg(f'*** {pair} *** Stoploss reset.')
+                logger.info(f'*** {pair} *** Stoploss reset.')
 
-    dataframe['buy2ewo_weight'] = (
-      (dataframe['buy20'] + dataframe['buy21'] + dataframe['buy22']
-        + dataframe['buy23']) / 4) * self.x03.value
+        return self.stoploss
 
-    dataframe['buy30'] = np.where(
-      dataframe['open'] < dataframe['ema_8'] * self.buy_ema_cofi.value, 1.0, 0.0)
-    dataframe['buy31'] = np.where(
-      qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 1.0, 0.0)
-    dataframe['buy32'] = np.where(
-      dataframe['fastk'] < self.buy_fastk.value, 1.0, 0.0)
-    dataframe['buy33'] = np.where(
-      dataframe['fastd'] < self.buy_fastd.value, 1.0, 0.0)
-    dataframe['buy34'] = np.where(dataframe['adx'] > self.buy_adx.value, 1.0, 0.0)
-    dataframe['buy35'] = np.where(
-      dataframe['EWO'] > dataframe['EWO_MEAN_UP'], 1.0, 0.0)
-    dataframe['buy36'] = np.where(dataframe['atr_pcnt'] > dataframe['min'], 1.0, 0.0)
 
-    dataframe['cofi_weight'] = (
-      (dataframe['buy30'] + dataframe['buy31'] + dataframe['buy32'] + dataframe['buy33']
-        + dataframe['buy34'] + dataframe['buy35'] + dataframe['buy36']) / 7
-    ) * self.x04.value
+    def custom_entry_price(self, pair: str, trade: Optional['Trade'], current_time: datetime, proposed_rate: float,
+                           entry_tag: Optional[str], side: str, **kwargs) -> float:
 
-    dataframe['buy_weight'] = ta.SMA(
-      ((dataframe['lambo_weight'] + dataframe['buy1ewo_weight']
-        + dataframe['buy2ewo_weight'] + dataframe['cofi_weight']) / 4)
-      * self.x05.value, timeperiod=5)
+        dataframe, last_updated = self.dp.get_analyzed_dataframe(pair=pair,
+                                                                timeframe=self.timeframe)
 
-    ### General Indicators ###
-    dataframe['gen1'] = np.where(
-      dataframe['fastk'] < self.buy_fastk.value, 1.0, -1.0)
-    dataframe['gen2'] = np.where(
-      dataframe['fastd'] < self.buy_fastd.value, 1.0, -1.0)
-    dataframe['gen3'] = np.where(dataframe['adx'] > self.buy_adx.value, 1.0, -1.0)
-    crossed_up_kd = qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd'])
-    crossed_dn_kd = qtpylib.crossed_below(dataframe['fastk'], dataframe['fastd'])
-    dataframe['gen4'] = np.where(
-      crossed_up_kd, 1.0, np.where(crossed_dn_kd, -1.0, 0.0))
+        entry_price = (dataframe['close'].iat[-1] + dataframe['open'].iat[-1] + proposed_rate + proposed_rate) / 4
+        logger.info(f"{pair} Using Entry Price: {entry_price} | close: {dataframe['close'].iat[-1]} open: {dataframe['open'].iat[-1]} proposed_rate: {proposed_rate}") 
 
-    # Distance from min and max summed for different ranges
-    dataframe['gen5'] = (
-      (dataframe['max'] + dataframe['max_l'] + dataframe['max_x'])
-      - (dataframe['min'] + dataframe['min_l'] + dataframe['min_x']))
+        # Check if there is a stored last entry price and if it matches the proposed entry price
+        if self.last_entry_price is not None and abs(entry_price - self.last_entry_price) < 0.0001:  # Tolerance for floating-point comparison
+            entry_price *= self.increment.value # Increment by 0.2%
+            logger.info(f"{pair} Incremented entry price: {entry_price} based on previous entry price : {self.last_entry_price}.")
 
-    crossed_up_ema = qtpylib.crossed_above(dataframe['ema_8'], dataframe['ema_14'])
-    crossed_dn_ema = qtpylib.crossed_below(dataframe['ema_8'], dataframe['ema_14'])
-    dataframe['gen6'] = np.where(
-      crossed_up_ema, 1.0, np.where(crossed_dn_ema, -1.0, 0.0))
+        # Update the last entry price
+        self.last_entry_price = entry_price
 
-    dataframe['general_weight'] = (
-      (dataframe['gen1'] + dataframe['gen2'] + dataframe['gen3']
-        + dataframe['gen4'] + dataframe['gen5'] + dataframe['gen6']) / 6)
+        return entry_price
 
-    gw = dataframe['general_weight']
-    gw_move = gw * (1 + dataframe['move'])
-    dataframe['gen_buy'] = np.where(gw > 0, gw_move, 0.0)
-    dataframe['gen_sell'] = np.where(gw < 0, gw_move.abs(), 0.0)
 
-    ### SELLING Weights & Signals ###
-    dataframe['sell0'] = np.where(dataframe['close'] > dataframe['hma_50'], 1.0, 0.0)
-    dataframe['sell1'] = np.where(
-      dataframe['close'] > dataframe['ma_hi_2'], 1.0, 0.0)
-    dataframe['sell2'] = np.where(dataframe['max_l'] != 0, 1.0, 0.0)
-    dataframe['sell3'] = np.where(
-      dataframe['close'] > dataframe['exit_mean_x'], 1.0, 0.0)
-    dataframe['sell4'] = np.where(dataframe['rsi'] > 50, 1.0, 0.0)
-    dataframe['sell5'] = np.where(
-      dataframe['rsi_fast'] > dataframe['rsi_slow'], 1.0, 0.0)
+    def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
+                           rate: float, time_in_force: str, exit_reason: str,
+                           current_time: datetime, **kwargs) -> bool:
+        
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        last_candle = dataframe.iloc[-1].squeeze()
 
-    dataframe['hi2_weight'] = (
-      (dataframe['sell0'] + dataframe['sell1'] + dataframe['sell2']
-        + dataframe['sell3'] + dataframe['sell4'] + dataframe['sell5']) / 6
-    ) * self.y01.value
+        if exit_reason == 'roi' and (last_candle['min_l'] < 0.003):
+            return False
 
-    dataframe['sell10'] = np.where(
-      dataframe['close'] < dataframe['hma_50'], 1.0, 0.0)
-    dataframe['sell11'] = np.where(
-      dataframe['close'] > dataframe['ma_hi'], 1.0, 0.0)
-    dataframe['sell12'] = np.where(dataframe['max_l'] != 0, 1.0, 0.0)
-    dataframe['sell13'] = np.where(
-      dataframe['rsi_fast'] > dataframe['rsi_slow'], 1.0, 0.0)
+        # Handle freak events
 
-    dataframe['hi_weight'] = (
-      (dataframe['sell10'] + dataframe['sell11'] + dataframe['sell12']
-        + dataframe['sell13']) / 4) * self.y02.value
+        if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.003:
+            logger.info(f"{trade.pair} ROI is below 0")
+            self.dp.send_msg(f'{trade.pair} ROI is below 0')
+            return False
 
-    dataframe['sell_weight'] = ta.SMA(
-      ((dataframe['hi_weight'] + dataframe['hi2_weight']) / 2)
-      * self.y03.value, timeperiod=5)
+        if exit_reason == 'partial_exit' and trade.calc_profit_ratio(rate) < 0:
+            logger.info(f"{trade.pair} partial exit is below 0")
+            self.dp.send_msg(f'{trade.pair} partial exit is below 0')
+            return False
 
-    dataframe['buy_decision'] = dataframe['buy_weight'] - dataframe['sell_weight']
-    dataframe['sell_decision'] = dataframe['sell_weight'] - dataframe['buy_weight']
+        if exit_reason == 'trailing_stop_loss' and trade.calc_profit_ratio(rate) < 0:
+            logger.info(f"{trade.pair} trailing stop price is below 0")
+            self.dp.send_msg(f'{trade.pair} trailing stop price is below 0')
+            return False
 
-    min_b = min(self.b01.value, self.b02.value, self.b03.value,
-                self.b04.value, self.b05.value, self.b06.value)
-    dataframe['Gen Buy Above'] = np.where(
-      dataframe['gen_buy'] > min_b, 1, 0)
+        return True
 
-    min_s = min(self.s01.value, self.s02.value, self.s03.value,
-                self.s04.value, self.s05.value, self.s06.value)
-    dataframe['Gen Sell Above'] = np.where(
-      dataframe['gen_sell'] > min_s, 1, 0)
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+        # Sell any positions at a loss if they are held for more than X days.
+        if current_profit < -self.unclog4.value and (current_time - trade.open_date_utc).days >= self.day4.value:
+            return 'unclog 4'
+        if current_profit < -self.unclog3.value and (current_time - trade.open_date_utc).days >= self.day3.value:
+            return 'unclog 3'
+        if current_profit < -self.unclog2.value and (current_time - trade.open_date_utc).days >= self.day2.value:
+            return 'unclog 2'
+        if current_profit < -self.unclog1.value and (current_time - trade.open_date_utc).days >= self.day1.value:
+            return 'unclog 1'
+    
+    # Sell signal
+    use_exit_signal = True
+    exit_profit_only = True
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = False
+    ## Optional order time in force.
+    order_time_in_force = {'entry': 'gtc', 'exit': 'gtc'}
+    # Optimal timeframe for the strategy
+    timeframe = '5m'
 
-    return dataframe
+    position_adjustment_enable = False
+    process_only_new_candles = True
+    startup_candle_count = 200
 
-  def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-    # SHORTS: Enter when sell_decision is strong (overbought conditions)
-    # Uses sell_decision + gen_sell (inverted from longs which use buy_decision + gen_buy)
 
-    # Short at EWO overbought fib zone
-    ewo_fib_up = (
-      (dataframe['EWO'] > dataframe['EWO_UP_FIB']) &
-      (dataframe['sell_decision'] > self.fib_ups.value) &
-      (dataframe['gen_sell'] > self.s04.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_fib_up, 'enter_short'] = 1
-    dataframe.loc[ewo_fib_up, 'enter_tag'] = 'short_ewo_fib_up'
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
-    # Short at EWO overbought mean zone
-    ewo_mean_up = (
-      (dataframe['EWO'] < dataframe['EWO_UP_FIB']) &
-      (dataframe['EWO'] > dataframe['EWO_MEAN_UP']) &
-      (dataframe['sell_decision'] > self.mean_ups.value) &
-      (dataframe['gen_sell'] > self.s05.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_mean_up, 'enter_short'] = 1
-    dataframe.loc[ewo_mean_up, 'enter_tag'] = 'short_ewo_mean_up'
+        # Calculate all ma_buy values
+        for val in self.base_nb_candles_buy.range:
+            dataframe[f'ma_buy_{val}'] = ta.EMA(dataframe, timeperiod=val)
 
-    # Short at EWO zero crossing up
-    ewo_zero_up = (
-      (dataframe['EWO'] < dataframe['EWO_MEAN_UP']) &
-      (dataframe['EWO'] > 0) &
-      (dataframe['sell_decision'] > self.zero_ups.value) &
-      (dataframe['gen_sell'] > self.s06.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_zero_up, 'enter_short'] = 1
-    dataframe.loc[ewo_zero_up, 'enter_tag'] = 'short_ewo_zero_up'
+        # Calculate all ma_sell values
+        for val in self.base_nb_candles_sell.range:
+            dataframe[f'ma_sell_{val}'] = ta.EMA(dataframe, timeperiod=val)
 
-    # Short at EWO oversold fib zone (bounce short)
-    ewo_fib_dn = (
-      (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
-      (dataframe['sell_decision'] > self.fib_dns.value) &
-      (dataframe['gen_sell'] > self.s01.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_fib_dn, 'enter_short'] = 1
-    dataframe.loc[ewo_fib_dn, 'enter_tag'] = 'short_ewo_fib_dn'
+        dataframe['ma_lo'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.low_offset.value)
+        dataframe['ma_hi'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.high_offset.value)
+        dataframe['ma_hi_2'] = dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * (self.high_offset_2.value)
 
-    # Short at EWO oversold mean zone
-    ewo_mean_dn = (
-      (dataframe['EWO'] > dataframe['EWO_DN_FIB']) &
-      (dataframe['EWO'] < dataframe['EWO_MEAN_DN']) &
-      (dataframe['sell_decision'] > self.mean_dns.value) &
-      (dataframe['gen_sell'] > self.s02.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_mean_dn, 'enter_short'] = 1
-    dataframe.loc[ewo_mean_dn, 'enter_tag'] = 'short_ewo_mean_dn'
+        dataframe['hma_50'] = qtpylib.hull_moving_average(dataframe['close'], window=50)
+        # HMA-BUY SQUEEZE
+        dataframe['HMA_SQZ'] = (((dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] - dataframe['hma_50']) 
+            / dataframe[f'ma_buy_{self.base_nb_candles_buy.value}']) * 100)
 
-    # Short at EWO zero crossing down
-    ewo_zero_dn = (
-      (dataframe['EWO'] > dataframe['EWO_MEAN_DN']) &
-      (dataframe['EWO'] < 0) &
-      (dataframe['sell_decision'] > self.zero_dns.value) &
-      (dataframe['gen_sell'] > self.s03.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[ewo_zero_dn, 'enter_short'] = 1
-    dataframe.loc[ewo_zero_dn, 'enter_tag'] = 'short_ewo_zero_dn'
 
-    return dataframe
+        dataframe['zero'] = 0
+        # Elliot
+        dataframe['EWO'] = EWO(dataframe, self.fast_ewo, self.slow_ewo)
+        dataframe.loc[dataframe['EWO'] > 0, "EWO_UP"] = dataframe['EWO']
+        dataframe.loc[dataframe['EWO'] < 0, "EWO_DN"] = dataframe['EWO']
+        dataframe['EWO_UP'].ffill()
+        dataframe['EWO_DN'].ffill()
+        dataframe['EWO_MEAN_UP'] = dataframe['EWO_UP'].mean()
+        dataframe['EWO_MEAN_DN'] = dataframe['EWO_DN'].mean()
+        dataframe['EWO_UP_FIB'] = dataframe['EWO_MEAN_UP'] * 1.618
+        dataframe['EWO_DN_FIB'] = dataframe['EWO_MEAN_DN'] * 1.618
 
-  def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-    # SHORTS: Exit when buy_decision is strong (oversold = cover shorts)
-    # Uses buy_decision + gen_buy (inverted from longs which use sell_decision + gen_sell)
+        # RSI
+        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
+        dataframe['rsi_fast'] = ta.RSI(dataframe, timeperiod=4)
+        dataframe['rsi_slow'] = ta.RSI(dataframe, timeperiod=20)
 
-    # Cover short at EWO oversold fib zone
-    exit_fib_dn = (
-      (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
-      (dataframe['buy_decision'] > self.fib_dn.value) &
-      (dataframe['gen_buy'] > self.b01.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_fib_dn, 'exit_short'] = 1
-    dataframe.loc[exit_fib_dn, 'exit_tag'] = 'cover_ewo_fib_dn'
+        #lambo2
+        dataframe['ema_14'] = ta.EMA(dataframe, timeperiod=14)
+        dataframe['rsi_4'] = ta.RSI(dataframe, timeperiod=4)
+        dataframe['rsi_14'] = ta.RSI(dataframe, timeperiod=14)
 
-    # Cover short at EWO oversold mean zone
-    exit_mean_dn = (
-      (dataframe['EWO'] > dataframe['EWO_DN_FIB']) &
-      (dataframe['EWO'] < dataframe['EWO_MEAN_DN']) &
-      (dataframe['buy_decision'] > self.mean_dn.value) &
-      (dataframe['gen_buy'] > self.b02.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_mean_dn, 'exit_short'] = 1
-    dataframe.loc[exit_mean_dn, 'exit_tag'] = 'cover_ewo_mean_dn'
+        # Cofi
+        stoch_fast = ta.STOCHF(dataframe, 5, 3, 0, 3, 0)
+        dataframe['fastd'] = stoch_fast['fastd']
+        dataframe['fastk'] = stoch_fast['fastk']
+        dataframe['adx'] = ta.ADX(dataframe)
+        dataframe['ema_8'] = ta.EMA(dataframe, timeperiod=8)
 
-    # Cover short at EWO zero crossing down
-    exit_zero_dn = (
-      (dataframe['EWO'] > dataframe['EWO_MEAN_DN']) &
-      (dataframe['EWO'] < 0) &
-      (dataframe['buy_decision'] > self.zero_dn.value) &
-      (dataframe['gen_buy'] > self.b03.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_zero_dn, 'exit_short'] = 1
-    dataframe.loc[exit_zero_dn, 'exit_tag'] = 'cover_ewo_zero_dn'
+        dataframe['OHLC4'] = (dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
 
-    # Cover short at EWO overbought fib zone
-    exit_fib_up = (
-      (dataframe['EWO'] > dataframe['EWO_UP_FIB']) &
-      (dataframe['buy_decision'] > self.fib_up.value) &
-      (dataframe['gen_buy'] > self.b04.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_fib_up, 'exit_short'] = 1
-    dataframe.loc[exit_fib_up, 'exit_tag'] = 'cover_ewo_fib_up'
+        # Check how far we are from min and max 
+        dataframe['max'] = dataframe['OHLC4'].rolling(4).max() / dataframe['OHLC4'] - 1
+        dataframe['min'] = abs(dataframe['OHLC4'].rolling(4).min() / dataframe['OHLC4'] - 1)
 
-    # Cover short at EWO overbought mean zone
-    exit_mean_up = (
-      (dataframe['EWO'] < dataframe['EWO_UP_FIB']) &
-      (dataframe['EWO'] > dataframe['EWO_MEAN_UP']) &
-      (dataframe['buy_decision'] > self.mean_up.value) &
-      (dataframe['gen_buy'] > self.b05.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_mean_up, 'exit_short'] = 1
-    dataframe.loc[exit_mean_up, 'exit_tag'] = 'cover_ewo_mean_up'
+        dataframe['max_l'] = dataframe['OHLC4'].rolling(48).max() / dataframe['OHLC4'] - 1
+        dataframe['min_l'] = abs(dataframe['OHLC4'].rolling(48).min() / dataframe['OHLC4'] - 1)
 
-    # Cover short at EWO zero crossing up
-    exit_zero_up = (
-      (dataframe['EWO'] < dataframe['EWO_MEAN_UP']) &
-      (dataframe['EWO'] > 0) &
-      (dataframe['buy_decision'] > self.zero_up.value) &
-      (dataframe['gen_buy'] > self.b06.value) &
-      (dataframe['volume'] > 0)
-    )
-    dataframe.loc[exit_zero_up, 'exit_short'] = 1
-    dataframe.loc[exit_zero_up, 'exit_tag'] = 'cover_ewo_zero_up'
+        dataframe['max_x'] = dataframe['OHLC4'].rolling(336).max() / dataframe['OHLC4'] - 1
+        dataframe['min_x'] = abs(dataframe['OHLC4'].rolling(336).min() / dataframe['OHLC4'] - 1)
 
-    return dataframe
+
+        # Apply rolling window operation to the 'OHLC4'column
+        rolling_window = dataframe['OHLC4'].rolling(self.window.value) 
+        rolling_max = rolling_window.max()
+        rolling_min = rolling_window.min()
+
+        # Calculate the peak-to-peak value on the resulting rolling window data
+        ptp_value = rolling_window.apply(lambda x: np.ptp(x))
+
+        # Assign the calculated peak-to-peak value to the DataFrame column
+        dataframe['move'] = ptp_value / dataframe['OHLC4']
+        dataframe['move_mean'] = dataframe['move'].mean()
+        dataframe['move_mean_x'] = dataframe['move'].mean() * 1.6
+        dataframe['exit_mean'] = rolling_min * (1 + dataframe['move_mean'])
+        dataframe['exit_mean_x'] = rolling_min * (1 + dataframe['move_mean_x'])
+        dataframe['enter_mean'] = rolling_max * (1 - dataframe['move_mean'])
+        dataframe['enter_mean_x'] = rolling_max * (1 - dataframe['move_mean_x'])
+        dataframe['atr_pcnt'] = (ta.ATR(dataframe, timeperiod=5) / dataframe['OHLC4'])
+
+        # Apply rolling window operation to the 'OHLC4'column
+        rolling_window_x = dataframe['OHLC4'].rolling(200)
+        rolling_max_x = rolling_window_x.max()
+        rolling_min_x = rolling_window_x.min()
+
+        # Calculate the peak-to-peak value on the resulting rolling window data
+        ptp_value_x = rolling_window_x.apply(lambda x: np.ptp(x))
+
+        # Assign the calculated peak-to-peak value to the DataFrame column
+        dataframe['move_l'] = ptp_value_x / dataframe['OHLC4']
+        dataframe['move_mean_l'] = dataframe['move_l'].mean()
+        dataframe['move_mean_xl'] = dataframe['move_l'].mean() * 1.6
+        dataframe['exit_mean_l'] = rolling_min_x * (1 + dataframe['move_mean_l'])
+        dataframe['exit_mean_xl'] = rolling_min_x * (1 + dataframe['move_mean_xl'])
+        dataframe['enter_mean_l'] = rolling_max_x * (1 - dataframe['move_mean_l'])
+        dataframe['enter_mean_xL'] = rolling_max_x * (1 - dataframe['move_mean_xl'])
+
+        ### Buying Weights & Signals ###
+        dataframe.loc[(dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value)), 'buy0'] = 1
+        dataframe.loc[(dataframe['close'] > (dataframe['ema_14'] * self.lambo2_ema_14_factor.value)), 'buy0'] = 0
+        dataframe.loc[(dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value)), 'buy1'] = 1
+        dataframe.loc[(dataframe['rsi_4'] > int(self.lambo2_rsi_4_limit.value)), 'buy1'] = 0
+        dataframe.loc[(dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value)), 'buy2'] = 1
+        dataframe.loc[(dataframe['rsi_14'] > int(self.lambo2_rsi_14_limit.value)), 'buy2'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min_l']), 'buy3'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min_l']), 'buy3'] = 0 
+        dataframe.loc[(dataframe['rsi']<self.rsi_buy.value), 'buy4'] = 1
+        dataframe.loc[(dataframe['rsi']>self.rsi_buy.value), 'buy4'] = 0
+
+        dataframe['lambo_weight'] = (
+            (dataframe['buy0']+dataframe['buy1']+dataframe['buy2']+dataframe['buy3']+dataframe['buy4'])/5) * self.x01.value
+
+        dataframe.loc[(dataframe['rsi_fast'] < 35), 'buy10'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] > 35), 'buy10'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['ma_lo']), 'buy11'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['ma_lo']), 'buy11'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['enter_mean_x']), 'buy12'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['enter_mean_x']), 'buy12'] = 0
+        dataframe.loc[(dataframe['close'].shift() < dataframe['enter_mean_x'].shift()), 'buy13'] = 1
+        dataframe.loc[(dataframe['close'].shift() > dataframe['enter_mean_x'].shift()), 'buy13'] = 0 
+        dataframe.loc[(dataframe['rsi'] < self.rsi_buy.value), 'buy14'] = 1
+        dataframe.loc[(dataframe['rsi'] > self.rsi_buy.value), 'buy14'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy15'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy15'] = 0
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_MEAN_UP']), 'buy16'] = 1
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_MEAN_UP']), 'buy16'] = 0 
+
+        dataframe['buy1ewo_weight'] = (
+            (dataframe['buy10']+dataframe['buy11']+dataframe['buy12']+dataframe['buy13']
+                +dataframe['buy14']+dataframe['buy15']+dataframe['buy16'])/7) * self.x02.value
+
+        dataframe.loc[(dataframe['rsi_fast'] < 35), 'buy20'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] > 35), 'buy20'] = 0
+        dataframe.loc[(dataframe['close'] < dataframe['ma_lo']), 'buy21'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['ma_lo']), 'buy21'] = 0
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_DN_FIB']), 'buy22'] = 1
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_DN_FIB']), 'buy22'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy23'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy23'] = 0
+
+        dataframe['buy2ewo_weight'] = (
+            (dataframe['buy20']+dataframe['buy21']+dataframe['buy22']+dataframe['buy23'])/4) * self.x03.value
+
+
+        dataframe.loc[(dataframe['open'] < dataframe['ema_8'] * self.buy_ema_cofi.value), 'buy30'] = 1
+        dataframe.loc[(dataframe['open'] > dataframe['ema_8'] * self.buy_ema_cofi.value), 'buy30'] = 0
+        dataframe['buy31'] = 0 
+        dataframe.loc[qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 'buy31'] = 1
+        dataframe.loc[(dataframe['fastk'] < self.buy_fastk.value), 'buy32'] = 1
+        dataframe.loc[(dataframe['fastk'] > self.buy_fastk.value), 'buy32'] = 0
+        dataframe.loc[(dataframe['fastd'] < self.buy_fastd.value), 'buy33'] = 1
+        dataframe.loc[(dataframe['fastd'] > self.buy_fastd.value), 'buy33'] = 0
+        dataframe.loc[(dataframe['adx'] > self.buy_adx.value), 'buy34'] = 1
+        dataframe.loc[(dataframe['adx'] < self.buy_adx.value), 'buy34'] = 0
+        dataframe.loc[(dataframe['EWO'] > dataframe['EWO_MEAN_UP']), 'buy35'] = 1
+        dataframe.loc[(dataframe['EWO'] < dataframe['EWO_MEAN_UP']), 'buy35'] = 0
+        dataframe.loc[(dataframe['atr_pcnt'] > dataframe['min']), 'buy36'] = 1
+        dataframe.loc[(dataframe['atr_pcnt'] < dataframe['min']), 'buy36'] = 0
+
+
+        dataframe['cofi_weight'] = (
+            (dataframe['buy30']+dataframe['buy31']+dataframe['buy32']+dataframe['buy33']+dataframe['buy34']+dataframe['buy35']+dataframe['buy36'])/7) * self.x04.value
+
+        dataframe['buy_weight'] = ta.SMA(((dataframe['lambo_weight'] + dataframe['buy1ewo_weight'] + dataframe['buy2ewo_weight'] + dataframe['cofi_weight']) / 4) * self.x05.value, timeperiod=5)
+
+        ### General Indicators ###
+        dataframe.loc[(dataframe['fastk'] < self.buy_fastk.value), 'gen1'] = 1
+        dataframe.loc[(dataframe['fastk'] > self.buy_fastk.value), 'gen1'] = -1
+        dataframe.loc[(dataframe['fastd'] < self.buy_fastd.value), 'gen2'] = 1
+        dataframe.loc[(dataframe['fastd'] > self.buy_fastd.value), 'gen2'] = -1
+        dataframe.loc[(dataframe['adx'] > self.buy_adx.value), 'gen3'] = 1
+        dataframe.loc[(dataframe['adx'] < self.buy_adx.value), 'gen3'] = -1
+        dataframe['gen4'] = 0
+        dataframe.loc[qtpylib.crossed_above(dataframe['fastk'], dataframe['fastd']), 'gen4'] = 1
+        dataframe.loc[qtpylib.crossed_below(dataframe['fastk'], dataframe['fastd']), 'gen4'] = -1
+
+        # Distance from min and max summed for different ranges. Selling it will go negative.
+        dataframe['gen5'] = (dataframe['max']+dataframe['max_l']+dataframe['max_x']) - (dataframe['min']+dataframe['min_l']+dataframe['min_x'])
+
+        dataframe['gen6'] = 0
+        dataframe.loc[qtpylib.crossed_above(dataframe['ema_8'], dataframe['ema_14']), 'gen6'] = 1
+        dataframe.loc[qtpylib.crossed_below(dataframe['ema_8'], dataframe['ema_14']), 'gen6'] = -1
+
+        dataframe['general_weight'] = ((dataframe['gen1']+dataframe['gen2']+dataframe['gen3']+dataframe['gen4']+dataframe['gen5']+dataframe['gen6'])/6) 
+
+        dataframe.loc[(dataframe['general_weight'] > 0), 'gen_buy'] = dataframe['general_weight'] * (1 + dataframe['move']) 
+        dataframe.loc[(dataframe['general_weight'] < 0), 'gen_buy'] = 0
+        dataframe.loc[(dataframe['general_weight'] < 0), 'gen_sell'] = abs(dataframe['general_weight'] * (1 + dataframe['move'])) 
+        dataframe.loc[(dataframe['general_weight'] > 0), 'gen_sell'] = 0     
+
+
+        ### SELLING Weights & Signals ###
+        dataframe.loc[(dataframe['close'] > dataframe['hma_50']), 'sell0'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['hma_50']), 'sell0'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['ma_hi_2']), 'sell1'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['ma_hi_2']), 'sell1'] = 0
+        dataframe.loc[(dataframe['max_l'] != 0), 'sell2'] = 1
+        dataframe.loc[(dataframe['max_l'] == 0), 'sell2'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['exit_mean_x']), 'sell3'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['exit_mean_x']), 'sell3'] = 0
+        dataframe.loc[(dataframe['rsi'] > 50), 'sell4'] = 1
+        dataframe.loc[(dataframe['rsi'] < 50), 'sell4'] = 0
+        dataframe.loc[(dataframe['rsi_fast'] > dataframe['rsi_slow']), 'sell5'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] < dataframe['rsi_slow']), 'sell5'] = 0
+
+        dataframe['hi2_weight'] = (
+            (dataframe['sell0']+dataframe['sell1']+dataframe['sell2']+dataframe['sell3']+dataframe['sell4']+dataframe['sell5'])/6) * self.y01.value
+
+        dataframe.loc[(dataframe['close'] < dataframe['hma_50']), 'sell10'] = 1
+        dataframe.loc[(dataframe['close'] > dataframe['hma_50']), 'sell10'] = 0
+        dataframe.loc[(dataframe['close'] > dataframe['ma_hi']), 'sell11'] = 1
+        dataframe.loc[(dataframe['close'] < dataframe['ma_hi']), 'sell11'] = 0
+        dataframe.loc[(dataframe['max_l'] != 0), 'sell12'] = 1
+        dataframe.loc[(dataframe['max_l'] == 0), 'sell12'] = 0
+        dataframe.loc[(dataframe['rsi_fast'] > dataframe['rsi_slow']), 'sell13'] = 1
+        dataframe.loc[(dataframe['rsi_fast'] < dataframe['rsi_slow']), 'sell13'] = 0
+
+        dataframe['hi_weight'] = (
+            (dataframe['sell10']+dataframe['sell11']+dataframe['sell12']+dataframe['sell13'])/4) * self.y02.value
+
+        dataframe['sell_weight'] = ta.SMA(((dataframe['hi_weight'] + dataframe['hi2_weight']) / 2) * self.y03.value, timeperiod=5)
+
+
+        dataframe['buy_decision'] = dataframe['buy_weight'] - dataframe['sell_weight']
+        dataframe['sell_decision'] = dataframe['sell_weight'] - dataframe['buy_weight']
+
+        dataframe['Gen Buy Above'] = 0
+        dataframe.loc[(dataframe['gen_buy'] > self.b01.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b02.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b03.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b04.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b05.value), 'Gen Buy Above'] = 1
+        dataframe.loc[(dataframe['gen_buy'] > self.b06.value), 'Gen Buy Above'] = 1
+
+        dataframe['Gen Sell Above'] = 0
+        dataframe.loc[(dataframe['gen_sell'] > self.s01.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s02.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s03.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s04.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s05.value), 'Gen Sell Above'] = 1
+        dataframe.loc[(dataframe['gen_sell'] > self.s06.value), 'Gen Sell Above'] = 1
+
+        return dataframe
+
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+
+        # Mirrored from long exits: short entries use sell_decision + gen_sell.
+        ewo_fib_dns = (
+                (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
+                (dataframe['sell_decision'] > self.fib_dns.value) &
+                (dataframe['gen_sell'] > self.s01.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_fib_dns, 'enter_short'] = 1
+        dataframe.loc[ewo_fib_dns, 'enter_tag'] = 'short_ewo_fib_dns'
+
+        ewo_mean_dns = (
+                (dataframe['EWO'] > dataframe['EWO_DN_FIB']) &
+                (dataframe['EWO'] < dataframe['EWO_MEAN_DN']) &
+                (dataframe['sell_decision'] > self.mean_dns.value) &
+                (dataframe['gen_sell'] > self.s02.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_mean_dns, 'enter_short'] = 1
+        dataframe.loc[ewo_mean_dns, 'enter_tag'] = 'short_ewo_mean_dns'
+
+        ewo_zero_dns = (
+                (dataframe['EWO'] > dataframe['EWO_MEAN_DN']) &
+                (dataframe['EWO'] < 0) &
+                (dataframe['sell_decision'] > self.zero_dns.value) &
+                (dataframe['gen_sell'] > self.s03.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_zero_dns, 'enter_short'] = 1
+        dataframe.loc[ewo_zero_dns, 'enter_tag'] = 'short_ewo_zero_dns'
+
+        ewo_fib_ups = (
+                (dataframe['EWO'] > dataframe['EWO_UP_FIB']) &
+                (dataframe['sell_decision'] > self.fib_ups.value) &
+                (dataframe['gen_sell'] > self.s04.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_fib_ups, 'enter_short'] = 1
+        dataframe.loc[ewo_fib_ups, 'enter_tag'] = 'short_ewo_fib_ups'
+
+        ewo_mean_ups = (
+                (dataframe['EWO'] < dataframe['EWO_UP_FIB']) &
+                (dataframe['EWO'] > dataframe['EWO_MEAN_UP']) &
+                (dataframe['sell_decision'] > self.mean_ups.value) &
+                (dataframe['gen_sell'] > self.s05.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_mean_ups, 'enter_short'] = 1
+        dataframe.loc[ewo_mean_ups, 'enter_tag'] = 'short_ewo_mean_ups'
+
+        ewo_zero_ups = (
+                (dataframe['EWO'] < dataframe['EWO_MEAN_UP']) &
+                (dataframe['EWO'] > 0) &
+                (dataframe['sell_decision'] > self.zero_ups.value) &
+                (dataframe['gen_sell'] > self.s06.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_zero_ups, 'enter_short'] = 1
+        dataframe.loc[ewo_zero_ups, 'enter_tag'] = 'short_ewo_zero_ups'
+
+        return dataframe
+
+
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+
+        # Mirrored from long entries: short exits use buy_decision + gen_buy.
+        ewo_fib_dn = (
+                (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
+                (dataframe['buy_decision'] > self.fib_dn.value) &
+                (dataframe['gen_buy'] > self.b01.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_fib_dn, 'exit_short'] = 1
+        dataframe.loc[ewo_fib_dn, 'exit_tag'] = 'cover_ewo_fib_dn'
+
+        ewo_mean_dn = (
+                (dataframe['EWO'] > dataframe['EWO_DN_FIB']) &
+                (dataframe['EWO'] < dataframe['EWO_MEAN_DN']) &
+                (dataframe['buy_decision'] > self.mean_dn.value) &
+                (dataframe['gen_buy'] > self.b02.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_mean_dn, 'exit_short'] = 1
+        dataframe.loc[ewo_mean_dn, 'exit_tag'] = 'cover_ewo_mean_dn'
+
+        ewo_zero_dn = (
+                (dataframe['EWO'] > dataframe['EWO_MEAN_DN']) &
+                (dataframe['EWO'] < 0) &
+                (dataframe['buy_decision'] > self.zero_dn.value) &
+                (dataframe['gen_buy'] > self.b03.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_zero_dn, 'exit_short'] = 1
+        dataframe.loc[ewo_zero_dn, 'exit_tag'] = 'cover_ewo_zero_dn'
+
+        ewo_fib_up = (
+                (dataframe['EWO'] > dataframe['EWO_UP_FIB']) &
+                (dataframe['buy_decision'] > self.fib_up.value) &
+                (dataframe['gen_buy'] > self.b04.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_fib_up, 'exit_short'] = 1
+        dataframe.loc[ewo_fib_up, 'exit_tag'] = 'cover_ewo_fib_up'
+
+        ewo_mean_up = (
+                (dataframe['EWO'] < dataframe['EWO_UP_FIB']) &
+                (dataframe['EWO'] > dataframe['EWO_MEAN_UP']) &
+                (dataframe['buy_decision'] > self.mean_up.value) &
+                (dataframe['gen_buy'] > self.b05.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_mean_up, 'exit_short'] = 1
+        dataframe.loc[ewo_mean_up, 'exit_tag'] = 'cover_ewo_mean_up'
+
+        ewo_zero_up = (
+                (dataframe['EWO'] < dataframe['EWO_MEAN_UP']) &
+                (dataframe['EWO'] > 0) &
+                (dataframe['buy_decision'] > self.zero_up.value) &
+                (dataframe['gen_buy'] > self.b06.value) &
+                (dataframe['volume'] > 0) 
+            )
+        dataframe.loc[ewo_zero_up, 'exit_short'] = 1
+        dataframe.loc[ewo_zero_up, 'exit_tag'] = 'cover_ewo_zero_up'
+
+        return dataframe
 
 
 def pct_change(a, b):
-  return (b - a) / a
+    return (b - a) / a
+
+
