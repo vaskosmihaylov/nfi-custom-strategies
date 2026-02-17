@@ -283,7 +283,7 @@ class GeneStrategy_v2(IStrategy):
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
-        filled_buys = trade.select_filled_orders('entry')
+        filled_buys = trade.select_filled_orders(trade.entry_side)
         count_of_buys = len(filled_buys)
 
         #previous_candle_1 = dataframe.iloc[-1].squeeze()
@@ -822,7 +822,7 @@ class GeneStrategy_v2(IStrategy):
         #if last_candle['close'] / previous_candle['close'] < 1.02 :
         #if last_candle['close'] < previous_candle['close']:
 
-        filled_buys = trade.select_filled_orders('entry')
+        filled_buys = trade.select_filled_orders(trade.entry_side)
         count_of_buys = len(filled_buys)
         if count_of_buys == 1 and (last_candle['tpct_change_0'] > 0.018) and (last_candle['close'] < last_candle['open']) :
             

@@ -100,7 +100,7 @@ def ha_typical_price(bars):
     return Series(index=bars.index, data=res)
 
 
-class newstrategy53_shorts_test(IStrategy):
+class newstrategy53_shorts(IStrategy):
     """
     newstrategy53_shorts Strategy
 
@@ -205,7 +205,7 @@ class newstrategy53_shorts_test(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
 
-    use_custom_stoploss = True
+    use_custom_stoploss = False
 
     process_only_new_candles = True
     startup_candle_count = 168
@@ -793,10 +793,10 @@ class newstrategy53_shorts_test(IStrategy):
 
 
 
-    initial_safety_order_trigger = -0.03
-    max_safety_orders = 4
-    safety_order_step_scale = 1.5
-    safety_order_volume_scale = 1.2
+    initial_safety_order_trigger = -0.018
+    max_safety_orders = 8
+    safety_order_step_scale = 1.2
+    safety_order_volume_scale = 1.4
 
 
 
@@ -1020,5 +1020,6 @@ def pmax(df, period, multiplier, length, MAtype, src):
     pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), "down",  "up"), None)
 
     return pm, pmx
+
 
 

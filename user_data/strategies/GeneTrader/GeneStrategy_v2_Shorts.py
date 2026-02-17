@@ -288,7 +288,7 @@ class GeneStrategy_v2_Shorts(IStrategy):
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
-        filled_sells = trade.select_filled_orders('exit')
+        filled_sells = trade.select_filled_orders(trade.entry_side)
         count_of_sells = len(filled_sells)
 
         if (last_candle is not None):
@@ -769,7 +769,7 @@ class GeneStrategy_v2_Shorts(IStrategy):
         # Only sell when it seems it's dropping back down (for shorts)
         last_candle = dataframe.iloc[-1].squeeze()
 
-        filled_sells = trade.select_filled_orders('entry')
+        filled_sells = trade.select_filled_orders(trade.entry_side)
         count_of_sells = len(filled_sells)
 
         # DCA logic for shorts (inverted conditions)
