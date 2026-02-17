@@ -394,6 +394,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
+      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
       --db-url sqlite:////freqtrade/user_data/simplersi-tradesv3.sqlite
       --log-file user_data/logs/simplersi.log
       --strategy-path user_data/strategies/SimpleRSI
@@ -411,6 +412,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
+      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
       --db-url sqlite:////freqtrade/user_data/simplersi_shorts-tradesv3.sqlite
       --log-file user_data/logs/simplersi_shorts.log
       --strategy-path user_data/strategies/SimpleRSI
