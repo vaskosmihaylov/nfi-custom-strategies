@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.3.873"
+    return "v17.3.874"
 
   stoploss = -0.99
 
@@ -12207,10 +12207,18 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["AROONU_14_1h"] < 85.0) | (df["ROC_9_1h"] < 20.0) | (df["ROC_9_1d"] > -40.0))
             # 4h & 1d high, 1d overbought
             & ((df["AROONU_14_4h"] < 80.0) | (df["AROONU_14_1d"] < 100.0) | (df["ROC_9_1d"] < 50.0))
+            # 4h high, 1h downtrend
+            & ((df["AROONU_14_4h"] < 80.0) | (df["ROC_9_1h"] > -15.0))
+            # 4h high, 1d downtrend
+            & ((df["AROONU_14_4h"] < 80.0) | (df["ROC_9_1d"] > -40.0))
             # 1d high, 4h downtrend, 1d overbought
             & ((df["AROONU_14_1d"] < 85.0) | (df["ROC_9_4h"] > -25.0) | (df["ROC_9_1d"] < 50.0))
             # 1d high, 4h & 1d overbought
             & ((df["AROONU_14_1d"] < 90.0) | (df["ROC_9_4h"] < 40.0) | (df["ROC_9_1d"] < 80.0))
+            # 4h high, 1h downtrend
+            & ((df["STOCHRSIk_14_14_3_3_4h"] < 70.0) | (df["ROC_9_1h"] > -15.0))
+            # 4h high, 1d downtrend
+            & ((df["STOCHRSIk_14_14_3_3_4h"] < 70.0) | (df["ROC_9_1d"] > -40.0))
             # 5m down move, 15m still not low enough, 1h high
             & ((df["ROC_2"] > -10.0) | (df["AROONU_14_15m"] < 30.0) | (df["AROONU_14_1h"] < 80.0))
             # 5m down move, 15m still high
