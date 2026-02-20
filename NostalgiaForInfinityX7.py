@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.3.878"
+    return "v17.3.880"
 
   stoploss = -0.99
 
@@ -22295,8 +22295,8 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append((df["RSI_3_15m"] < 90.0) | (df["AROONU_14_1h"] < 100.0))
           # 15m up move, 1h still low
           short_entry_logic.append((df["RSI_3_15m"] < 90.0) | (df["STOCHRSIk_14_14_3_3_1h"] > 50.0))
-          # 15m up move, 4h & 1d uptrend
-          short_entry_logic.append((df["RSI_3_15m"] < 90.0) | (df["ROC_9_4h"] < 20.0) | (df["ROC_9_1d"] < 50.0))
+          # 15m up move, 4h uptrend
+          short_entry_logic.append((df["RSI_3_15m"] < 90.0) | (df["ROC_9_4h"] < 20.0))
           # 15m & 1h up move, 1h still low
           short_entry_logic.append(
             (df["RSI_3_15m"] < 85.0) | (df["RSI_3_1h"] < 65.0) | (df["STOCHRSIk_14_14_3_3_1h"] > 60.0)
@@ -22325,10 +22325,14 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append((df["RSI_3_1h"] < 95.0) | (df["CCI_20_change_pct_15m"] < -0.0))
           # 1h up move, relative stable before the hour
           short_entry_logic.append((df["RSI_3_1h"] < 95.0) | (df["close_min_12"] > (df["close_min_48"] * 1.10)))
+          # 1h up move, 15m uptrend
+          short_entry_logic.append((df["RSI_3_1h"] < 90.0) | (df["AROONU_14_15m"] < 100.0))
           # 1h up move, 1d low
           short_entry_logic.append((df["RSI_3_1h"] < 90.0) | (df["STOCHRSIk_14_14_3_3_1d"] > 10.0))
-          # 1h up move, 4h & 1d uptrend
-          short_entry_logic.append((df["RSI_3_1h"] < 90.0) | (df["ROC_9_4h"] < 30.0) | (df["ROC_9_1h"] < 30.0))
+          # 1h up move, 1h & 4h uptrend
+          short_entry_logic.append((df["RSI_3_1h"] < 90.0) | (df["ROC_9_1h"] < 30.0) | (df["ROC_9_4h"] < 30.0))
+          # 1h up move, 4h uptrend
+          short_entry_logic.append((df["RSI_3_1h"] < 90.0) | (df["ROC_9_4h"] < 20.0))
           # 1h up move, 4h still low
           short_entry_logic.append((df["RSI_3_1h"] < 85.0) | (df["AROONU_14_4h"] > 50.0))
           # 1h & 4h up move, 1d low
@@ -22371,6 +22375,8 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append((df["RSI_3_4h"] < 85.0) | (df["STOCHRSIk_14_14_3_3_4h"] > 70.0))
           # 4h up move, 1d still low, 4h uptrend
           short_entry_logic.append((df["RSI_3_4h"] < 85.0) | (df["RSI_14_1d"] > 50.0) | (df["ROC_9_4h"] < 20.0))
+          # 4h up move, 4h uptrend
+          short_entry_logic.append((df["RSI_3_4h"] < 80.0) | (df["ROC_9_4h"] < 20.0))
           # 4h up move, 1h low
           short_entry_logic.append((df["RSI_3_4h"] < 75.0) | (df["STOCHRSIk_14_14_3_3_1h"] > 20.0))
           # 1d up move, 1h still not high enough
