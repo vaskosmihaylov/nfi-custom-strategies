@@ -135,7 +135,7 @@ class newstrategy53(IStrategy):
 
     sell_params = {
 
-      "pHSL": -0.397,
+      "pHSL": -0.10,
       "pPF_1": 0.012,
       "pPF_2": 0.07,
       "pSL_1": 0.015,
@@ -182,7 +182,9 @@ class newstrategy53(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
 
-    use_custom_stoploss = False
+    use_custom_stoploss = True
+    emergency_exit_profit = -0.12
+    emergency_liq_buffer = 0.03
 
     process_only_new_candles = True
     startup_candle_count = 168
@@ -299,7 +301,7 @@ class newstrategy53(IStrategy):
         pairs = self.dp.current_whitelist()
         informative_pairs = [(pair, '1h') for pair in pairs]
 
-        informative_pairs += [("BTC/USDT", "5m"),
+        informative_pairs += [("BTC/USDT:USDT", "5m"),
                              ]
         return informative_pairs
     
@@ -310,6 +312,14 @@ class newstrategy53(IStrategy):
         last_candle = dataframe.iloc[-1].squeeze()
         filled_buys = trade.select_filled_orders('buy')
         count_of_buys = len(filled_buys)
+
+        if trade.liquidation_price is not None and trade.liquidation_price > 0:
+            liq_buffer_rate = trade.liquidation_price * (1.0 + self.emergency_liq_buffer)
+            if current_rate <= liq_buffer_rate:
+                return "sell_emergency_liq_buffer"
+
+        if current_profit <= self.emergency_exit_profit:
+            return "sell_emergency_hard_stop"
 
 
 
@@ -390,7 +400,7 @@ class newstrategy53(IStrategy):
             sl_profit = HSL
 
         if sl_profit >= current_profit:
-            return -0.99
+            return -0.189
 
         return stoploss_from_open(sl_profit, current_profit)
 
@@ -399,7 +409,7 @@ class newstrategy53(IStrategy):
         
         info_tf = '5m'
 
-        informative = self.dp.get_pair_dataframe('BTC/USDT', timeframe=info_tf)
+        informative = self.dp.get_pair_dataframe('BTC/USDT:USDT', timeframe=info_tf)
         informative_btc = informative.copy().shift(1)
 
 
@@ -765,9 +775,9 @@ class newstrategy53(IStrategy):
    
    
     initial_safety_order_trigger = -0.018
-    max_safety_orders = 8
-    safety_order_step_scale = 1.2
-    safety_order_volume_scale = 1.4
+    max_safety_orders = 3
+    safety_order_step_scale = 1.1
+    safety_order_volume_scale = 1.2
     
     
     
@@ -978,4 +988,3 @@ def pmax(df, period, multiplier, length, MAtype, src):
 
     return pm, pmx
     
-
