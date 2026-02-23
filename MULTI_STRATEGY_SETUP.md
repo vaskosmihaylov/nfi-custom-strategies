@@ -36,7 +36,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KamaFama_Shorts (Port 8093)
                            ├── FrankenStrat (Port 8119)
                            ├── FrankenStrat_Shorts (Port 8118)
-                           ├── BB_RPB_TSL (Port 8122)
+                           ├── CryptoFrog_nateema (Port 8122)
                            ├── SimpleRSI (Port 8124)
                            └── SimpleRSI_Shorts (Port 8125)
 ```
@@ -72,7 +72,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 - `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
-- `bb_rpb_tsl.env` - BB_RPB_TSL strategy (longs with 3x leverage, 19-signal BB/EWO dip buyer)
+- `cryptofrog.env` - CryptoFrog_nateema strategy (longs with 3x leverage, 19-signal BB/EWO dip buyer)
 - `simplersi.env` - SimpleRSI strategy (longs with 3x leverage, RSI momentum breakout on 1d)
 - `simplersi_shorts.env` - SimpleRSI_Shorts strategy (shorts with 3x leverage, RSI momentum breakdown on 1d)
 
@@ -166,7 +166,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
-| **BB_RPB_TSL** | `Vasko_BB_RPB_TSL` | `http://freq.gaiaderma.com/bb_rpb_tsl` | `bb_rpb_tsl_user` | `bb_rpb_tsl_secure_password` |
+| **CryptoFrog_nateema** | `Vasko_CryptoFrog_nateema` | `http://freq.gaiaderma.com/cryptofrog` | `cryptofrog_user` | `cryptofrog_secure_password` |
 | **SimpleRSI** | `Vasko_SimpleRSI` | `http://freq.gaiaderma.com/simplersi` | `simplersi_user` | `simplersi_secure_password` |
 | **SimpleRSI_Shorts** | `Vasko_SimpleRSI_Shorts` | `http://freq.gaiaderma.com/simplersi_shorts` | `simplersi_shorts_user` | `simplersi_shorts_secure_password` |
 
@@ -227,7 +227,7 @@ curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
-curl http://127.0.0.1:8122/api/v1/ping  # BB_RPB_TSL
+curl http://127.0.0.1:8122/api/v1/ping  # CryptoFrog_nateema
 curl http://127.0.0.1:8124/api/v1/ping  # SimpleRSI
 curl http://127.0.0.1:8125/api/v1/ping  # SimpleRSI_Shorts
 
@@ -252,7 +252,7 @@ curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/bb_rpb_tsl/api/v1/ping
+curl http://freq.gaiaderma.com/cryptofrog/api/v1/ping
 curl http://freq.gaiaderma.com/simplersi/api/v1/ping
 curl http://freq.gaiaderma.com/simplersi_shorts/api/v1/ping
 ```
@@ -308,7 +308,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8093 | KamaFama_Shorts | Shorts | 3x |
 | 8118 | FrankenStrat_Shorts | Shorts | 3x |
 | 8119 | FrankenStrat | Longs | 3x |
-| 8122 | BB_RPB_TSL | Longs | 3x |
+| 8122 | CryptoFrog_nateema | Longs | 3x |
 | 8124 | SimpleRSI | Longs | 3x |
 | 8125 | SimpleRSI_Shorts | Shorts | 3x |
 
@@ -336,7 +336,7 @@ Each strategy uses its own SQLite database:
 - `kamafama_shorts-tradesv3.sqlite`
 - `frankenstrat-tradesv3.sqlite`
 - `frankenstrat_shorts-tradesv3.sqlite`
-- `bb_rpb_tsl-tradesv3.sqlite`
+- `cryptofrog-tradesv3.sqlite`
 - `simplersi-tradesv3.sqlite`
 - `simplersi_shorts-tradesv3.sqlite`
 
@@ -458,7 +458,7 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 **Last Updated**: February 11, 2026
 
 ## Recent Changes (February 11, 2026)
-- **Added**: BB_RPB_TSL (longs, port 8122) - 19-signal BB/EWO dip buyer with custom trailing stoploss, 3x leverage
+- **Added**: CryptoFrog_nateema (longs, port 8122) - 19-signal BB/EWO dip buyer with custom trailing stoploss, 3x leverage
 - **Added**: SimpleRSI (longs, port 8124) - RSI momentum breakout on 1d timeframe, 3x leverage
 - **Added**: SimpleRSI_Shorts (shorts, port 8125) - Shorts-only RSI momentum breakdown, 3x leverage, max 4 shorts
 

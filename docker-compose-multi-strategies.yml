@@ -281,21 +281,21 @@ services:
       --strategy GeneStrategy_v2_Shorts
 
   # AlexNexusForgeV8AIV2 Strategy (Long + Short capable)
-  freqtrade-alexnexusforgev8aiv2:
-    <<: *common-settings
-    container_name: freqtrade-alexnexusforgev8aiv2
-    ports:
-      - "127.0.0.1:8112:8080"
-    env_file:
-      - path: ./env-files/alexnexusforgev8aiv2.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/alexnexusforgev8aiv2-tradesv3.sqlite
-      --log-file user_data/logs/alexnexusforgev8aiv2.log
-      --strategy-path user_data/strategies/AlexNexusForgeV7
-      --strategy AlexNexusForgeV8AIV2
+  # freqtrade-alexnexusforgev8aiv2:
+  #   <<: *common-settings
+  #   container_name: freqtrade-alexnexusforgev8aiv2
+  #   ports:
+  #     - "127.0.0.1:8112:8080"
+  #   env_file:
+  #     - path: ./env-files/alexnexusforgev8aiv2.env
+  #       required: true
+  #   command: >
+  #     trade
+  #     --config user_data/strategies/config.json
+  #     --db-url sqlite:////freqtrade/user_data/alexnexusforgev8aiv2-tradesv3.sqlite
+  #     --log-file user_data/logs/alexnexusforgev8aiv2.log
+  #     --strategy-path user_data/strategies/AlexNexusForgeV7
+  #     --strategy AlexNexusForgeV8AIV2
 
   # KamaFama Strategy (Longs)
   freqtrade-kamafama:
@@ -365,22 +365,22 @@ services:
       --strategy-path user_data/strategies/Frankie
       --strategy FrankenStrat_Shorts
 
-  # BB_RPB_TSL Strategy (Longs with 3x leverage)
-  freqtrade-bb_rpb_tsl:
+  # CryptoFrog_nateema Strategy (Longs with 3x leverage)
+  freqtrade-cryptofrog:
     <<: *common-settings
-    container_name: freqtrade-bb_rpb_tsl
+    container_name: freqtrade-cryptofrog
     ports:
       - "127.0.0.1:8122:8080"
     env_file:
-      - path: ./env-files/bb_rpb_tsl.env
+      - path: ./env-files/cryptofrog.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/bb_rpb_tsl-tradesv3.sqlite
-      --log-file user_data/logs/bb_rpb_tsl.log
-      --strategy-path user_data/strategies/BB_RPB_TSL
-      --strategy BB_RPB_TSL
+      --db-url sqlite:////freqtrade/user_data/cryptofrog-tradesv3.sqlite
+      --log-file user_data/logs/cryptofrog.log
+      --strategy-path user_data/strategies/CryptoFrog
+      --strategy CryptoFrog_nateema
 
   # SimpleRSI Strategy (Longs with 3x leverage)
   freqtrade-simplersi:

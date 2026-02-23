@@ -8,7 +8,43 @@ import numpy as np
 
 ## Indicator libs
 import talib.abstract as ta
-from finta import TA as fta
+try:
+    from finta import TA as fta
+except ImportError:
+    class _FintaFallback:
+        @staticmethod
+        def MFI(dataframe: DataFrame):
+            return ta.MFI(dataframe, timeperiod=14)
+
+        @staticmethod
+        def SQZMI(dataframe: DataFrame):
+            # Fallback squeeze proxy: current BB width below rolling median.
+            bb = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
+            width = (bb['upper'] - bb['lower']) / bb['mid']
+            return width < width.rolling(20, min_periods=1).median()
+
+        @staticmethod
+        def VFI(dataframe: DataFrame, period: int = 14):
+            tp = (dataframe['high'] + dataframe['low'] + dataframe['close']) / 3
+            mf = tp * dataframe['volume']
+            delta = tp.diff()
+            signed_flow = np.where(delta > 0, mf, np.where(delta < 0, -mf, 0))
+            num = DataFrame({'sf': signed_flow}, index=dataframe.index)['sf'].rolling(period, min_periods=1).sum()
+            den = dataframe['volume'].rolling(period, min_periods=1).sum().replace(0, np.nan)
+            return num / den
+
+        @staticmethod
+        def DMI(dataframe: DataFrame, period: int = 14):
+            return DataFrame({
+                'DI+': ta.PLUS_DI(dataframe, timeperiod=period),
+                'DI-': ta.MINUS_DI(dataframe, timeperiod=period)
+            }, index=dataframe.index)
+
+        @staticmethod
+        def ADX(dataframe: DataFrame, period: int = 14):
+            return ta.ADX(dataframe, timeperiod=period)
+
+    fta = _FintaFallback()
 
 ## FT stuffs
 from freqtrade.strategy import IStrategy, merge_informative_pair, stoploss_from_open, IntParameter, DecimalParameter, \
@@ -16,7 +52,6 @@ from freqtrade.strategy import IStrategy, merge_informative_pair, stoploss_from_
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.persistence import Trade
-from skopt.space import Dimension
 from freqtrade.optimize.space import Categorical, Dimension, Integer, SKDecimal, Real  # noqa
 
 
@@ -104,9 +139,9 @@ class CryptoFrog_nateema(IStrategy):
     process_only_new_candles = False
 
     # Experimental settings (configuration will overide these if set)
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     use_dynamic_roi = True
 
@@ -481,7 +516,7 @@ class CryptoFrog_nateema(IStrategy):
     Tuple[Optional[int], Optional[float]]:
 
         minimal_roi = self.minimal_roi
-        _, table_roi = self.min_roi_reached_entry(trade_dur)
+        _, table_roi = self.min_roi_reached_entry(trade, trade_dur, current_time)
 
         # see if we have the data we need to do this, otherwise fall back to the standard table
         if self.custom_trade_info and trade and trade.pair in self.custom_trade_info:
@@ -534,7 +569,7 @@ class CryptoFrog_nateema(IStrategy):
         if self.use_dynamic_roi:
             _, roi = self.min_roi_reached_dynamic(trade, current_profit, current_time, trade_dur)
         else:
-            _, roi = self.min_roi_reached_entry(trade_dur)
+            _, roi = self.min_roi_reached_entry(trade, trade_dur, current_time)
         if roi is None:
             return False
         else:
@@ -649,7 +684,7 @@ def SSLChannels_ATR(dataframe, length=7):
     df['ATR'] = ta.ATR(df, timeperiod=14)
     df['smaHigh'] = df['high'].rolling(length).mean() + df['ATR']
     df['smaLow'] = df['low'].rolling(length).mean() - df['ATR']
-    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.NAN))
+    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.nan))
     df['hlv'] = df['hlv'].ffill()
     df['sslDown'] = np.where(df['hlv'] < 0, df['smaHigh'], df['smaLow'])
     df['sslUp'] = np.where(df['hlv'] < 0, df['smaLow'], df['smaHigh'])
