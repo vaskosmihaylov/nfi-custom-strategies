@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.3.887"
+    return "v17.3.889"
 
   stoploss = -0.99
 
@@ -15140,6 +15140,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 25.0) | (df["AROONU_14_1h"] < 100.0) | (df["ROC_9_4h"] < 15.0))
             # 15m down move, 1h high, 1d overbought
             & ((df["RSI_3_15m"] > 25.0) | (df["AROONU_14_1h"] < 100.0) | (df["ROC_9_1d"] < 20.0))
+            # 15m down move, 1h & 4h high
+            & ((df["RSI_3_15m"] > 30.0) | (df["AROONU_14_1h"] < 90.0) | (df["AROONU_14_4h"] < 90.0))
             # 1h & 4h down move, 1d still high
             & ((df["RSI_3_1h"] > 3.0) | (df["RSI_3_4h"] > 3.0) | (df["STOCHRSIk_14_14_3_3_1d"] < 50.0))
             # 1h & 4h down move, 1h still high
@@ -15437,7 +15439,7 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h high, 4h & 1d downtrend
             & ((df["AROONU_14_1h"] < 85.0) | (df["ROC_9_4h"] > -20.0) | (df["ROC_9_1d"] > -50.0))
             # 1h & 4h high, 1h overbought
-            & ((df["AROONU_14_1h"] < 100.0) | (df["AROONU_14_4h"] < 100.0) | (df["ROC_9_1h"] < 20.0))
+            & ((df["AROONU_14_1h"] < 100.0) | (df["AROONU_14_4h"] < 100.0) | (df["ROC_9_1h"] < 10.0))
             # 4h & 1d high, 4h overbought
             & ((df["AROONU_14_4h"] < 80.0) | (df["AROONU_14_1d"] < 100.0) | (df["ROC_9_4h"] < 80.0))
             # 4h high, 15m downtrend, 4h overbought
@@ -16450,6 +16452,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 15.0) | (df["ROC_9_4h"] > -10.0) | (df["ROC_9_1d"] > -40.0))
             # 1h & 4h down move, 1h still not low enough
             & ((df["RSI_3_1h"] > 3.0) | (df["RSI_3_4h"] > 3.0) | (df["AROONU_14_1h"] < 20.0))
+            # 1h & 4h down move
+            & ((df["RSI_3_1h"] > 3.0) | (df["RSI_3_4h"] > 5.0))
             # 1h & 4h down move, 1d still high
             & ((df["RSI_3_1h"] > 3.0) | (df["RSI_3_4h"] > 10.0) | (df["AROONU_14_1d"] < 50.0))
             # 1h & 4h down move, 1d high
