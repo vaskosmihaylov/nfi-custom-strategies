@@ -61,7 +61,7 @@ show_help() {
     echo "  help                Show this help message"
     echo ""
     echo "Available strategies:"
-    echo "  nfi-x7, falcontrader, falcontrader_short, e0v1e, e0v1e_shorts,"
+    echo "  nfi-x7, e0v1e, e0v1e_shorts,"
     echo "  auto_ei_t4c0s, auto_ei_t4c0s_shorts, etcg, etcg_shorts,"
     echo "  cluchanix-hhll, cluchanix-hhll-shorts, awesomeewolambo, awesomeewolambo_shorts,"
     echo "  genestrategy_v2, genestrategy_v2_shorts,"
@@ -79,8 +79,6 @@ show_help() {
     echo ""
     echo "FreqUI Bot URLs (use these in FreqUI):"
     echo "  NFI-X7:                http://freq.gaiaderma.com/nfi-x7"
-    echo "  FalconTrader:          http://freq.gaiaderma.com/falcontrader"
-    echo "  FalconTrader_Short:    http://freq.gaiaderma.com/falcontrader_short"
     echo "  E0V1E:                 http://freq.gaiaderma.com/e0v1e"
     echo "  E0V1E_Shorts:          http://freq.gaiaderma.com/e0v1e_shorts"
     echo "  Auto_EI_t4c0s:         http://freq.gaiaderma.com/auto_ei_t4c0s"
@@ -227,8 +225,6 @@ health_check() {
     
     local strategies=(
         "nfi-x7:8080"
-        "falcontrader:8092"
-        "falcontrader_short:8094"
         "e0v1e:8098"
         "e0v1e_shorts:8099"
         "auto_ei_t4c0s:8100"

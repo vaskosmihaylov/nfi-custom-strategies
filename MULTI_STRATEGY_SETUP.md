@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **24 active trading strategies** running in separate Docker containers
+- **22 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -17,8 +17,6 @@ The multi-strategy setup includes:
 ```
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
-                           ├── FalconTrader (Port 8092)
-                           ├── FalconTrader_Short (Port 8094)
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
                            ├── Auto_EI_t4c0s (Port 8100)
@@ -52,8 +50,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 ### Environment Files (in `env-files/`)
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
-- `falcontrader.env` - FalconTrader strategy (longs with 3x leverage, DCA, multi-entry)
-- `falcontrader_short.env` - FalconTrader_Short strategy (shorts with 3x leverage, DCA, same settings as longs)
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
@@ -145,8 +141,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | Strategy | Bot Name | API URL | Username | Password |
 |----------|----------|---------|----------|----------|
 | **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
-| **FalconTrader** | `Vasko_FalconTrader` | `http://freq.gaiaderma.com/falcontrader` | `falcontrader_user` | `falcontrader_secure_password` |
-| **FalconTrader_Short** | `Vasko_FalconTrader_Shorts` | `http://freq.gaiaderma.com/falcontrader_short` | `falcontrader_short_user` | `falcontrader_short_secure_password` |
 | **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
 | **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
@@ -205,8 +199,6 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 
 # Individual health checks (direct to containers)
 curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
-curl http://127.0.0.1:8092/api/v1/ping  # FalconTrader
-curl http://127.0.0.1:8094/api/v1/ping  # FalconTrader_Short
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
@@ -229,8 +221,6 @@ curl http://127.0.0.1:8125/api/v1/ping  # SimpleRSI_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
-curl http://freq.gaiaderma.com/falcontrader/api/v1/ping
-curl http://freq.gaiaderma.com/falcontrader_short/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
@@ -267,7 +257,6 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 ### File-based Logs
 Each strategy logs to separate files in `user_data/logs/`:
 - `nfi-x7.log`
-- `falcontrader.log`, `falcontrader_short.log`
 - `e0v1e.log`, `e0v1e_shorts.log`
 - `auto_ei_t4c0s.log`, `auto_ei_t4c0s_shorts.log`
 - `etcg.log`, `etcg_shorts.log`
@@ -284,8 +273,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | Port | Strategy | Direction | Leverage |
 |------|----------|-----------|----------|
 | 8080 | nfi-x7 | Longs | - |
-| 8092 | FalconTrader | Longs | 3x |
-| 8094 | FalconTrader_Short | Shorts | 3x |
 | 8098 | E0V1E | Longs | 3x |
 | 8099 | E0V1E_Shorts | Shorts | 3x |
 | 8100 | Auto_EI_t4c0s | Longs | - |
@@ -311,8 +298,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 ### Database Separation
 Each strategy uses its own SQLite database:
 - `nfi-x7-tradesv3.sqlite`
-- `falcontrader-tradesv3.sqlite`
-- `falcontrader_short-tradesv3.sqlite`
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
@@ -460,6 +445,4 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 - **Fixed**: `np.NAN` → `np.nan` in both FrankenStrat files (NumPy 2.x compatibility)
 
 ## Recent Changes (February 9, 2026)
-- **Removed**: BinClucMadV1 strategy (port 8092) - replaced by FalconTrader
-- **Added**: FalconTrader (longs, port 8092) - Multi-entry EWO/DCA strategy with 14+ entry signals and 3x leverage
-- **Added**: FalconTrader_Short (shorts, port 8094) - Shorts variant with 3x leverage, same settings as longs, just inverted logic
+- **Removed**: BinClucMadV1 strategy (port 8092)
