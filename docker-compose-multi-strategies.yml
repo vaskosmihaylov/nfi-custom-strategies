@@ -365,23 +365,6 @@ services:
       --strategy-path user_data/strategies/Frankie
       --strategy FrankenStrat_Shorts
 
-  # CryptoFrog_nateema Strategy (Longs with 3x leverage)
-  freqtrade-cryptofrog:
-    <<: *common-settings
-    container_name: freqtrade-cryptofrog
-    ports:
-      - "127.0.0.1:8122:8080"
-    env_file:
-      - path: ./env-files/cryptofrog.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/cryptofrog-tradesv3.sqlite
-      --log-file user_data/logs/cryptofrog.log
-      --strategy-path user_data/strategies/CryptoFrog
-      --strategy CryptoFrog_nateema
-
   # SimpleRSI Strategy (Longs with 3x leverage)
   freqtrade-simplersi:
     <<: *common-settings

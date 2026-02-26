@@ -684,8 +684,8 @@ class Auto_EI_t4c0s(IStrategy):
                 (dataframe['gen_buy'] > self.b06.value) &
                 (dataframe['volume'] > 0) 
             )
-        dataframe.loc[ewo_zero_dn, 'enter_long'] = 1
-        dataframe.loc[ewo_zero_dn, 'enter_tag'] = 'ewo_zero_dn'
+        dataframe.loc[ewo_zero_up, 'enter_long'] = 1
+        dataframe.loc[ewo_zero_up, 'enter_tag'] = 'ewo_zero_up'
 
         return dataframe
 
@@ -747,14 +747,12 @@ class Auto_EI_t4c0s(IStrategy):
                 (dataframe['gen_sell'] > self.s06.value) &
                 (dataframe['volume'] > 0) 
             )
-        dataframe.loc[ewo_zero_dns, 'exit_long'] = 1
-        dataframe.loc[ewo_zero_dns, 'exit_tag'] = 'ewo_zero_dns'
+        dataframe.loc[ewo_zero_ups, 'exit_long'] = 1
+        dataframe.loc[ewo_zero_ups, 'exit_tag'] = 'ewo_zero_ups'
 
         return dataframe
 
 
 def pct_change(a, b):
     return (b - a) / a
-
-
 
