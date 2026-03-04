@@ -326,7 +326,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --config user_data/strategies/Bounce/BollingerBounce.json
       --db-url sqlite:////freqtrade/user_data/bollingerbounce-tradesv3.sqlite
       --log-file user_data/logs/bollingerbounce.log
       --strategy-path user_data/strategies/Bounce
@@ -344,7 +344,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --config user_data/strategies/Bounce/BollingerBounce.json
       --db-url sqlite:////freqtrade/user_data/bollingerbounce_shorts-tradesv3.sqlite
       --log-file user_data/logs/bollingerbounce_shorts.log
       --strategy-path user_data/strategies/Bounce
@@ -362,7 +362,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --config user_data/strategies/Bounce/KeltnerBounce.json
       --db-url sqlite:////freqtrade/user_data/keltnerbounce-tradesv3.sqlite
       --log-file user_data/logs/keltnerbounce.log
       --strategy-path user_data/strategies/Bounce
@@ -380,7 +380,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --config user_data/strategies/Bounce/KeltnerBounce.json
       --db-url sqlite:////freqtrade/user_data/keltnerbounce_shorts-tradesv3.sqlite
       --log-file user_data/logs/keltnerbounce_shorts.log
       --strategy-path user_data/strategies/Bounce
