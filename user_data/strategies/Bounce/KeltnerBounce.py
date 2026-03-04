@@ -43,6 +43,7 @@ class KeltnerBounce(IStrategy):
     startup_candle_count = 20
 
     # set common parameters
+    can_short: bool = False
     minimal_roi = Config.minimal_roi
     trailing_stop = Config.trailing_stop
     trailing_stop_positive = Config.trailing_stop_positive
@@ -187,3 +188,8 @@ class KeltnerBounce(IStrategy):
             ),
             'sell'] = 1
         return dataframe
+
+    def leverage(self, pair: str, current_time, current_rate: float,
+                 proposed_leverage: float, max_leverage: float, entry_tag,
+                 side: str, **kwargs) -> float:
+        return min(3.0, max_leverage)

@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **22 active trading strategies** running in separate Docker containers
+- **21 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -27,15 +27,16 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ClucHAnix_hhll_Shorts (Port 8107)
                            ├── AwesomeEWOLambo (Port 8108)
                            ├── AwesomeEWOLambo_Shorts (Port 8109)
-                           ├── AlexNexusForgeV8AIV2 (Port 8112)
                            ├── GeneStrategy_v2 (Port 8114)
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
                            ├── KamaFama_Shorts (Port 8093)
                            ├── FrankenStrat (Port 8119)
                            ├── FrankenStrat_Shorts (Port 8118)
-                           ├── SimpleRSI (Port 8124)
-                           └── SimpleRSI_Shorts (Port 8125)
+                           ├── BollingerBounce (Port 8124)
+                           ├── BollingerBounce_Shorts (Port 8125)
+                           ├── KeltnerBounce (Port 8126)
+                           └── KeltnerBounce_Shorts (Port 8127)
 ```
 
 ## Files
@@ -60,15 +61,16 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, Heikin Ashi + BB)
 - `awesomeewolambo.env` - AwesomeEWOLambo strategy (longs-only)
 - `awesomeewolambo_shorts.env` - AwesomeEWOLambo_Shorts strategy (shorts-only)
-- `alexnexusforgev8aiv2.env` - AlexNexusForgeV8AIV2 strategy (long + short capable)
 - `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 - `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
 - `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
-- `simplersi.env` - SimpleRSI strategy (longs with 3x leverage, RSI momentum breakout on 1d)
-- `simplersi_shorts.env` - SimpleRSI_Shorts strategy (shorts with 3x leverage, RSI momentum breakdown on 1d)
+- `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
+- `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
+- `keltnerbounce.env` - KeltnerBounce strategy (longs with 3x leverage)
+- `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
 
 ## Quick Start
 
@@ -151,15 +153,16 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
 | **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
-| **AlexNexusForgeV8AIV2** | `Vasko_AlexNexusForgeV8AIV2` | `http://freq.gaiaderma.com/alexnexusforgev8aiv2` | `alexnexusforgev8aiv2_user` | `alexnexusforgev8aiv2_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
 | **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
-| **SimpleRSI** | `Vasko_SimpleRSI` | `http://freq.gaiaderma.com/simplersi` | `simplersi_user` | `simplersi_secure_password` |
-| **SimpleRSI_Shorts** | `Vasko_SimpleRSI_Shorts` | `http://freq.gaiaderma.com/simplersi_shorts` | `simplersi_shorts_user` | `simplersi_shorts_secure_password` |
+| **BollingerBounce** | `Vasko_BollingerBounce` | `http://freq.gaiaderma.com/bollingerbounce` | `bollingerbounce_user` | `bollingerbounce_secure_password` |
+| **BollingerBounce_Shorts** | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
+| **KeltnerBounce** | `Vasko_KeltnerBounce` | `http://freq.gaiaderma.com/keltnerbounce` | `keltnerbounce_user` | `keltnerbounce_secure_password` |
+| **KeltnerBounce_Shorts** | `Vasko_KeltnerBounce_Shorts` | `http://freq.gaiaderma.com/keltnerbounce_shorts` | `keltnerbounce_shorts_user` | `keltnerbounce_shorts_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -209,15 +212,16 @@ curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
 curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
 curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
-curl http://127.0.0.1:8112/api/v1/ping  # AlexNexusForgeV8AIV2
 curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
 curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
-curl http://127.0.0.1:8124/api/v1/ping  # SimpleRSI
-curl http://127.0.0.1:8125/api/v1/ping  # SimpleRSI_Shorts
+curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
+curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
+curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
+curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -231,15 +235,16 @@ curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
 curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/alexnexusforgev8aiv2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
 curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/simplersi/api/v1/ping
-curl http://freq.gaiaderma.com/simplersi_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
+curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
+curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 ```
 
 ### Log Management
@@ -283,17 +288,18 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8107 | ClucHAnix_hhll_Shorts | Shorts | - |
 | 8108 | AwesomeEWOLambo | Longs | - |
 | 8109 | AwesomeEWOLambo_Shorts | Shorts | - |
-| 8112 | AlexNexusForgeV8AIV2 | Long + Shorts | - |
 | 8114 | GeneStrategy_v2 | Longs | 3x |
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
 | 8118 | FrankenStrat_Shorts | Shorts | 3x |
 | 8119 | FrankenStrat | Longs | 3x |
-| 8124 | SimpleRSI | Longs | 3x |
-| 8125 | SimpleRSI_Shorts | Shorts | 3x |
+| 8124 | BollingerBounce | Longs | 3x |
+| 8125 | BollingerBounce_Shorts | Shorts | 3x |
+| 8126 | KeltnerBounce | Longs | 3x |
+| 8127 | KeltnerBounce_Shorts | Shorts | 3x |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8126+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8128+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -308,15 +314,16 @@ Each strategy uses its own SQLite database:
 - `cluchanix_hhll_shorts-tradesv3.sqlite`
 - `awesomeewolambo-tradesv3.sqlite`
 - `awesomeewolambo_shorts-tradesv3.sqlite`
-- `alexnexusforgev8aiv2-tradesv3.sqlite`
 - `genestrategy_v2-tradesv3.sqlite`
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
 - `frankenstrat-tradesv3.sqlite`
 - `frankenstrat_shorts-tradesv3.sqlite`
-- `simplersi-tradesv3.sqlite`
-- `simplersi_shorts-tradesv3.sqlite`
+- `bollingerbounce-tradesv3.sqlite`
+- `bollingerbounce_shorts-tradesv3.sqlite`
+- `keltnerbounce-tradesv3.sqlite`
+- `keltnerbounce_shorts-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
@@ -397,22 +404,6 @@ To add new strategies or modify existing ones:
 4. **Update `deploy-multi-strategies.sh`** health check array and help text
 5. **Restart services**
 
-## Removed Strategies (February 2026)
-
-The following strategies were removed due to poor performance in bear market conditions:
-
-| Strategy | Port | Reason |
-|----------|------|--------|
-| ElliotV5_SMA | 8091 | Poor 2-month performance |
-| ElliotV5_SMA_Shorts | 8097 | Short counterpart also underperforming |
-| NASOSv4 | 8093 | Poor performance |
-| NASOSv4_Shorts | 8104 | Removed with parent |
-| RsiquiV5 | 8094 | Poor performance |
-| ElliotV5HO | 8112 | Poor performance (port now reused by AlexNexusForgeV8AIV2) |
-| ElliotV5HO_Shorts | 8113 | Short counterpart underperforming |
-| EI4_t4c0s_V2_2 | 8100 | Replaced by Auto_EI_t4c0s |
-| EI4_t4c0s_V2_2_Shorts | 8101 | Replaced by Auto_EI_t4c0s_Shorts |
-
 ## Validation Tests
 
 After setup, verify everything works:
@@ -433,11 +424,12 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 **Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`.
 
-**Last Updated**: February 11, 2026
+**Last Updated**: March 4, 2026
 
-## Recent Changes (February 11, 2026)
-- **Added**: SimpleRSI (longs, port 8124) - RSI momentum breakout on 1d timeframe, 3x leverage
-- **Added**: SimpleRSI_Shorts (shorts, port 8125) - Shorts-only RSI momentum breakdown, 3x leverage, max 4 shorts
+## Recent Changes (March 4, 2026)
+- **Removed**: SimpleRSI (port 8124) and SimpleRSI_Shorts (port 8125)
+- **Added**: BollingerBounce (longs, port 8124) and BollingerBounce_Shorts (shorts, port 8125), both 3x leverage
+- **Added**: KeltnerBounce (longs, port 8126) and KeltnerBounce_Shorts (shorts, port 8127), both 3x leverage
 
 ## Recent Changes (February 10, 2026)
 - **Added**: FrankenStrat (longs, port 8119) - Multi-signal dip buyer with 3x leverage, SSL/MACD/EWO-based entries

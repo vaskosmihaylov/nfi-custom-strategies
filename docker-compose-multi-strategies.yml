@@ -246,23 +246,6 @@ services:
       --strategy-path user_data/strategies/GeneTrader
       --strategy GeneStrategy_v2_Shorts
 
-  # AlexNexusForgeV8AIV2 Strategy (Long + Short capable)
-  # freqtrade-alexnexusforgev8aiv2:
-  #   <<: *common-settings
-  #   container_name: freqtrade-alexnexusforgev8aiv2
-  #   ports:
-  #     - "127.0.0.1:8112:8080"
-  #   env_file:
-  #     - path: ./env-files/alexnexusforgev8aiv2.env
-  #       required: true
-  #   command: >
-  #     trade
-  #     --config user_data/strategies/config.json
-  #     --db-url sqlite:////freqtrade/user_data/alexnexusforgev8aiv2-tradesv3.sqlite
-  #     --log-file user_data/logs/alexnexusforgev8aiv2.log
-  #     --strategy-path user_data/strategies/AlexNexusForgeV7
-  #     --strategy AlexNexusForgeV8AIV2
-
   # KamaFama Strategy (Longs)
   freqtrade-kamafama:
     <<: *common-settings
@@ -331,41 +314,77 @@ services:
       --strategy-path user_data/strategies/Frankie
       --strategy FrankenStrat_Shorts
 
-  # SimpleRSI Strategy (Longs with 3x leverage)
-  freqtrade-simplersi:
+  # BollingerBounce Strategy (Longs with 3x leverage)
+  freqtrade-bollingerbounce:
     <<: *common-settings
-    container_name: freqtrade-simplersi
+    container_name: freqtrade-bollingerbounce
     ports:
       - "127.0.0.1:8124:8080"
     env_file:
-      - path: ./env-files/simplersi.env
+      - path: ./env-files/bollingerbounce.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
       --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
-      --db-url sqlite:////freqtrade/user_data/simplersi-tradesv3.sqlite
-      --log-file user_data/logs/simplersi.log
-      --strategy-path user_data/strategies/SimpleRSI
-      --strategy SimpleRSI
+      --db-url sqlite:////freqtrade/user_data/bollingerbounce-tradesv3.sqlite
+      --log-file user_data/logs/bollingerbounce.log
+      --strategy-path user_data/strategies/Bounce
+      --strategy BollingerBounce
 
-  # SimpleRSI_Shorts Strategy (Shorts with 3x leverage)
-  freqtrade-simplersi_shorts:
+  # BollingerBounce_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-bollingerbounce_shorts:
     <<: *common-settings
-    container_name: freqtrade-simplersi_shorts
+    container_name: freqtrade-bollingerbounce_shorts
     ports:
       - "127.0.0.1:8125:8080"
     env_file:
-      - path: ./env-files/simplersi_shorts.env
+      - path: ./env-files/bollingerbounce_shorts.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
       --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
-      --db-url sqlite:////freqtrade/user_data/simplersi_shorts-tradesv3.sqlite
-      --log-file user_data/logs/simplersi_shorts.log
-      --strategy-path user_data/strategies/SimpleRSI
-      --strategy SimpleRSI_Shorts
+      --db-url sqlite:////freqtrade/user_data/bollingerbounce_shorts-tradesv3.sqlite
+      --log-file user_data/logs/bollingerbounce_shorts.log
+      --strategy-path user_data/strategies/Bounce
+      --strategy BollingerBounce_Shorts
+
+  # KeltnerBounce Strategy (Longs with 3x leverage)
+  freqtrade-keltnerbounce:
+    <<: *common-settings
+    container_name: freqtrade-keltnerbounce
+    ports:
+      - "127.0.0.1:8126:8080"
+    env_file:
+      - path: ./env-files/keltnerbounce.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --db-url sqlite:////freqtrade/user_data/keltnerbounce-tradesv3.sqlite
+      --log-file user_data/logs/keltnerbounce.log
+      --strategy-path user_data/strategies/Bounce
+      --strategy KeltnerBounce
+
+  # KeltnerBounce_Shorts Strategy (Shorts with 3x leverage)
+  freqtrade-keltnerbounce_shorts:
+    <<: *common-settings
+    container_name: freqtrade-keltnerbounce_shorts
+    ports:
+      - "127.0.0.1:8127:8080"
+    env_file:
+      - path: ./env-files/keltnerbounce_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config user_data/configs_production/simplersi_pairlist_no_range_vol.json
+      --db-url sqlite:////freqtrade/user_data/keltnerbounce_shorts-tradesv3.sqlite
+      --log-file user_data/logs/keltnerbounce_shorts.log
+      --strategy-path user_data/strategies/Bounce
+      --strategy KeltnerBounce_Shorts
 
 networks:
   default:

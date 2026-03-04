@@ -67,13 +67,14 @@ show_help() {
     echo "  genestrategy_v2, genestrategy_v2_shorts,"
     echo "  kamafama, kamafama_shorts,"
     echo "  frankenstrat, frankenstrat_shorts,"
-    echo "  simplersi, simplersi_shorts"
+    echo "  bollingerbounce, bollingerbounce_shorts,"
+    echo "  keltnerbounce, keltnerbounce_shorts"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
     echo "  \$0 start nfi-x7            # Start only NFI-X7 strategy"
     echo "  \$0 status                  # Show status of all strategies"
-    echo "  \$0 logs elliotv5_sma       # Show logs for ElliotV5_SMA strategy"
+    echo "  \$0 logs e0v1e              # Show logs for the E0V1E strategy"
     echo "  \$0 health-check            # Check health of all running strategies"
     echo "  \$0 setup-nginx             # Copy NGINX configuration"
     echo ""
@@ -95,8 +96,10 @@ show_help() {
     echo "  KamaFama_Shorts:       http://freq.gaiaderma.com/kamafama_shorts"
     echo "  FrankenStrat:          http://freq.gaiaderma.com/frankenstrat"
     echo "  FrankenStrat_Shorts:   http://freq.gaiaderma.com/frankenstrat_shorts"
-    echo "  SimpleRSI:             http://freq.gaiaderma.com/simplersi"
-    echo "  SimpleRSI_Shorts:      http://freq.gaiaderma.com/simplersi_shorts"
+    echo "  BollingerBounce:       http://freq.gaiaderma.com/bollingerbounce"
+    echo "  BollingerBounce_Shorts: http://freq.gaiaderma.com/bollingerbounce_shorts"
+    echo "  KeltnerBounce:         http://freq.gaiaderma.com/keltnerbounce"
+    echo "  KeltnerBounce_Shorts:  http://freq.gaiaderma.com/keltnerbounce_shorts"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -241,8 +244,10 @@ health_check() {
         "kamafama_shorts:8093"
         "frankenstrat:8119"
         "frankenstrat_shorts:8118"
-        "simplersi:8124"
-        "simplersi_shorts:8125"
+        "bollingerbounce:8124"
+        "bollingerbounce_shorts:8125"
+        "keltnerbounce:8126"
+        "keltnerbounce_shorts:8127"
     )
     
     local healthy=0

@@ -68,10 +68,27 @@ update_all_env_files() {
     
     # List of all environment files
     local env_files=(
-        "env-files/nfi-x6.env"
-        "env-files/trendfollowing.env"
-        "env-files/powertower.env"
-        "env-files/fastsupertrend.env"
+        "env-files/nfi-x7.env"
+        "env-files/e0v1e.env"
+        "env-files/e0v1e_shorts.env"
+        "env-files/auto_ei_t4c0s.env"
+        "env-files/auto_ei_t4c0s_shorts.env"
+        "env-files/etcg.env"
+        "env-files/etcg_shorts.env"
+        "env-files/cluchanix_hhll.env"
+        "env-files/cluchanix_hhll_shorts.env"
+        "env-files/awesomeewolambo.env"
+        "env-files/awesomeewolambo_shorts.env"
+        "env-files/genestrategy_v2.env"
+        "env-files/genestrategy_v2_shorts.env"
+        "env-files/kamafama.env"
+        "env-files/kamafama_shorts.env"
+        "env-files/frankenstrat.env"
+        "env-files/frankenstrat_shorts.env"
+        "env-files/bollingerbounce.env"
+        "env-files/bollingerbounce_shorts.env"
+        "env-files/keltnerbounce.env"
+        "env-files/keltnerbounce_shorts.env"
     )
     
     for env_file in "${env_files[@]}"; do
