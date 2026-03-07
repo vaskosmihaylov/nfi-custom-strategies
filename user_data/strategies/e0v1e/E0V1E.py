@@ -110,14 +110,6 @@ class E0V1E(IStrategy):
         conditions = []
         dataframe.loc[:, 'enter_tag'] = ''
 
-        is_ewo = (
-                (dataframe['rsi_fast'] < self.buy_rsi_fast.value) &
-                (dataframe['close'] < dataframe['ema_8'] * self.buy_ema_low.value) &
-                (dataframe['EWO'] > self.buy_ewo.value) &
-                (dataframe['close'] < dataframe['ema_16'] * self.buy_ema_high.value) &
-                (dataframe['rsi'] < self.buy_rsi.value)
-        )
-
         buy_1 = (
                 (dataframe['rsi_slow'] < dataframe['rsi_slow'].shift(1)) &
                 (dataframe['rsi_fast'] < self.buy_rsi_fast_32.value) &
@@ -126,9 +118,7 @@ class E0V1E(IStrategy):
                 (dataframe['cti'] < self.buy_cti_32.value)
         )
 
-        conditions.append(is_ewo)
-        dataframe.loc[is_ewo, 'enter_tag'] += 'ewo'
-
+        # Keep only the profitable buy_1 branch until ewo is reworked.
         conditions.append(buy_1)
         dataframe.loc[buy_1, 'enter_tag'] += 'buy_1'
 

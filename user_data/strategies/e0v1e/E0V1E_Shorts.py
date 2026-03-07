@@ -188,16 +188,7 @@ class E0V1E_Shorts(IStrategy):
         conditions = []
         dataframe.loc[:, 'enter_tag'] = ''
 
-        # Inverted from long logic
-        is_ewo_short = (
-                (dataframe['rsi_fast'] > self.sell_rsi_fast.value) &
-                (dataframe['close'] > dataframe['ema_8'] * self.sell_ema_low.value) &
-                (dataframe['EWO'] < self.sell_ewo.value) &
-                (dataframe['close'] > dataframe['ema_16'] * self.sell_ema_high.value) &
-                (dataframe['rsi'] > self.sell_rsi.value)
-        )
-
-        # Inverted from buy_1 logic
+        # Keep only the profitable short_1 branch until ewo_short is reworked.
         short_1 = (
                 (dataframe['rsi_slow'] > dataframe['rsi_slow'].shift(1)) &
                 (dataframe['rsi_fast'] > self.sell_rsi_fast_32.value) &
@@ -205,9 +196,6 @@ class E0V1E_Shorts(IStrategy):
                 (dataframe['close'] > dataframe['sma_15'] * self.sell_sma15_32.value) &
                 (dataframe['cti'] > self.sell_cti_32.value)
         )
-
-        conditions.append(is_ewo_short)
-        dataframe.loc[is_ewo_short, 'enter_tag'] += 'ewo_short'
 
         conditions.append(short_1)
         dataframe.loc[short_1, 'enter_tag'] += 'short_1'
@@ -243,11 +231,10 @@ class E0V1E_Shorts(IStrategy):
         Returns:
             float: Stoploss percentage or 1.0 to keep base stoploss
         """
-        # EMERGENCY BACKSTOP: Last resort before liquidation (~-30% with 3x)
-        # This should RARELY trigger - indicators and unclog should catch first
-        if current_profit <= -0.20:
+        # EMERGENCY BACKSTOP: Cap tail risk before small losers compound into liquidation-scale moves.
+        if current_profit <= -0.05:
             logger.warning(f"{trade.pair} EMERGENCY stop at {current_profit*100:.2f}% (preventing liquidation)")
-            return -0.21  # Exit immediately
+            return -0.06
 
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         current_candle = dataframe.iloc[-1].squeeze()
