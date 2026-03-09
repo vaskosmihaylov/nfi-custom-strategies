@@ -381,7 +381,6 @@ class ETCG_Shorts(IStrategy):
             (dataframe['rsi_14'] > int(self.lambo2_rsi_14_limit.value))
         )
         dataframe.loc[lambo2_short, 'enter_tag'] += 'lambo2_short_'
-        conditions.append(lambo2_short)
 
         # sell1ewo_short: Rallies during downtrend (inverted)
         sell1ewo_short = (
@@ -416,7 +415,10 @@ class ETCG_Shorts(IStrategy):
             (dataframe['EWO'] < -self.sell_ewo_high.value)  # Negative EWO for shorts
         )
         dataframe.loc[cofi_short, 'enter_tag'] += 'cofi_short_'
-        conditions.append(cofi_short)
+
+        # The standalone lambo/cofi short entries are not stable enough in local
+        # dry-run and backtest evidence. Keep them as confirming tags, but require
+        # one of the EWO-based triggers to actually open the short.
 
         if conditions:
             dataframe.loc[

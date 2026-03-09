@@ -73,7 +73,6 @@ update_all_env_files() {
         "env-files/e0v1e_shorts.env"
         "env-files/auto_ei_t4c0s.env"
         "env-files/auto_ei_t4c0s_shorts.env"
-        "env-files/etcg.env"
         "env-files/etcg_shorts.env"
         "env-files/cluchanix_hhll.env"
         "env-files/cluchanix_hhll_shorts.env"

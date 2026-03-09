@@ -15,7 +15,7 @@ Implement a market regime detection and switching system that automatically enab
 1. **Predictive Detection**: Use leading indicators to detect bear markets BEFORE they fully develop
 2. **Risk Management**: Only run strategies proven to work in current market regime
 3. **Flexibility**: Support manual override when needed
-4. **Production Ready**: Deploy 4 strategy pairs (AwesomeEWOLambo, ETCG, e0v1e, ei4_t4c0s_v2_2)
+4. **Production Ready**: Deploy 4 strategy groups (AwesomeEWOLambo, ETCG_Shorts, e0v1e, ei4_t4c0s_v2_2)
 
 ### Current Status (Feb 2026)
 
@@ -193,10 +193,9 @@ strategies:
     status: both_ready
 
   etcg:
-    long_container: freqtrade-etcg
     short_container: freqtrade-etcg_shorts
-    approved_modes: [BULL, BEAR, SIDEWAYS]
-    status: both_ready
+    approved_modes: [BEAR, SIDEWAYS]
+    status: short_only
 
   e0v1e:
     long_container: freqtrade-e0v1e
@@ -374,7 +373,7 @@ CREATE TABLE regime_history (
 | Strategy | Long Status | Short Status | Deployment Mode |
 |----------|-------------|--------------|-----------------|
 | AwesomeEWOLambo | ✅ Profitable ($321) | ✅ Profitable ($1,510) | BULL/BEAR/SIDEWAYS |
-| ETCG | ✅ Profitable ($373) | ✅ Profitable ($2,359) | BULL/BEAR/SIDEWAYS |
+| ETCG_Shorts | n/a | ✅ Profitable ($2,359) | BEAR/SIDEWAYS |
 | e0v1e | ❌ Loss (-$3,704) | ✅ Profitable ($762) | BEAR only |
 | ei4_t4c0s_v2_2 | ❌ Loss (-$4,608) | ✅ Profitable ($2,008) | BEAR only |
 
