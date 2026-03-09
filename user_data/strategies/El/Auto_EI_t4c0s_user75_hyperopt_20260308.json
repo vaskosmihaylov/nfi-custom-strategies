@@ -1,0 +1,89 @@
+{
+  "strategy_name": "Auto_EI_t4c0s",
+  "params": {
+    "roi": {
+      "0": 0.243,
+      "46": 0.035,
+      "127": 0.015,
+      "237": 0
+    },
+    "stoploss": {
+      "stoploss": -0.99
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 8
+    },
+    "buy": {
+      "atr_length": 22,
+      "b01": 0.84,
+      "b02": 0.72,
+      "b03": 0.1,
+      "b04": 0.42,
+      "b05": 0.45,
+      "b06": 0.12,
+      "base_nb_candles_buy": 9,
+      "buy_adx": 22,
+      "buy_ema_cofi": 0.979,
+      "buy_ewo_high": 10.27,
+      "buy_fastd": 23,
+      "buy_fastk": 26,
+      "fib_dn": 2.8,
+      "fib_up": 3.8,
+      "increment": 1.0007,
+      "lambo2_ema_14_factor": 1.145,
+      "lambo2_rsi_14_limit": 5,
+      "lambo2_rsi_4_limit": 25,
+      "low_offset": 0.988,
+      "mean_dn": 1.7,
+      "mean_up": 9.9,
+      "rsi_buy": 39,
+      "window": 57,
+      "x01": 4.8,
+      "x02": 2.2,
+      "x03": 4.6,
+      "x04": 4.5,
+      "x05": 4.1,
+      "z01": 1.2,
+      "zero_dn": 8.0,
+      "zero_up": 8.6
+    },
+    "sell": {
+      "base_nb_candles_sell": 8,
+      "day1": 4,
+      "day2": 3,
+      "day3": 3,
+      "day4": 6,
+      "fib_dns": 7.4,
+      "fib_ups": 3.0,
+      "high_offset": 1.005,
+      "high_offset_2": 1.01,
+      "mean_dns": 1.7,
+      "mean_ups": 6.4,
+      "moon": 0.001,
+      "s01": 0.79,
+      "s02": 0.95,
+      "s03": 0.82,
+      "s04": 1.1,
+      "s05": 0.51,
+      "s06": 0.49,
+      "unclog1": 0.17,
+      "unclog2": 0.12,
+      "unclog3": 0.1,
+      "unclog4": 0.16,
+      "y01": 1.8,
+      "y02": 1.4,
+      "y03": 2.0,
+      "z02": 2.0,
+      "zero_dns": 5.9,
+      "zero_ups": 6.3
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-03-08 15:25:23.518105+00:00"
+}

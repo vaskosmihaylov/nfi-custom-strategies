@@ -20,7 +20,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
                            ├── Auto_EI_t4c0s (Port 8100)
-                           ├── Auto_EI_t4c0s_Shorts (Port 8101)
                            ├── ETCG (Port 8102)
                            ├── ETCG_Shorts (Port 8103)
                            ├── ClucHAnix_hhll (Port 8106)
@@ -54,7 +53,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
-- `auto_ei_t4c0s_shorts.env` - Auto_EI_t4c0s_Shorts strategy (shorts with 3x leverage)
 - `etcg.env` - ETCG strategy (longs-only, multi-entry)
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
 - `cluchanix_hhll.env` - ClucHAnix_hhll strategy (longs-only, Heikin Ashi + BB)
@@ -146,7 +144,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
 | **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
-| **Auto_EI_t4c0s_Shorts** | `Vasko_Auto_EI_t4c0s_Shorts` | `http://freq.gaiaderma.com/auto_ei_t4c0s_shorts` | `auto_ei_t4c0s_shorts_user` | `auto_ei_t4c0s_shorts_secure_password` |
 | **ETCG** | `Vasko_ETCG` | `http://freq.gaiaderma.com/etcg` | `etcg_user` | `etcg_secure_password` |
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 | **ClucHAnix_hhll** | `Vasko_ClucHAnix_hhll` | `http://freq.gaiaderma.com/cluchanix_hhll` | `cluchanix_hhll_user` | `cluchanix_hhll_secure_password` |
@@ -205,7 +202,6 @@ curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
-curl http://127.0.0.1:8101/api/v1/ping  # Auto_EI_t4c0s_Shorts
 curl http://127.0.0.1:8102/api/v1/ping  # ETCG
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
@@ -228,7 +224,6 @@ curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
-curl http://freq.gaiaderma.com/auto_ei_t4c0s_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/etcg/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
@@ -263,7 +258,7 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 Each strategy logs to separate files in `user_data/logs/`:
 - `nfi-x7.log`
 - `e0v1e.log`, `e0v1e_shorts.log`
-- `auto_ei_t4c0s.log`, `auto_ei_t4c0s_shorts.log`
+- `auto_ei_t4c0s.log`
 - `etcg.log`, `etcg_shorts.log`
 - `kamafama.log`, `kamafama_shorts.log`
 - etc.
@@ -281,7 +276,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8098 | E0V1E | Longs | 3x |
 | 8099 | E0V1E_Shorts | Shorts | 3x |
 | 8100 | Auto_EI_t4c0s | Longs | - |
-| 8101 | Auto_EI_t4c0s_Shorts | Shorts | 3x |
 | 8102 | ETCG | Longs | 3x |
 | 8103 | ETCG_Shorts | Shorts | 3x |
 | 8106 | ClucHAnix_hhll | Longs | - |
@@ -307,7 +301,6 @@ Each strategy uses its own SQLite database:
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
-- `auto_ei_t4c0s_shorts-tradesv3.sqlite`
 - `etcg-tradesv3.sqlite`
 - `etcg_shorts-tradesv3.sqlite`
 - `cluchanix_hhll-tradesv3.sqlite`

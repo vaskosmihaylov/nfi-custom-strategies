@@ -33,6 +33,8 @@ def EWO(dataframe, ema_length=5, ema2_length=3):
 
 class Auto_EI_t4c0s(IStrategy):
 
+    weak_entry_tags = {"ewo_mean_dn", "ewo_zero_dn"}
+
     '''
           ______   __          __              __    __   ______   __    __        __     __    __             ______            
      /      \ /  |       _/  |            /  |  /  | /      \ /  \  /  |      /  |   /  |  /  |           /      \           
@@ -57,37 +59,37 @@ class Auto_EI_t4c0s(IStrategy):
     # Buy hyperspace params:
     buy_params = {
         "atr_length": 23,
-        "b01": 0.5,
-        "b02": 0.5,
-        "b03": 0.5,
-        "b04": 0.5,
-        "b05": 0.5,
-        "b06": 0.5,
-        "base_nb_candles_buy": 17,
-        "buy_adx": 28,
-        "buy_ema_cofi": 0.969,
-        "buy_ewo_high": 5.687,
-        "buy_fastd": 23,
-        "buy_fastk": 30,
-        "fib_dn": 2.5,
-        "fib_up": 9.5,
+        "b01": 0.78,
+        "b02": 0.24,
+        "b03": 0.55,
+        "b04": 0.55,
+        "b05": 0.55,
+        "b06": 0.9,
+        "base_nb_candles_buy": 14,
+        "buy_adx": 27,
+        "buy_ema_cofi": 0.972,
+        "buy_ewo_high": 11.346,
+        "buy_fastd": 30,
+        "buy_fastk": 26,
+        "fib_dn": 7.6,
+        "fib_up": 5.0,
         "increment": 1.0007,
-        "lambo2_ema_14_factor": 0.967,
-        "lambo2_rsi_14_limit": 27,
-        "lambo2_rsi_4_limit": 32,
-        "low_offset": 0.995,
-        "mean_dn": 1.6,
-        "mean_up": 3.3,
-        "rsi_buy": 54,
-        "window": 30,
-        "x01": 4.2,
-        "x02": 1.3,
-        "x03": 1.2,
+        "lambo2_ema_14_factor": 0.82,
+        "lambo2_rsi_14_limit": 23,
+        "lambo2_rsi_4_limit": 16,
+        "low_offset": 0.992,
+        "mean_dn": 6.5,
+        "mean_up": 7.0,
+        "rsi_buy": 42,
+        "window": 36,
+        "x01": 3.9,
+        "x02": 2.1,
+        "x03": 4.6,
         "x04": 1.3,
-        "x05": 4.2,
+        "x05": 3.7,
         "z01": 2.1,
-        "zero_dn": 4.1,
-        "zero_up": 6.6,
+        "zero_dn": 5.2,
+        "zero_up": 6.9,
     }
 
     # Sell hyperspace params:
@@ -117,6 +119,7 @@ class Auto_EI_t4c0s(IStrategy):
         "y01": 3.6,
         "y02": 3.4,
         "y03": 2.6,
+        "z02": 2.5,
         "zero_dns": 7.3,
         "zero_ups": 1.8,
     }
@@ -170,15 +173,15 @@ class Auto_EI_t4c0s(IStrategy):
 
     # Stoploss - Unclog
     stoploss = -0.99
-    moon = DecimalParameter(0.001, 0.004, default=0.35,  decimals=3, space='sell', optimize=True)
-    unclog1 = DecimalParameter(0.1, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
-    unclog2 = DecimalParameter(0.08, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
-    unclog3 = DecimalParameter(0.10, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
-    unclog4 = DecimalParameter(0.14, 0.2, default=0.04,  decimals=2, space='sell', optimize=True)
-    day1 = IntParameter(1, 4, default=1, space='sell', optimize=True)
-    day2 = IntParameter(2, 5, default=2, space='sell', optimize=True)
-    day3 = IntParameter(3, 6, default=3, space='sell', optimize=True)
-    day4 = IntParameter(4, 10, default=4, space='sell', optimize=True)
+    moon = DecimalParameter(0.001, 0.004, default=sell_params['moon'],  decimals=3, space='sell', optimize=True)
+    unclog1 = DecimalParameter(0.1, 0.2, default=sell_params['unclog1'],  decimals=2, space='sell', optimize=True)
+    unclog2 = DecimalParameter(0.08, 0.2, default=sell_params['unclog2'],  decimals=2, space='sell', optimize=True)
+    unclog3 = DecimalParameter(0.10, 0.2, default=sell_params['unclog3'],  decimals=2, space='sell', optimize=True)
+    unclog4 = DecimalParameter(0.14, 0.2, default=sell_params['unclog4'],  decimals=2, space='sell', optimize=True)
+    day1 = IntParameter(1, 4, default=sell_params['day1'], space='sell', optimize=True)
+    day2 = IntParameter(2, 5, default=sell_params['day2'], space='sell', optimize=True)
+    day3 = IntParameter(3, 6, default=sell_params['day3'], space='sell', optimize=True)
+    day4 = IntParameter(4, 10, default=sell_params['day4'], space='sell', optimize=True)
 
 
     # SMAOffset
@@ -199,64 +202,69 @@ class Auto_EI_t4c0s(IStrategy):
 
     locked_stoploss = {}
 
+    def _notify_runtime(self, message: str) -> None:
+        if self.dp and self.dp.runmode.value in ("live", "dry_run"):
+            self.dp.send_msg(message)
+            logger.info(message)
+
     rsi_buy = IntParameter(30, 70, default=buy_params['rsi_buy'], space='buy', optimize=True)
-    window = IntParameter(12, 70, default=48, space='buy', optimize=True)
+    window = IntParameter(12, 70, default=buy_params['window'], space='buy', optimize=True)
 
     #cofi
     is_optimize_cofi = True
-    buy_ema_cofi = DecimalParameter(0.96, 0.98, default=0.97 , optimize = is_optimize_cofi)
-    buy_fastk = IntParameter(20, 30, default=20, optimize = is_optimize_cofi)
-    buy_fastd = IntParameter(20, 30, default=20, optimize = is_optimize_cofi)
-    buy_adx = IntParameter(20, 30, default=30, optimize = is_optimize_cofi)
-    buy_ewo_high = DecimalParameter(2, 12, default=3.553, optimize = is_optimize_cofi)
+    buy_ema_cofi = DecimalParameter(0.96, 0.98, default=buy_params['buy_ema_cofi'] , optimize = is_optimize_cofi)
+    buy_fastk = IntParameter(20, 30, default=buy_params['buy_fastk'], optimize = is_optimize_cofi)
+    buy_fastd = IntParameter(20, 30, default=buy_params['buy_fastd'], optimize = is_optimize_cofi)
+    buy_adx = IntParameter(20, 30, default=buy_params['buy_adx'], optimize = is_optimize_cofi)
+    buy_ewo_high = DecimalParameter(2, 12, default=buy_params['buy_ewo_high'], optimize = is_optimize_cofi)
 
-    atr_length = IntParameter(10, 30, default=14, space='buy', optimize=True)
-    increment = DecimalParameter(low=1.0005, high=1.001, default=1.0007, decimals=4 ,space='buy', optimize=True, load=True)
+    atr_length = IntParameter(10, 30, default=buy_params['atr_length'], space='buy', optimize=True)
+    increment = DecimalParameter(low=1.0005, high=1.001, default=buy_params['increment'], decimals=4 ,space='buy', optimize=True, load=True)
 
     ###  Buy Weight Mulitpliers ###
-    x01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-    x02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-    x03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-    x04 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-    x05 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
+    x01 = DecimalParameter(1.0, 5.0, default=buy_params['x01'], decimals=1, space='buy', optimize=True)
+    x02 = DecimalParameter(1.0, 5.0, default=buy_params['x02'], decimals=1, space='buy', optimize=True)
+    x03 = DecimalParameter(1.0, 5.0, default=buy_params['x03'], decimals=1, space='buy', optimize=True)
+    x04 = DecimalParameter(1.0, 5.0, default=buy_params['x04'], decimals=1, space='buy', optimize=True)
+    x05 = DecimalParameter(1.0, 5.0, default=buy_params['x05'], decimals=1, space='buy', optimize=True)
 
     ###  Sell Weight Mulitpliers ###
-    y01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-    y02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
-    y03 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
+    y01 = DecimalParameter(1.0, 5.0, default=sell_params['y01'], decimals=1, space='sell', optimize=True)
+    y02 = DecimalParameter(1.0, 5.0, default=sell_params['y02'], decimals=1, space='sell', optimize=True)
+    y03 = DecimalParameter(1.0, 5.0, default=sell_params['y03'], decimals=1, space='sell', optimize=True)
 
     ###  General Weight Mulitpliers ###
-    z01 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='buy', optimize=True)
-    z02 = DecimalParameter(1.0, 5.0, default=2.5, decimals=1, space='sell', optimize=True)
+    z01 = DecimalParameter(1.0, 5.0, default=buy_params['z01'], decimals=1, space='buy', optimize=True)
+    z02 = DecimalParameter(1.0, 5.0, default=sell_params['z02'], decimals=1, space='sell', optimize=True)
 
     ### Entry / Exit Thresholds ###
-    b01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-    b02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-    b03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-    b04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-    b05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
-    b06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='buy', optimize=True)
+    b01 = DecimalParameter(0.0, 1.10, default=buy_params['b01'], decimals=2, space='buy', optimize=True)
+    b02 = DecimalParameter(0.0, 1.10, default=buy_params['b02'], decimals=2, space='buy', optimize=True)
+    b03 = DecimalParameter(0.0, 1.10, default=buy_params['b03'], decimals=2, space='buy', optimize=True)
+    b04 = DecimalParameter(0.0, 1.10, default=buy_params['b04'], decimals=2, space='buy', optimize=True)
+    b05 = DecimalParameter(0.0, 1.10, default=buy_params['b05'], decimals=2, space='buy', optimize=True)
+    b06 = DecimalParameter(0.0, 1.10, default=buy_params['b06'], decimals=2, space='buy', optimize=True)
 
-    s01 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-    s02 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-    s03 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-    s04 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-    s05 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
-    s06 = DecimalParameter(0.0, 1.10, default=0.5, decimals=2, space='sell', optimize=True)
+    s01 = DecimalParameter(0.0, 1.10, default=sell_params['s01'], decimals=2, space='sell', optimize=True)
+    s02 = DecimalParameter(0.0, 1.10, default=sell_params['s02'], decimals=2, space='sell', optimize=True)
+    s03 = DecimalParameter(0.0, 1.10, default=sell_params['s03'], decimals=2, space='sell', optimize=True)
+    s04 = DecimalParameter(0.0, 1.10, default=sell_params['s04'], decimals=2, space='sell', optimize=True)
+    s05 = DecimalParameter(0.0, 1.10, default=sell_params['s05'], decimals=2, space='sell', optimize=True)
+    s06 = DecimalParameter(0.0, 1.10, default=sell_params['s06'], decimals=2, space='sell', optimize=True)
 
-    fib_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-    mean_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-    zero_dn = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-    zero_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-    mean_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
-    fib_up = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='buy', optimize=True)
+    fib_dn = DecimalParameter(1.0, 10.0, default=buy_params['fib_dn'], decimals=1, space='buy', optimize=True)
+    mean_dn = DecimalParameter(1.0, 10.0, default=buy_params['mean_dn'], decimals=1, space='buy', optimize=True)
+    zero_dn = DecimalParameter(1.0, 10.0, default=buy_params['zero_dn'], decimals=1, space='buy', optimize=True)
+    zero_up = DecimalParameter(1.0, 10.0, default=buy_params['zero_up'], decimals=1, space='buy', optimize=True)
+    mean_up = DecimalParameter(1.0, 10.0, default=buy_params['mean_up'], decimals=1, space='buy', optimize=True)
+    fib_up = DecimalParameter(1.0, 10.0, default=buy_params['fib_up'], decimals=1, space='buy', optimize=True)
 
-    fib_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-    mean_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-    zero_dns = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-    zero_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-    mean_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
-    fib_ups = DecimalParameter(1.0, 10.0, default=2.5, decimals=1, space='sell', optimize=True)
+    fib_dns = DecimalParameter(1.0, 10.0, default=sell_params['fib_dns'], decimals=1, space='sell', optimize=True)
+    mean_dns = DecimalParameter(1.0, 10.0, default=sell_params['mean_dns'], decimals=1, space='sell', optimize=True)
+    zero_dns = DecimalParameter(1.0, 10.0, default=sell_params['zero_dns'], decimals=1, space='sell', optimize=True)
+    zero_ups = DecimalParameter(1.0, 10.0, default=sell_params['zero_ups'], decimals=1, space='sell', optimize=True)
+    mean_ups = DecimalParameter(1.0, 10.0, default=sell_params['mean_ups'], decimals=1, space='sell', optimize=True)
+    fib_ups = DecimalParameter(1.0, 10.0, default=sell_params['fib_ups'], decimals=1, space='sell', optimize=True)
 
 
     use_custom_stoploss = True
@@ -285,25 +293,21 @@ class Auto_EI_t4c0s(IStrategy):
             if pair not in self.locked_stoploss:  # No locked stoploss for this pair yet
                 if SLT2 is not None and current_profit > SLT2:
                     self.locked_stoploss[pair] = SL2
-                    self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% - {slt2:.3f}%/{sl2:.3f}% activated')
-                    logger.info(f'*** {pair} *** Profit {display_profit:.3f}% - {slt2:.3f}%/{sl2:.3f}% activated')
+                    self._notify_runtime(f'*** {pair} *** Profit {display_profit:.3f}% - {slt2:.3f}%/{sl2:.3f}% activated')
                     return SL2
                 elif SLT1 is not None and current_profit > SLT1:
                     self.locked_stoploss[pair] = SL1
-                    self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% - {slt1:.3f}%/{sl1:.3f}% activated')
-                    logger.info(f'*** {pair} *** Profit {display_profit:.3f}% - {slt1:.3f}%/{sl1:.3f}% activated')
+                    self._notify_runtime(f'*** {pair} *** Profit {display_profit:.3f}% - {slt1:.3f}%/{sl1:.3f}% activated')
                     return SL1
                 else:
                     return self.stoploss
             else:  # Stoploss has been locked for this pair
-                self.dp.send_msg(f'*** {pair} *** Profit {display_profit:.3f}% stoploss locked at {self.locked_stoploss[pair]:.4f}')
-                logger.info(f'*** {pair} *** Profit {display_profit:.3f}% stoploss locked at {self.locked_stoploss[pair]:.4f}')
+                self._notify_runtime(f'*** {pair} *** Profit {display_profit:.3f}% stoploss locked at {self.locked_stoploss[pair]:.4f}')
                 return self.locked_stoploss[pair]
         if current_profit < -.01:
             if pair in self.locked_stoploss:
                 del self.locked_stoploss[pair]
-                self.dp.send_msg(f'*** {pair} *** Stoploss reset.')
-                logger.info(f'*** {pair} *** Stoploss reset.')
+                self._notify_runtime(f'*** {pair} *** Stoploss reset.')
 
         return self.stoploss
 
@@ -315,12 +319,14 @@ class Auto_EI_t4c0s(IStrategy):
                                                                 timeframe=self.timeframe)
 
         entry_price = (dataframe['close'].iat[-1] + dataframe['open'].iat[-1] + proposed_rate + proposed_rate) / 4
-        logger.info(f"{pair} Using Entry Price: {entry_price} | close: {dataframe['close'].iat[-1]} open: {dataframe['open'].iat[-1]} proposed_rate: {proposed_rate}") 
+        if self.dp and self.dp.runmode.value in ("live", "dry_run"):
+            logger.info(f"{pair} Using Entry Price: {entry_price} | close: {dataframe['close'].iat[-1]} open: {dataframe['open'].iat[-1]} proposed_rate: {proposed_rate}")
 
         # Check if there is a stored last entry price and if it matches the proposed entry price
         if self.last_entry_price is not None and abs(entry_price - self.last_entry_price) < 0.0001:  # Tolerance for floating-point comparison
             entry_price *= self.increment.value # Increment by 0.2%
-            logger.info(f"{pair} Incremented entry price: {entry_price} based on previous entry price : {self.last_entry_price}.")
+            if self.dp and self.dp.runmode.value in ("live", "dry_run"):
+                logger.info(f"{pair} Incremented entry price: {entry_price} based on previous entry price : {self.last_entry_price}.")
 
         # Update the last entry price
         self.last_entry_price = entry_price
@@ -335,37 +341,46 @@ class Auto_EI_t4c0s(IStrategy):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
 
-        if exit_reason == 'roi' and (last_candle['max_l'] < 0.003):
+        if exit_reason == 'roi' and (last_candle['max_l'] < 0.0015):
             return False
 
         # Handle freak events
 
-        if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.003:
-            logger.info(f"{trade.pair} ROI is below 0")
-            self.dp.send_msg(f'{trade.pair} ROI is below 0')
+        if exit_reason == 'roi' and trade.calc_profit_ratio(rate) < 0.001:
+            self._notify_runtime(f'{trade.pair} ROI is below 0')
             return False
 
         if exit_reason == 'partial_exit' and trade.calc_profit_ratio(rate) < 0:
-            logger.info(f"{trade.pair} partial exit is below 0")
-            self.dp.send_msg(f'{trade.pair} partial exit is below 0')
+            self._notify_runtime(f'{trade.pair} partial exit is below 0')
             return False
 
         if exit_reason == 'trailing_stop_loss' and trade.calc_profit_ratio(rate) < 0:
-            logger.info(f"{trade.pair} trailing stop price is below 0")
-            self.dp.send_msg(f'{trade.pair} trailing stop price is below 0')
+            self._notify_runtime(f'{trade.pair} trailing stop price is below 0')
             return False
 
         return True
 
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+        held_days = (current_time - trade.open_date_utc).days
+        enter_tag = (trade.enter_tag or "").strip()
+
+        # Weak dip entries should not be allowed to drift into the broad unclog ladder.
+        if enter_tag in self.weak_entry_tags:
+            if current_profit < -0.12 and held_days >= 3:
+                return 'unclog weak 3'
+            if current_profit < -0.10 and held_days >= 2:
+                return 'unclog weak 2'
+            if current_profit < -0.08 and held_days >= 1:
+                return 'unclog weak 1'
+
         # Sell any positions at a loss if they are held for more than X days.
-        if current_profit < -self.unclog4.value and (current_time - trade.open_date_utc).days >= self.day4.value:
+        if current_profit < -self.unclog4.value and held_days >= self.day4.value:
             return 'unclog 4'
-        if current_profit < -self.unclog3.value and (current_time - trade.open_date_utc).days >= self.day3.value:
+        if current_profit < -self.unclog3.value and held_days >= self.day3.value:
             return 'unclog 3'
-        if current_profit < -self.unclog2.value and (current_time - trade.open_date_utc).days >= self.day2.value:
+        if current_profit < -self.unclog2.value and held_days >= self.day2.value:
             return 'unclog 2'
-        if current_profit < -self.unclog1.value and (current_time - trade.open_date_utc).days >= self.day1.value:
+        if current_profit < -self.unclog1.value and held_days >= self.day1.value:
             return 'unclog 1'
     
     # Sell signal
@@ -755,4 +770,3 @@ class Auto_EI_t4c0s(IStrategy):
 
 def pct_change(a, b):
     return (b - a) / a
-

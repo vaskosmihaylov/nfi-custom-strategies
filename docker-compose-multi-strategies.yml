@@ -93,23 +93,6 @@ services:
       --strategy-path user_data/strategies/El
       --strategy Auto_EI_t4c0s
 
-  # Auto_EI_t4c0s_Shorts Strategy (Shorts-only - replaces EI4_t4c0s_V2_2_Shorts)
-  freqtrade-auto_ei_t4c0s_shorts:
-    <<: *common-settings
-    container_name: freqtrade-auto_ei_t4c0s_shorts
-    ports:
-      - "127.0.0.1:8101:8080"
-    env_file:
-      - path: ./env-files/auto_ei_t4c0s_shorts.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/auto_ei_t4c0s_shorts-tradesv3.sqlite
-      --log-file user_data/logs/auto_ei_t4c0s_shorts.log
-      --strategy-path user_data/strategies/El
-      --strategy Auto_EI_t4c0s_Shorts
-
   # ETCG Strategy (Longs)
   freqtrade-etcg:
     <<: *common-settings
