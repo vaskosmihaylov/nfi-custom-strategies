@@ -15,7 +15,7 @@ Implement a market regime detection and switching system that automatically enab
 1. **Predictive Detection**: Use leading indicators to detect bear markets BEFORE they fully develop
 2. **Risk Management**: Only run strategies proven to work in current market regime
 3. **Flexibility**: Support manual override when needed
-4. **Production Ready**: Deploy 4 strategy groups (AwesomeEWOLambo, ETCG_Shorts, e0v1e, ei4_t4c0s_v2_2)
+4. **Production Ready**: Deploy 3 strategy groups (ETCG_Shorts, e0v1e, ei4_t4c0s_v2_2)
 
 ### Current Status (Feb 2026)
 
@@ -186,12 +186,6 @@ def apply_regime_change(regime: str)
 **`regime_engine/config/strategy_mapping.yaml`**
 ```yaml
 strategies:
-  awesomeewolambo:
-    long_container: freqtrade-awesomeewolambo
-    short_container: freqtrade-awesomeewolambo_shorts
-    approved_modes: [BULL, BEAR, SIDEWAYS]
-    status: both_ready
-
   etcg:
     short_container: freqtrade-etcg_shorts
     approved_modes: [BEAR, SIDEWAYS]
@@ -372,7 +366,6 @@ CREATE TABLE regime_history (
 
 | Strategy | Long Status | Short Status | Deployment Mode |
 |----------|-------------|--------------|-----------------|
-| AwesomeEWOLambo | ✅ Profitable ($321) | ✅ Profitable ($1,510) | BULL/BEAR/SIDEWAYS |
 | ETCG_Shorts | n/a | ✅ Profitable ($2,359) | BEAR/SIDEWAYS |
 | e0v1e | ❌ Loss (-$3,704) | ✅ Profitable ($762) | BEAR only |
 | ei4_t4c0s_v2_2 | ❌ Loss (-$4,608) | ✅ Profitable ($2,008) | BEAR only |
@@ -382,13 +375,11 @@ CREATE TABLE regime_history (
 **BEAR Market (Current):**
 ```
 ENABLED:
-- awesomeewolambo_shorts
 - etcg_shorts
 - e0v1e_shorts
 - ei4_t4c0s_v2_2_shorts
 
 DISABLED:
-- awesomeewolambo (long)
 - etcg (long)
 - e0v1e (long)
 - ei4_t4c0s_v2_2 (long)
@@ -397,11 +388,9 @@ DISABLED:
 **BULL Market (Future):**
 ```
 ENABLED:
-- awesomeewolambo (long)
 - etcg (long)
 
 DISABLED:
-- awesomeewolambo_shorts
 - etcg_shorts
 - e0v1e (all - needs validation)
 - ei4_t4c0s_v2_2 (all - needs validation)
@@ -410,7 +399,6 @@ DISABLED:
 **SIDEWAYS Market:**
 ```
 ENABLED (Both long AND short):
-- awesomeewolambo (both)
 - etcg (both)
 
 DISABLED:
@@ -512,7 +500,7 @@ DISABLED:
 - Tune thresholds if needed
 
 **Phase 2: Single Strategy (Week 3)**
-- Enable regime control for AwesomeEWOLambo only
+- Enable regime control for the first validated long strategy only
 - Monitor closely for 1 week
 - Validate transitions work correctly
 

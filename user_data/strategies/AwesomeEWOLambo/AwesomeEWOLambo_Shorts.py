@@ -71,7 +71,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
     minimal_roi = {"0": 0.07, "20": 0.05, "40": 0.03, "60": 0.015}
 
     # Tighter stoploss for shorts
-    stoploss = -0.12
+    stoploss = -0.08
 
     # Optimal timeframe for the strategy
     timeframe = '5m'
@@ -91,7 +91,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
         "low_offset": 1.013,  # 2 - 0.987 = 1.013
         "low_offset_2": 1.058,  # 2 - 0.942 = 1.058
         "ewo_low": 2.289,  # Inverted sign
-        "rsi_sell": 42,  # 100 - 58 = 42
+        "rsi_sell": 50,
         "lambo2_ema_14_factor": 1.03,
         "lambo2_rsi_14_limit": 66,
         "lambo2_rsi_4_limit": 70,
@@ -379,6 +379,7 @@ class AwesomeEWOLambo_Shorts(IStrategy):
             (dataframe['rsi_fast'] > 65) &  # INVERTED
             (dataframe['close'] > (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.low_offset.value)) &  # INVERTED
             (dataframe['EWO'] > self.ewo_low.value) &  # INVERTED: > (ewo_low is positive)
+            (dataframe['rsi_14'] > self.rsi_sell.value) &
             (dataframe['volume'] > 0) &
             (dataframe['close'] > (dataframe[f'ma_cover_{self.base_nb_candles_cover.value}'] * self.high_offset.value))  # INVERTED
         )

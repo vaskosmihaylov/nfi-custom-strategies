@@ -29,7 +29,7 @@ class AwesomeEWOLambo(IStrategy):
     minimal_roi = {"0": 0.02, "20": 0.015, "40": 0.014, "60": 0.012, "180": 0.015, }
     # Optimal stoploss designed for the strategy
     # This attribute will be overridden if the config file contains "stoploss"
-    stoploss = -0.2  # Tightened from -0.7 (was allowing -34% losses)
+    stoploss = -0.16  # Tightened after repeated stoploss / unclog losses in dry-run and 90d backtests
     # Optimal timeframe for the strategy
     timeframe = '5m'
     # Protection
@@ -38,15 +38,15 @@ class AwesomeEWOLambo(IStrategy):
     # Buy hyperspace params:
     buy_params = {
         "base_nb_candles_buy": 12,
-        "ewo_high": 1.001,
+        "ewo_high": 3.023,
         "ewo_high_2": -3.585,
-        "low_offset": 0.987,
+        "low_offset": 0.995,
         "low_offset_2": 0.942,
-        "ewo_low": -2.289,
+        "ewo_low": -9.606,
         "rsi_buy": 58,
-        "lambo2_ema_14_factor": 0.981,
-        "lambo2_rsi_14_limit": 39,
-        "lambo2_rsi_4_limit": 44,
+        "lambo2_ema_14_factor": 1.041,
+        "lambo2_rsi_14_limit": 44,
+        "lambo2_rsi_4_limit": 6,
     }
 
     # Sell hyperspace params:
@@ -155,7 +155,7 @@ class AwesomeEWOLambo(IStrategy):
         return max(new_stoploss, self.stoploss)  # Ensure it's not below the initial stop loss
     def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         # Tightened from 10 days to 3 days - with 1x leverage, no reason to hold losers so long
-        if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 3:
+        if current_profit < -0.03 and (current_time - trade.open_date_utc).days >= 2:
             return 'unclog'
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, sell_reason: str,
@@ -287,7 +287,7 @@ class AwesomeEWOLambo(IStrategy):
         lambo2 = (
             (dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value)) &
             (dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value)) &
-            (dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value)) 
+            (dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value))
 
         )
         dataframe.loc[lambo2, 'enter_tag'] += 'buy_lambo2_'
@@ -296,6 +296,7 @@ class AwesomeEWOLambo(IStrategy):
         buyewolow = ( (dataframe['rsi_fast'] < 35) &
                 (dataframe['close'] < (dataframe[f'ma_buy_{self.base_nb_candles_buy.value}'] * self.low_offset.value)) &
                 (dataframe['EWO'] < self.ewo_low.value) &
+                (dataframe['rsi_14'] < 35) &
                 (dataframe['volume'] > 0) &
                 (dataframe['close'] < (
                     dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value)))

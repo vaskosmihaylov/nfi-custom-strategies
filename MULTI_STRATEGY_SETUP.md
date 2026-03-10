@@ -23,8 +23,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ETCG_Shorts (Port 8103)
                            ├── ClucHAnix_hhll (Port 8106)
                            ├── ClucHAnix_hhll_Shorts (Port 8107)
-                           ├── AwesomeEWOLambo (Port 8108)
-                           ├── AwesomeEWOLambo_Shorts (Port 8109)
                            ├── GeneStrategy_v2 (Port 8114)
                            ├── GeneStrategy_v2_Shorts (Port 8115)
                            ├── KamaFama (Port 8091)
@@ -55,8 +53,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
 - `cluchanix_hhll.env` - ClucHAnix_hhll strategy (longs-only, Heikin Ashi + BB)
 - `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, Heikin Ashi + BB)
-- `awesomeewolambo.env` - AwesomeEWOLambo strategy (longs-only)
-- `awesomeewolambo_shorts.env` - AwesomeEWOLambo_Shorts strategy (shorts-only)
 - `genestrategy_v2.env` - GeneStrategy_v2 strategy (longs with 3x leverage + DCA)
 - `genestrategy_v2_shorts.env` - GeneStrategy_v2_Shorts strategy (shorts with 3x leverage + DCA)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
@@ -145,8 +141,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 | **ClucHAnix_hhll** | `Vasko_ClucHAnix_hhll` | `http://freq.gaiaderma.com/cluchanix_hhll` | `cluchanix_hhll_user` | `cluchanix_hhll_secure_password` |
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
-| **AwesomeEWOLambo** | `Vasko_AwesomeEWOLambo` | `http://freq.gaiaderma.com/awesomeewolambo` | `awesomeewolambo_user` | `awesomeewolambo_secure_password` |
-| **AwesomeEWOLambo_Shorts** | `Vasko_AwesomeEWOLambo_Shorts` | `http://freq.gaiaderma.com/awesomeewolambo_shorts` | `awesomeewolambo_shorts_user` | `awesomeewolambo_shorts_secure_password` |
 | **GeneStrategy_v2** | `Vasko_GeneStrategy_v2` | `http://freq.gaiaderma.com/genestrategy_v2` | `genestrategy_v2_user` | `genestrategy_v2_secure_password` |
 | **GeneStrategy_v2_Shorts** | `Vasko_GeneStrategy_v2_Shorts` | `http://freq.gaiaderma.com/genestrategy_v2_shorts` | `genestrategy_v2_shorts_user` | `genestrategy_v2_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
@@ -202,8 +196,6 @@ curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
 curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
-curl http://127.0.0.1:8108/api/v1/ping  # AwesomeEWOLambo
-curl http://127.0.0.1:8109/api/v1/ping  # AwesomeEWOLambo_Shorts
 curl http://127.0.0.1:8114/api/v1/ping  # GeneStrategy_v2
 curl http://127.0.0.1:8115/api/v1/ping  # GeneStrategy_v2_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
@@ -223,8 +215,6 @@ curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/awesomeewolambo/api/v1/ping
-curl http://freq.gaiaderma.com/awesomeewolambo_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2/api/v1/ping
 curl http://freq.gaiaderma.com/genestrategy_v2_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
@@ -274,8 +264,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8103 | ETCG_Shorts | Shorts | 3x |
 | 8106 | ClucHAnix_hhll | Longs | - |
 | 8107 | ClucHAnix_hhll_Shorts | Shorts | - |
-| 8108 | AwesomeEWOLambo | Longs | - |
-| 8109 | AwesomeEWOLambo_Shorts | Shorts | - |
 | 8114 | GeneStrategy_v2 | Longs | 3x |
 | 8115 | GeneStrategy_v2_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
@@ -298,8 +286,6 @@ Each strategy uses its own SQLite database:
 - `etcg_shorts-tradesv3.sqlite`
 - `cluchanix_hhll-tradesv3.sqlite`
 - `cluchanix_hhll_shorts-tradesv3.sqlite`
-- `awesomeewolambo-tradesv3.sqlite`
-- `awesomeewolambo_shorts-tradesv3.sqlite`
 - `genestrategy_v2-tradesv3.sqlite`
 - `genestrategy_v2_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
