@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **20 active trading strategies** running in separate Docker containers
+- **14 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -25,8 +25,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── ClucHAnix_hhll_Shorts (Port 8107)
                            ├── KamaFama (Port 8091)
                            ├── KamaFama_Shorts (Port 8093)
-                           ├── FrankenStrat (Port 8119)
-                           ├── FrankenStrat_Shorts (Port 8118)
+                           ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
                            ├── BollingerBounce_Shorts (Port 8125)
                            ├── KeltnerBounce (Port 8126)
@@ -53,8 +52,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, Heikin Ashi + BB)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
-- `frankenstrat.env` - FrankenStrat strategy (longs with 3x leverage, multi-signal dip buyer)
-- `frankenstrat_shorts.env` - FrankenStrat_Shorts strategy (shorts with 3x leverage, multi-signal inverted)
+- `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
 - `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
 - `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `keltnerbounce.env` - KeltnerBounce strategy (longs with 3x leverage)
@@ -139,8 +137,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
-| **FrankenStrat** | `Vasko_FrankenStrat` | `http://freq.gaiaderma.com/frankenstrat` | `frankenstrat_user` | `frankenstrat_secure_password` |
-| **FrankenStrat_Shorts** | `Vasko_FrankenStrat_Shorts` | `http://freq.gaiaderma.com/frankenstrat_shorts` | `frankenstrat_shorts_user` | `frankenstrat_shorts_secure_password` |
+| **ZaratustraDCA2_06** | `Vasko_ZaratustraDCA2_06` | `http://freq.gaiaderma.com/zaratustra` | `zaratustra_user` | `zaratustra_secure_password` |
 | **BollingerBounce** | `Vasko_BollingerBounce` | `http://freq.gaiaderma.com/bollingerbounce` | `bollingerbounce_user` | `bollingerbounce_secure_password` |
 | **BollingerBounce_Shorts** | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
 | **KeltnerBounce** | `Vasko_KeltnerBounce` | `http://freq.gaiaderma.com/keltnerbounce` | `keltnerbounce_user` | `keltnerbounce_secure_password` |
@@ -192,8 +189,7 @@ curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
 curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
-curl http://127.0.0.1:8119/api/v1/ping  # FrankenStrat
-curl http://127.0.0.1:8118/api/v1/ping  # FrankenStrat_Shorts
+curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
 curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
 curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
 curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
@@ -209,8 +205,7 @@ curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
 curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/frankenstrat/api/v1/ping
-curl http://freq.gaiaderma.com/frankenstrat_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
@@ -256,14 +251,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8107 | ClucHAnix_hhll_Shorts | Shorts | - |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
-| 8118 | FrankenStrat_Shorts | Shorts | 3x |
-| 8119 | FrankenStrat | Longs | 3x |
+| 8119 | ZaratustraDCA2_06 | Longs + Shorts | Config-defined |
 | 8124 | BollingerBounce | Longs | 3x |
 | 8125 | BollingerBounce_Shorts | Shorts | 3x |
 | 8126 | KeltnerBounce | Longs | 3x |
 | 8127 | KeltnerBounce_Shorts | Shorts | 3x |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8128+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8128+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -276,8 +270,7 @@ Each strategy uses its own SQLite database:
 - `cluchanix_hhll_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
-- `frankenstrat-tradesv3.sqlite`
-- `frankenstrat_shorts-tradesv3.sqlite`
+- `zaratustra-tradesv3.sqlite`
 - `bollingerbounce-tradesv3.sqlite`
 - `bollingerbounce_shorts-tradesv3.sqlite`
 - `keltnerbounce-tradesv3.sqlite`
@@ -389,10 +382,8 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 - **Added**: BollingerBounce (longs, port 8124) and BollingerBounce_Shorts (shorts, port 8125), both 3x leverage
 - **Added**: KeltnerBounce (longs, port 8126) and KeltnerBounce_Shorts (shorts, port 8127), both 3x leverage
 
-## Recent Changes (February 10, 2026)
-- **Added**: FrankenStrat (longs, port 8119) - Multi-signal dip buyer with 3x leverage, SSL/MACD/EWO-based entries
-- **Added**: FrankenStrat_Shorts (shorts, port 8118) - Shorts-only variant of FrankenStrat with 7 inverted signals, 3x leverage, -20% emergency backstop
-- **Fixed**: `np.NAN` → `np.nan` in both FrankenStrat files (NumPy 2.x compatibility)
+## Recent Changes (March 11, 2026)
+- **Added**: ZaratustraDCA2_06 (mixed long/short, port 8119) with `/zaratustra` reverse-proxy routing
 
 ## Recent Changes (February 9, 2026)
 - **Removed**: BinClucMadV1 strategy (port 8092)
