@@ -76,8 +76,6 @@ update_all_env_files() {
         "env-files/etcg_shorts.env"
         "env-files/cluchanix_hhll.env"
         "env-files/cluchanix_hhll_shorts.env"
-        "env-files/genestrategy_v2.env"
-        "env-files/genestrategy_v2_shorts.env"
         "env-files/kamafama.env"
         "env-files/kamafama_shorts.env"
         "env-files/frankenstrat.env"
