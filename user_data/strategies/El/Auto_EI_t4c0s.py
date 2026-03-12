@@ -623,6 +623,7 @@ class Auto_EI_t4c0s(IStrategy):
 
         dataframe['buy_decision'] = dataframe['buy_weight'] - dataframe['sell_weight']
         dataframe['sell_decision'] = dataframe['sell_weight'] - dataframe['buy_weight']
+        dataframe = dataframe.copy()
 
         dataframe['Gen Buy Above'] = (
             dataframe['gen_buy'] > min(
