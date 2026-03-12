@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **14 active trading strategies** running in separate Docker containers
+- **15 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -29,7 +29,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KeltnerBounce (Port 8126)
                            ├── KeltnerBounce_Shorts (Port 8127)
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
-                           └── Lmao (Port 8129)
+                           ├── Lmao (Port 8129)
+                           └── GKD_FisherTransformV4_ML (Port 8130)
 ```
 
 ## Files
@@ -57,6 +58,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
 - `lmao.env` - Lmao strategy (long-only Lmao family strategy)
+- `gkd_transformv55_ml.env` - GKD_FisherTransformV4_ML strategy (ML-enhanced futures strategy)
 
 ## Quick Start
 
@@ -142,6 +144,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **KeltnerBounce_Shorts** | `Vasko_KeltnerBounce_Shorts` | `http://freq.gaiaderma.com/keltnerbounce_shorts` | `keltnerbounce_shorts_user` | `keltnerbounce_shorts_secure_password` |
 | **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2` | `http://freq.gaiaderma.com/ultrasmart_nostop_v2` | `ultrasmart_nostop_v2_user` | `ultrasmart_nostop_v2_secure_password` |
 | **Lmao** | `Vasko_Lmao` | `http://freq.gaiaderma.com/lmao` | `lmao_user` | `lmao_secure_password` |
+| **GKD_FisherTransformV4_ML** | `Vasko_GKD_FisherTransformV4_ML` | `http://freq.gaiaderma.com/gkd_transformv55_ml` | `gkd_transformv55_ml_user` | `gkd_transformv55_ml_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -194,6 +197,7 @@ curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
 curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # Lmao
+curl http://127.0.0.1:8130/api/v1/ping  # GKD_FisherTransformV4_ML
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -210,6 +214,7 @@ curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/lmao/api/v1/ping
+curl http://freq.gaiaderma.com/gkd_transformv55_ml/api/v1/ping
 ```
 
 ### Log Management
@@ -256,8 +261,9 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8127 | KeltnerBounce_Shorts | Shorts | 3x |
 | 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs | Config-defined |
 | 8129 | Lmao | Longs | Config-defined |
+| 8130 | GKD_FisherTransformV4_ML | Longs + Shorts | Strategy-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8131+
 
 ### Database Separation
 Each strategy uses its own SQLite database:

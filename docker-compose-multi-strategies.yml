@@ -267,6 +267,23 @@ services:
       --strategy-path user_data/strategies/Lmao
       --strategy Lmao
 
+  # GKD_FisherTransformV4_ML Strategy
+  freqtrade-gkd-transformv55-ml:
+    <<: *common-settings
+    container_name: freqtrade-gkd-transformv55-ml
+    ports:
+      - "127.0.0.1:8130:8080"
+    env_file:
+      - path: ./env-files/gkd_transformv55_ml.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/gkd_transformv55_ml-tradesv3.sqlite
+      --log-file user_data/logs/gkd_transformv55_ml.log
+      --strategy-path user_data/strategies/GKD_TRANSFORMV55_ML
+      --strategy GKD_FisherTransformV4_ML
+
 networks:
   default:
     name: freqtrade-network
