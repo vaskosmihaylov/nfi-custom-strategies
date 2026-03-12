@@ -515,15 +515,33 @@ class Lmao(IStrategy):
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # Main timeframe indicators
         inf_tf = "5m"
-        informative = self.dp.get_pair_dataframe("BTC/USDT", timeframe=inf_tf)
-        informative_btc = informative.copy().shift(1)
+        btc_info_pair = "BTC/USDT"
+        if self.config.get("trading_mode", "spot") == "futures":
+            stake_currency = self.config.get("stake_currency", "USDT")
+            btc_info_pair = f"BTC/{stake_currency}:{stake_currency}"
 
-        dataframe["btc_close"] = informative_btc["close"]
-        dataframe["btc_ema_fast"] = ta.EMA(informative_btc, timeperiod=20)
-        dataframe["btc_ema_slow"] = ta.EMA(informative_btc, timeperiod=25)
-        dataframe["down"] = (
-            dataframe["btc_ema_fast"] < dataframe["btc_ema_slow"]
-        ).astype("int")
+        informative = self.dp.get_pair_dataframe(btc_info_pair, timeframe=inf_tf)
+        if informative.empty or "close" not in informative.columns:
+            logger.warning(
+                "Missing BTC informative data for %s on %s. Falling back to pair close.",
+                btc_info_pair,
+                inf_tf,
+            )
+            dataframe["btc_close"] = dataframe["close"]
+            dataframe["btc_ema_fast"] = ta.EMA(dataframe, timeperiod=20)
+            dataframe["btc_ema_slow"] = ta.EMA(dataframe, timeperiod=25)
+            dataframe["down"] = (
+                dataframe["btc_ema_fast"] < dataframe["btc_ema_slow"]
+            ).astype("int")
+        else:
+            informative_btc = informative.copy().shift(1)
+
+            dataframe["btc_close"] = informative_btc["close"]
+            dataframe["btc_ema_fast"] = ta.EMA(informative_btc, timeperiod=20)
+            dataframe["btc_ema_slow"] = ta.EMA(informative_btc, timeperiod=25)
+            dataframe["down"] = (
+                dataframe["btc_ema_fast"] < dataframe["btc_ema_slow"]
+            ).astype("int")
 
         for val in self.base_nb_candles_sell.range:
             dataframe[f"ma_sell_{val}"] = ta.EMA(dataframe, timeperiod=val)
