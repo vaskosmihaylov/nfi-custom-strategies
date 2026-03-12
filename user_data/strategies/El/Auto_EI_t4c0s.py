@@ -624,25 +624,33 @@ class Auto_EI_t4c0s(IStrategy):
         dataframe['buy_decision'] = dataframe['buy_weight'] - dataframe['sell_weight']
         dataframe['sell_decision'] = dataframe['sell_weight'] - dataframe['buy_weight']
 
-        dataframe['Gen Buy Above'] = 0
-        dataframe.loc[(dataframe['gen_buy'] > self.b01.value), 'Gen Buy Above'] = 1
-        dataframe.loc[(dataframe['gen_buy'] > self.b02.value), 'Gen Buy Above'] = 1
-        dataframe.loc[(dataframe['gen_buy'] > self.b03.value), 'Gen Buy Above'] = 1
-        dataframe.loc[(dataframe['gen_buy'] > self.b04.value), 'Gen Buy Above'] = 1
-        dataframe.loc[(dataframe['gen_buy'] > self.b05.value), 'Gen Buy Above'] = 1
-        dataframe.loc[(dataframe['gen_buy'] > self.b06.value), 'Gen Buy Above'] = 1
+        dataframe['Gen Buy Above'] = (
+            dataframe['gen_buy'] > min(
+                self.b01.value,
+                self.b02.value,
+                self.b03.value,
+                self.b04.value,
+                self.b05.value,
+                self.b06.value,
+            )
+        ).astype(int)
 
-        dataframe['Gen Sell Above'] = 0
-        dataframe.loc[(dataframe['gen_sell'] > self.s01.value), 'Gen Sell Above'] = 1
-        dataframe.loc[(dataframe['gen_sell'] > self.s02.value), 'Gen Sell Above'] = 1
-        dataframe.loc[(dataframe['gen_sell'] > self.s03.value), 'Gen Sell Above'] = 1
-        dataframe.loc[(dataframe['gen_sell'] > self.s04.value), 'Gen Sell Above'] = 1
-        dataframe.loc[(dataframe['gen_sell'] > self.s05.value), 'Gen Sell Above'] = 1
-        dataframe.loc[(dataframe['gen_sell'] > self.s06.value), 'Gen Sell Above'] = 1
+        dataframe['Gen Sell Above'] = (
+            dataframe['gen_sell'] > min(
+                self.s01.value,
+                self.s02.value,
+                self.s03.value,
+                self.s04.value,
+                self.s05.value,
+                self.s06.value,
+            )
+        ).astype(int)
 
-        return dataframe
+        # Defragment before Freqtrade injects enter/exit tag columns.
+        return dataframe.copy()
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = dataframe.copy()
 
         ewo_fib_dn = (
                 (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
@@ -706,6 +714,7 @@ class Auto_EI_t4c0s(IStrategy):
 
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = dataframe.copy()
 
         ewo_fib_dns = (
                 (dataframe['EWO'] < dataframe['EWO_DN_FIB']) &
