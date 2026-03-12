@@ -74,8 +74,6 @@ update_all_env_files() {
         "env-files/auto_ei_t4c0s.env"
         "env-files/auto_ei_t4c0s_shorts.env"
         "env-files/etcg_shorts.env"
-        "env-files/cluchanix_hhll.env"
-        "env-files/cluchanix_hhll_shorts.env"
         "env-files/kamafama.env"
         "env-files/kamafama_shorts.env"
         "env-files/zaratustra.env"
@@ -83,6 +81,8 @@ update_all_env_files() {
         "env-files/bollingerbounce_shorts.env"
         "env-files/keltnerbounce.env"
         "env-files/keltnerbounce_shorts.env"
+        "env-files/ultrasmart_nostop_v2.env"
+        "env-files/lmao.env"
     )
     
     for env_file in "${env_files[@]}"; do

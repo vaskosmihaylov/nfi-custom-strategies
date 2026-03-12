@@ -63,11 +63,11 @@ show_help() {
     echo "Available strategies:"
     echo "  nfi-x7, e0v1e, e0v1e_shorts,"
     echo "  auto_ei_t4c0s, etcg_shorts,"
-    echo "  cluchanix-hhll, cluchanix-hhll-shorts,"
     echo "  kamafama, kamafama_shorts,"
     echo "  zaratustra,"
     echo "  bollingerbounce, bollingerbounce_shorts,"
-    echo "  keltnerbounce, keltnerbounce_shorts"
+    echo "  keltnerbounce, keltnerbounce_shorts,"
+    echo "  ultrasmart_nostop_v2, lmao"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -83,8 +83,6 @@ show_help() {
     echo "  E0V1E_Shorts:          http://freq.gaiaderma.com/e0v1e_shorts"
     echo "  Auto_EI_t4c0s:         http://freq.gaiaderma.com/auto_ei_t4c0s"
     echo "  ETCG_Shorts:           http://freq.gaiaderma.com/etcg_shorts"
-    echo "  ClucHAnix_hhll:        http://freq.gaiaderma.com/cluchanix_hhll"
-    echo "  ClucHAnix_hhll_Shorts: http://freq.gaiaderma.com/cluchanix_hhll_shorts"
     echo "  KamaFama:              http://freq.gaiaderma.com/kamafama"
     echo "  KamaFama_Shorts:       http://freq.gaiaderma.com/kamafama_shorts"
     echo "  ZaratustraDCA2_06:     http://freq.gaiaderma.com/zaratustra"
@@ -92,6 +90,8 @@ show_help() {
     echo "  BollingerBounce_Shorts: http://freq.gaiaderma.com/bollingerbounce_shorts"
     echo "  KeltnerBounce:         http://freq.gaiaderma.com/keltnerbounce"
     echo "  KeltnerBounce_Shorts:  http://freq.gaiaderma.com/keltnerbounce_shorts"
+    echo "  UltraSmart_NoStop_v2:  http://freq.gaiaderma.com/ultrasmart_nostop_v2"
+    echo "  Lmao:                  http://freq.gaiaderma.com/lmao"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -225,8 +225,6 @@ health_check() {
         "auto_ei_t4c0s:8100"
         "etcg:8102"
         "etcg_shorts:8103"
-        "cluchanix-hhll:8106"
-        "cluchanix-hhll-shorts:8107"
         "kamafama:8091"
         "kamafama_shorts:8093"
         "zaratustra:8119"
@@ -234,6 +232,8 @@ health_check() {
         "bollingerbounce_shorts:8125"
         "keltnerbounce:8126"
         "keltnerbounce_shorts:8127"
+        "ultrasmart_nostop_v2:8128"
+        "lmao:8129"
     )
     
     local healthy=0

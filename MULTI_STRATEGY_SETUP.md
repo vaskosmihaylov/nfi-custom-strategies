@@ -21,15 +21,15 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── E0V1E_Shorts (Port 8099)
                            ├── Auto_EI_t4c0s (Port 8100)
                            ├── ETCG_Shorts (Port 8103)
-                           ├── ClucHAnix_hhll (Port 8106)
-                           ├── ClucHAnix_hhll_Shorts (Port 8107)
                            ├── KamaFama (Port 8091)
                            ├── KamaFama_Shorts (Port 8093)
                            ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
                            ├── BollingerBounce_Shorts (Port 8125)
                            ├── KeltnerBounce (Port 8126)
-                           └── KeltnerBounce_Shorts (Port 8127)
+                           ├── KeltnerBounce_Shorts (Port 8127)
+                           ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
+                           └── Lmao (Port 8129)
 ```
 
 ## Files
@@ -48,8 +48,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
-- `cluchanix_hhll.env` - ClucHAnix_hhll strategy (longs-only, Heikin Ashi + BB)
-- `cluchanix_hhll_shorts.env` - ClucHAnix_hhll_Shorts strategy (shorts-only, Heikin Ashi + BB)
 - `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
 - `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
 - `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
@@ -57,6 +55,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `keltnerbounce.env` - KeltnerBounce strategy (longs with 3x leverage)
 - `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
+- `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
+- `lmao.env` - Lmao strategy (long-only Lmao family strategy)
 
 ## Quick Start
 
@@ -133,8 +133,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
 | **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
-| **ClucHAnix_hhll** | `Vasko_ClucHAnix_hhll` | `http://freq.gaiaderma.com/cluchanix_hhll` | `cluchanix_hhll_user` | `cluchanix_hhll_secure_password` |
-| **ClucHAnix_hhll_Shorts** | `Vasko_ClucHAnix_hhll_Shorts` | `http://freq.gaiaderma.com/cluchanix_hhll_shorts` | `cluchanix_hhll_shorts_user` | `cluchanix_hhll_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
 | **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **ZaratustraDCA2_06** | `Vasko_ZaratustraDCA2_06` | `http://freq.gaiaderma.com/zaratustra` | `zaratustra_user` | `zaratustra_secure_password` |
@@ -142,6 +140,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **BollingerBounce_Shorts** | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
 | **KeltnerBounce** | `Vasko_KeltnerBounce` | `http://freq.gaiaderma.com/keltnerbounce` | `keltnerbounce_user` | `keltnerbounce_secure_password` |
 | **KeltnerBounce_Shorts** | `Vasko_KeltnerBounce_Shorts` | `http://freq.gaiaderma.com/keltnerbounce_shorts` | `keltnerbounce_shorts_user` | `keltnerbounce_shorts_secure_password` |
+| **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2` | `http://freq.gaiaderma.com/ultrasmart_nostop_v2` | `ultrasmart_nostop_v2_user` | `ultrasmart_nostop_v2_secure_password` |
+| **Lmao** | `Vasko_Lmao` | `http://freq.gaiaderma.com/lmao` | `lmao_user` | `lmao_secure_password` |
 
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
@@ -185,8 +185,6 @@ curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
-curl http://127.0.0.1:8106/api/v1/ping  # ClucHAnix_hhll
-curl http://127.0.0.1:8107/api/v1/ping  # ClucHAnix_hhll_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
@@ -194,6 +192,8 @@ curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
 curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
 curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
 curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
+curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
+curl http://127.0.0.1:8129/api/v1/ping  # Lmao
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -201,8 +201,6 @@ curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/cluchanix_hhll/api/v1/ping
-curl http://freq.gaiaderma.com/cluchanix_hhll_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
@@ -210,6 +208,8 @@ curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
+curl http://freq.gaiaderma.com/lmao/api/v1/ping
 ```
 
 ### Log Management
@@ -247,8 +247,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8099 | E0V1E_Shorts | Shorts | 3x |
 | 8100 | Auto_EI_t4c0s | Longs | - |
 | 8103 | ETCG_Shorts | Shorts | 3x |
-| 8106 | ClucHAnix_hhll | Longs | - |
-| 8107 | ClucHAnix_hhll_Shorts | Shorts | - |
 | 8091 | KamaFama | Longs | 3x |
 | 8093 | KamaFama_Shorts | Shorts | 3x |
 | 8119 | ZaratustraDCA2_06 | Longs + Shorts | Config-defined |
@@ -256,8 +254,10 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8125 | BollingerBounce_Shorts | Shorts | 3x |
 | 8126 | KeltnerBounce | Longs | 3x |
 | 8127 | KeltnerBounce_Shorts | Shorts | 3x |
+| 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs | Config-defined |
+| 8129 | Lmao | Longs | Config-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8128+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -266,8 +266,6 @@ Each strategy uses its own SQLite database:
 - `e0v1e_shorts-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
 - `etcg_shorts-tradesv3.sqlite`
-- `cluchanix_hhll-tradesv3.sqlite`
-- `cluchanix_hhll_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `kamafama_shorts-tradesv3.sqlite`
 - `zaratustra-tradesv3.sqlite`
@@ -275,6 +273,8 @@ Each strategy uses its own SQLite database:
 - `bollingerbounce_shorts-tradesv3.sqlite`
 - `keltnerbounce-tradesv3.sqlite`
 - `keltnerbounce_shorts-tradesv3.sqlite`
+- `ultrasmart_nostop_v2-tradesv3.sqlite`
+- `lmao-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
