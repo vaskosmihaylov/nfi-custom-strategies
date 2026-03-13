@@ -1989,13 +1989,17 @@ class GKD_FisherTransformV4_ML(IStrategy):
             "Strong Signal Periods", f"{signal_str_count}/{len(dataframe)}", "⚡"
         )
 
+        long_fisher_condition = dataframe["fisher"] > fisher_buy_threshold
+        long_momentum_condition = dataframe["fisher_smooth_long"] < dataframe["fisher"]
+        long_regime_condition = dataframe["market_regime"] >= 0
+
         # Long entry with ML enhancements
         long_conditions = (
-            (dataframe["fisher"] < fisher_sell_threshold)
-            & (dataframe["fisher_smooth_long"] < dataframe["fisher"])
+            long_fisher_condition
+            & long_momentum_condition
             & ml_confidence_condition
             & signal_strength_condition
-            & (dataframe["market_regime"] >= 0)  # Neutral or bull market
+            & long_regime_condition  # Neutral or bull market
         )
 
         dataframe.loc[long_conditions, ["enter_long", "enter_tag"]] = [
@@ -2008,14 +2012,18 @@ class GKD_FisherTransformV4_ML(IStrategy):
 
         # Short entry with ML enhancements (if enabled)
         if self.can_short:
+            short_fisher_condition = dataframe["fisher_smooth_short"] < fisher_sell_threshold
+            short_zone_condition = (dataframe["close"] >= dataframe["goldie_min"]) & (
+                dataframe["close"] <= dataframe["goldie_max"]
+            )
+            short_regime_condition = dataframe["market_regime"] <= 0
             short_conditions = (
-                (dataframe["fisher_smooth_short"] < fisher_sell_threshold)
+                short_fisher_condition
                 & (dataframe["baseline_down"])
-                & (dataframe["close"] >= dataframe["goldie_min"])
-                & (dataframe["close"] <= dataframe["goldie_max"])
+                & short_zone_condition
                 & ml_confidence_condition
                 & signal_strength_condition
-                & (dataframe["market_regime"] <= 0)  # Neutral or bear market
+                & short_regime_condition  # Neutral or bear market
             )
 
             dataframe.loc[short_conditions, ["enter_short", "enter_tag"]] = [
@@ -2044,6 +2052,54 @@ class GKD_FisherTransformV4_ML(IStrategy):
         current_confidence = dataframe["ml_confidence"].iloc[-1]
         current_strength = dataframe["ml_signal_strength"].iloc[-1]
         current_regime = dataframe["market_regime"].iloc[-1]
+
+        EnhancedLogger.log_section("LAST CANDLE GATE CHECK", "🧪")
+        EnhancedLogger.log_parameter(
+            "Long Fisher > Buy Threshold",
+            bool(long_fisher_condition.iloc[-1]),
+            "🟢",
+        )
+        EnhancedLogger.log_parameter(
+            "Long Momentum Confirmed",
+            bool(long_momentum_condition.iloc[-1]),
+            "🟢",
+        )
+        EnhancedLogger.log_parameter(
+            "ML Confidence > Threshold",
+            bool(ml_confidence_condition.iloc[-1]),
+            "🎯",
+        )
+        EnhancedLogger.log_parameter(
+            "Signal Strength > 0.6",
+            bool(signal_strength_condition.iloc[-1]),
+            "⚡",
+        )
+        EnhancedLogger.log_parameter(
+            "Long Regime Allowed",
+            bool(long_regime_condition.iloc[-1]),
+            "🏛️",
+        )
+        if self.can_short:
+            EnhancedLogger.log_parameter(
+                "Short Fisher < Sell Threshold",
+                bool(short_fisher_condition.iloc[-1]),
+                "🔴",
+            )
+            EnhancedLogger.log_parameter(
+                "Baseline Down",
+                bool(dataframe["baseline_down"].iloc[-1]),
+                "🔴",
+            )
+            EnhancedLogger.log_parameter(
+                "Price In Goldie Zone",
+                bool(short_zone_condition.iloc[-1]),
+                "🔴",
+            )
+            EnhancedLogger.log_parameter(
+                "Short Regime Allowed",
+                bool(short_regime_condition.iloc[-1]),
+                "🏛️",
+            )
 
         EnhancedLogger.log_section("CURRENT MARKET STATE", "📈")
         EnhancedLogger.log_parameter("Fisher Value", f"{current_fisher:.3f}", "🎣")
