@@ -240,7 +240,7 @@ class AlexBandSniper(IStrategy):
     can_short = True
     use_custom_stoploss = False
     #max_open_trades = 10
-    leverage_value = 7.0
+    leverage_value = 3.0
 
     # Trailing stoploss
     trailing_stop = True

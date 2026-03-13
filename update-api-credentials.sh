@@ -84,6 +84,7 @@ update_all_env_files() {
         "env-files/ultrasmart_nostop_v2.env"
         "env-files/lmao.env"
         "env-files/gkd_transformv55_ml.env"
+        "env-files/notankai.env"
     )
     
     for env_file in "${env_files[@]}"; do

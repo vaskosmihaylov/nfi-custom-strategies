@@ -68,7 +68,7 @@ show_help() {
     echo "  bollingerbounce, bollingerbounce_shorts,"
     echo "  keltnerbounce, keltnerbounce_shorts,"
     echo "  ultrasmart_nostop_v2, lmao,"
-    echo "  gkd-transformv55-ml, atgdfv2"
+    echo "  gkd-transformv55-ml, atgdfv2, notankai"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -95,6 +95,7 @@ show_help() {
     echo "  Lmao:                  http://freq.gaiaderma.com/lmao"
     echo "  GKD_FisherTransformV4_ML: http://freq.gaiaderma.com/gkd_transformv55_ml"
     echo "  ATGDFV2 file strategy: http://freq.gaiaderma.com/atgdfv2"
+    echo "  NOTankAi_15_Cleaned_v2: http://freq.gaiaderma.com/notankai"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -239,6 +240,7 @@ health_check() {
         "lmao:8129"
         "gkd-transformv55-ml:8130"
         "atgdfv2:8131"
+        "notankai:8132"
     )
     
     local healthy=0
