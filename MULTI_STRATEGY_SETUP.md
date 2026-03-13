@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **15 active trading strategies** running in separate Docker containers
+- **16 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -30,7 +30,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KeltnerBounce_Shorts (Port 8127)
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
                            ├── Lmao (Port 8129)
-                           └── GKD_FisherTransformV4_ML (Port 8130)
+                           ├── GKD_FisherTransformV4_ML (Port 8130)
+                           └── ATGDFV2 file strategy / AlexBandSniper (Port 8131)
 ```
 
 ## Files
@@ -59,6 +60,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
 - `lmao.env` - Lmao strategy (long-only Lmao family strategy)
 - `gkd_transformv55_ml.env` - GKD_FisherTransformV4_ML strategy (ML-enhanced futures strategy)
+- `atgdfv2.env` - ATGDFV2 file strategy using runtime class `AlexBandSniper`
 
 ## Quick Start
 
@@ -198,6 +200,7 @@ curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # Lmao
 curl http://127.0.0.1:8130/api/v1/ping  # GKD_FisherTransformV4_ML
+curl http://127.0.0.1:8131/api/v1/ping  # ATGDFV2 / AlexBandSniper
 
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -215,6 +218,7 @@ curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/lmao/api/v1/ping
 curl http://freq.gaiaderma.com/gkd_transformv55_ml/api/v1/ping
+curl http://freq.gaiaderma.com/atgdfv2/api/v1/ping
 ```
 
 ### Log Management
@@ -262,8 +266,9 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs | Config-defined |
 | 8129 | Lmao | Longs | Config-defined |
 | 8130 | GKD_FisherTransformV4_ML | Longs + Shorts | Strategy-defined |
+| 8131 | ATGDFV2 / AlexBandSniper | Longs + Shorts | 7x leverage in strategy |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8131+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8132+
 
 ### Database Separation
 Each strategy uses its own SQLite database:
@@ -281,6 +286,8 @@ Each strategy uses its own SQLite database:
 - `keltnerbounce_shorts-tradesv3.sqlite`
 - `ultrasmart_nostop_v2-tradesv3.sqlite`
 - `lmao-tradesv3.sqlite`
+- `gkd_transformv55_ml-tradesv3.sqlite`
+- `atgdfv2-tradesv3.sqlite`
 
 ### NGINX Path Routing
 The NGINX configuration uses simple base paths without complex rewrites:
