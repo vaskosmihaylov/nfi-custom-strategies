@@ -45,7 +45,7 @@ class NOTankAi_15_Cleaned_v2(IStrategy):
     max_entry_position_adjustment = 0
     max_dca_multiplier = 1
     process_only_new_candles = True
-    can_short = False
+    can_short = True
     use_exit_signal = True
     startup_candle_count: int = 200
     stoploss = -0.99
