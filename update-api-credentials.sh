@@ -75,7 +75,6 @@ update_all_env_files() {
         "env-files/auto_ei_t4c0s_shorts.env"
         "env-files/etcg_shorts.env"
         "env-files/kamafama.env"
-        "env-files/kamafama_shorts.env"
         "env-files/zaratustra.env"
         "env-files/bollingerbounce.env"
         "env-files/bollingerbounce_shorts.env"

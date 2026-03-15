@@ -22,7 +22,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── Auto_EI_t4c0s (Port 8100)
                            ├── ETCG_Shorts (Port 8103)
                            ├── KamaFama (Port 8091)
-                           ├── KamaFama_Shorts (Port 8093)
                            ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
                            ├── BollingerBounce_Shorts (Port 8125)
@@ -51,8 +50,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
-- `kamafama.env` - KamaFama strategy (longs with 3x leverage, KAMA/FAMA mean-reversion)
-- `kamafama_shorts.env` - KamaFama_Shorts strategy (shorts with 3x leverage, KAMA/FAMA mean-reversion)
+- `kamafama.env` - KamaFama optimized long strategy (3x leverage, KAMA/FAMA mean-reversion)
 - `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
 - `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
 - `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
@@ -140,7 +138,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
-| **KamaFama_Shorts** | `Vasko_KamaFama_Shorts` | `http://freq.gaiaderma.com/kamafama_shorts` | `kamafama_shorts_user` | `kamafama_shorts_secure_password` |
 | **ZaratustraDCA2_06** | `Vasko_ZaratustraDCA2_06` | `http://freq.gaiaderma.com/zaratustra` | `zaratustra_user` | `zaratustra_secure_password` |
 | **BollingerBounce** | `Vasko_BollingerBounce` | `http://freq.gaiaderma.com/bollingerbounce` | `bollingerbounce_user` | `bollingerbounce_secure_password` |
 | **BollingerBounce_Shorts** | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
@@ -195,7 +192,6 @@ curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
-curl http://127.0.0.1:8093/api/v1/ping  # KamaFama_Shorts
 curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
 curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
 curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
@@ -214,7 +210,6 @@ curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
-curl http://freq.gaiaderma.com/kamafama_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
@@ -247,7 +242,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `e0v1e.log`, `e0v1e_shorts.log`
 - `auto_ei_t4c0s.log`
 - `etcg_shorts.log`
-- `kamafama.log`, `kamafama_shorts.log`
+- `kamafama.log`
 - etc.
 
 ## Configuration Details
@@ -265,7 +260,6 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8100 | Auto_EI_t4c0s | Longs | - |
 | 8103 | ETCG_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
-| 8093 | KamaFama_Shorts | Shorts | 3x |
 | 8119 | ZaratustraDCA2_06 | Longs + Shorts | Config-defined |
 | 8124 | BollingerBounce | Longs | 3x |
 | 8125 | BollingerBounce_Shorts | Shorts | 3x |
@@ -286,7 +280,6 @@ Each strategy uses its own SQLite database:
 - `auto_ei_t4c0s-tradesv3.sqlite`
 - `etcg_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
-- `kamafama_shorts-tradesv3.sqlite`
 - `zaratustra-tradesv3.sqlite`
 - `bollingerbounce-tradesv3.sqlite`
 - `bollingerbounce_shorts-tradesv3.sqlite`

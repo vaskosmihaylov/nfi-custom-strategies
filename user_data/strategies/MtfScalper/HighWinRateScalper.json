@@ -1,0 +1,35 @@
+{
+  "strategy_name": "HighWinRateScalper",
+  "params": {
+    "max_open_trades": {
+      "max_open_trades": 3
+    },
+    "buy": {
+      "bb_std": 1.828,
+      "bb_window": 16,
+      "rsi_oversold": 20,
+      "volume_mult": 1.102
+    },
+    "sell": {
+      "rsi_overbought": 73,
+      "take_profit_pct": 0.445
+    },
+    "roi": {
+      "0": 0.615,
+      "543": 0.224,
+      "1499": 0.057,
+      "2933": 0
+    },
+    "stoploss": {
+      "stoploss": -0.306
+    },
+    "trailing": {
+      "trailing_stop": true,
+      "trailing_stop_positive": 0.267,
+      "trailing_stop_positive_offset": 0.305,
+      "trailing_only_offset_is_reached": false
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-01-03 18:23:42.378763+00:00"
+}
