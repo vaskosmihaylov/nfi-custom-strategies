@@ -82,10 +82,6 @@
       "method": "FullTradesFilter"
     },
     {
-      "method": "SpreadFilter",
-      "max_spread_ratio": 0.005
-    },
-    {
       "method": "VolumePairList",
       "number_assets": 80,
       "sort_key": "quoteVolume"
