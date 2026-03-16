@@ -702,13 +702,24 @@ class AlexBandSniperV58COptuna(
 
     # ...existing code...
 
+    def _allow_dynamic_optimization(self) -> bool:
+        """Disable live-style optimization loops during backtest/hyperopt."""
+        if not self.enable_dynamic_optimization:
+            return False
+
+        runmode = getattr(getattr(self, "dp", None), "runmode", None)
+        if runmode and getattr(runmode, "value", None) in ["backtest", "hyperopt"]:
+            return False
+
+        return True
+
     def get_coin_params(self, pair: str) -> Dict[str, Any]:
         """Get optimized parameters for specific coin using real Optuna"""
         if pair not in self.coin_params:
             logger.debug(f"🔍 [OPTUNA] Loading parameters for new pair: {pair}")
 
             # Real Optuna optimization - no pre-training needed
-            if self.enable_dynamic_optimization and self.optuna_manager:
+            if self._allow_dynamic_optimization() and self.optuna_manager:
                 logger.info(
                     f"🚀 [OPTUNA] Real Optuna will optimize {pair} based on actual trade results"
                 )
@@ -1103,7 +1114,7 @@ class AlexBandSniperV58COptuna(
     def daily_optimization_check(self):
         """Enhanced optimization check with smarter scheduling"""
         try:
-            if not self.optuna_manager:
+            if not self.optuna_manager or not self._allow_dynamic_optimization():
                 return
 
             current_time = time.time()
@@ -3052,7 +3063,7 @@ class AlexBandSniperV58COptuna(
     def maybe_optimize_coin(self, pair: str, force_startup: bool = False):
         """ENHANCED optimization trigger with better permanent optimization"""
         # ADDED: Komplette neue Methode für Optimierungslogik
-        if not self.optuna_manager:
+        if not self.optuna_manager or not self._allow_dynamic_optimization():
             logger.debug(f"🚫 [OPTUNA] OptunaManager not available for {pair}")
             return
 
@@ -3257,15 +3268,16 @@ def pivot_points(dataframe: DataFrame, window: int = 5, pivot_source=None) -> Da
             # Additional validation: ensure pivot is significant
             if is_greater:
                 current_high = getattr(current_value, high_source)
-                # Check if high is significant enough (above ATR threshold)
+                # Stamp the pivot on the confirmation candle, not the pivot candle.
+                # This avoids backdating signals that require future candles to confirm.
                 if hasattr(current_value, "atr") and current_high > 0:
-                    pivot_points_highs[index - window] = current_high
+                    pivot_points_highs[index] = current_high
 
             if is_less:
                 current_low = getattr(current_value, low_source)
-                # Check if low is significant enough
+                # Stamp the pivot on the confirmation candle, not the pivot candle.
                 if hasattr(current_value, "atr") and current_low > 0:
-                    pivot_points_lows[index - window] = current_low
+                    pivot_points_lows[index] = current_low
 
             last_values.popleft()
 

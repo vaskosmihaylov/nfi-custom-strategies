@@ -267,6 +267,23 @@ services:
       --strategy-path user_data/strategies/GKD_TRANSFORMV55_ML
       --strategy GKD_FisherTransformV4_ML
 
+  # AlexBandSniperV58COptuna Strategy (Dry-run validation)
+  freqtrade-alexbandsniper_v58c:
+    <<: *common-settings
+    container_name: freqtrade-alexbandsniper_v58c
+    ports:
+      - "127.0.0.1:8132:8080"
+    env_file:
+      - path: ./env-files/alexbandsniper_v58c.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/alexbandsniper_v58c-tradesv3.sqlite
+      --log-file user_data/logs/alexbandsniper_v58c.log
+      --strategy-path user_data/strategies/AlexNexus
+      --strategy AlexBandSniperV58COptuna
+
 networks:
   default:
     name: freqtrade-network
