@@ -30,8 +30,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
                            ├── Lmao (Port 8129)
                            ├── GKD_FisherTransformV4_ML (Port 8130)
-                           ├── ATGDFV2 file strategy / AlexBandSniper (Port 8131)
-                           └── NOTankAi_15_Cleaned_v2 (Port 8132)
+                           └── ATGDFV2 file strategy / AlexBandSniper (Port 8131)
 ```
 
 ## Files
@@ -60,7 +59,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `lmao.env` - Lmao strategy (long-only Lmao family strategy)
 - `gkd_transformv55_ml.env` - GKD_FisherTransformV4_ML strategy (ML-enhanced futures strategy)
 - `atgdfv2.env` - ATGDFV2 file strategy using runtime class `AlexBandSniper`
-- `notankai.env` - NOTankAi_15_Cleaned_v2 strategy (selected NOTankAi dry-run candidate)
 
 ## Quick Start
 
@@ -147,8 +145,6 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Lmao** | `Vasko_Lmao` | `http://freq.gaiaderma.com/lmao` | `lmao_user` | `lmao_secure_password` |
 | **GKD_FisherTransformV4_ML** | `Vasko_GKD_FisherTransformV4_ML` | `http://freq.gaiaderma.com/gkd_transformv55_ml` | `gkd_transformv55_ml_user` | `gkd_transformv55_ml_secure_password` |
 | **ATGDFV2 / AlexBandSniper** | `Vasko_ATGDFV2` | `http://freq.gaiaderma.com/atgdfv2` | `atgdfv2_user` | `atgdfv2_secure_password` |
-| **NOTankAi_15_Cleaned_v2** | `Vasko_NOTankAi` | `http://freq.gaiaderma.com/notankai` | `notankai_user` | `notankai_secure_password` |
-
 ### URL Flow Example:
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
 2. **FreqUI automatically appends**: `/api/v1/token/login`
@@ -201,8 +197,6 @@ curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # Lmao
 curl http://127.0.0.1:8130/api/v1/ping  # GKD_FisherTransformV4_ML
 curl http://127.0.0.1:8131/api/v1/ping  # ATGDFV2 / AlexBandSniper
-curl http://127.0.0.1:8132/api/v1/ping  # NOTankAi_15_Cleaned_v2
-
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
@@ -219,7 +213,6 @@ curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/lmao/api/v1/ping
 curl http://freq.gaiaderma.com/gkd_transformv55_ml/api/v1/ping
 curl http://freq.gaiaderma.com/atgdfv2/api/v1/ping
-curl http://freq.gaiaderma.com/notankai/api/v1/ping
 curl http://freq.gaiaderma.com/gkd_transformv55_ml/api/v1/ping
 curl http://freq.gaiaderma.com/atgdfv2/api/v1/ping
 ```
