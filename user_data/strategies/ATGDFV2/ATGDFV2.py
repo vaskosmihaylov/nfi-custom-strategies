@@ -236,16 +236,16 @@ class AlexBandSniper(IStrategy):
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
     
-    stoploss = -0.25
-    can_short = True
+    stoploss = -0.08
+    can_short = False
     use_custom_stoploss = False
     #max_open_trades = 10
     leverage_value = 3.0
 
     # Trailing stoploss
     trailing_stop = True
-    trailing_stop_positive = 0.45
-    trailing_stop_positive_offset = 0.53
+    trailing_stop_positive = 0.02
+    trailing_stop_positive_offset = 0.04
     trailing_only_offset_is_reached = True
 
     # Optimal timeframe for the strategy.
@@ -296,235 +296,121 @@ class AlexBandSniper(IStrategy):
         return int(self.timeframe[:-1])
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """
-        Adds several different TA indicators to the given DataFrame
+        dataframe['rsi'] = ta.RSI(dataframe)
+        dataframe['cmf'] = chaikin_money_flow(dataframe, 20)
+        dataframe['adx'] = ta.ADX(dataframe)
+        dataframe['atr'] = qtpylib.atr(dataframe, window=14, exp=False)
 
-        Performance Note: For the best performance be frugal on the number of indicators
-        you are using. Let uncomment only the indicator you are using in your strategies
-        or your hyperopt configuration, otherwise you will waste your memory and CPU usage.
-        :param dataframe: Dataframe with data from the exchange
-        :param metadata: Additional information, like the currently traded pair
-        :return: a Dataframe with all mandatory indicators for the strategies
-        """
+        keltner = emaKeltner(dataframe)
+        dataframe["kc_upperband"] = keltner["upper"]
+        dataframe["kc_middleband"] = keltner["mid"]
+        dataframe["kc_lowerband"] = keltner["lower"]
 
-        # Get the informative pair
-        # informative = self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe='15m')
-        # informative = resample_to_interval(dataframe, self.get_ticker_indicator() * 15)
-        informative = dataframe
-        # Momentum Indicators
-        # ------------------------------------
+        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
+        dataframe['bollinger_upperband'] = bollinger['upper']
+        dataframe['bollinger_lowerband'] = bollinger['lower']
 
-        # RSI
-        informative['rsi'] = ta.RSI(informative)
-        # Stochastic Slow
-        informative['stoch'] = ta.STOCH(informative)['slowk']
-        # ROC
-        informative['roc'] = ta.ROC(informative)
-        # Ultimate Oscillator
-        informative['uo'] = ta.ULTOSC(informative)
-        # Awesome Oscillator
-        informative['ao'] = qtpylib.awesome_oscillator(informative)
-        # MACD
-        informative['macd'] = ta.MACD(informative)['macd']
-        # Commodity Channel Index
-        informative['cci'] = ta.CCI(informative)
-        # CMF
-        informative['cmf'] = chaikin_money_flow(informative, 20)
-        # OBV
-        informative['obv'] = ta.OBV(informative)
-        # MFI
-        informative['mfi'] = ta.MFI(informative)
-        # ADX
-        informative['adx'] = ta.ADX(informative)
+        dataframe['ema9'] = ta.EMA(dataframe, timeperiod=9)
+        dataframe['ema20'] = ta.EMA(dataframe, timeperiod=20)
+        dataframe['ema50'] = ta.EMA(dataframe, timeperiod=50)
+        dataframe['ema200'] = ta.EMA(dataframe, timeperiod=200)
 
-        # ATR
-        informative['atr'] = qtpylib.atr(informative, window=14, exp=False)
-
-        # Keltner Channel
-        # keltner = qtpylib.keltner_channel(dataframe, window=20, atrs=1)
-        keltner = emaKeltner(informative)
-        informative["kc_upperband"] = keltner["upper"]
-        informative["kc_middleband"] = keltner["mid"]
-        informative["kc_lowerband"] = keltner["lower"]
-
-        # Bollinger Bands
-        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(informative), window=20, stds=2)
-        informative['bollinger_upperband'] = bollinger['upper']
-        informative['bollinger_lowerband'] = bollinger['lower']
-
-        # EMA - Exponential Moving Average
-        informative['ema9'] = ta.EMA(informative, timeperiod=9)
-        informative['ema20'] = ta.EMA(informative, timeperiod=20)
-        informative['ema50'] = ta.EMA(informative, timeperiod=50)
-        informative['ema200'] = ta.EMA(informative, timeperiod=200)
-
-        pivots = pivot_points(informative, self.window.value)
-        informative['pivot_lows'] = pivots['pivot_lows']
-        informative['pivot_highs'] = pivots['pivot_highs']
-
-        # Use the helper function merge_informative_pair to safely merge the pair
-        # Automatically renames the columns and merges a shorter timeframe dataframe and a longer timeframe informative pair
-        # use ffill to have the 1d value available in every row throughout the day.
-        # Without this, comparisons between columns of the original and the informative pair would only work once per day.
-        # Full documentation of this method, see below
-
-
-        self.initialize_divergences_lists(informative)
-        (high_iterator, low_iterator) = self.get_iterators(informative)
-        self.add_divergences(informative, 'rsi',high_iterator, low_iterator)
-        self.add_divergences(informative, 'stoch',high_iterator, low_iterator)
-        self.add_divergences(informative, 'roc',high_iterator, low_iterator)
-        self.add_divergences(informative, 'uo',high_iterator, low_iterator)
-        self.add_divergences(informative, 'ao',high_iterator, low_iterator)
-        self.add_divergences(informative, 'macd',high_iterator, low_iterator)
-        self.add_divergences(informative, 'cci',high_iterator, low_iterator)
-        self.add_divergences(informative, 'cmf',high_iterator, low_iterator)
-        self.add_divergences(informative, 'obv',high_iterator, low_iterator)
-        self.add_divergences(informative, 'mfi',high_iterator, low_iterator)
-        self.add_divergences(informative, 'adx',high_iterator, low_iterator)
-
-        # print("-------------------informative-------------------")
-        # print(informative)
-        # print("-------------------dataframe-------------------")
-        # print(dataframe)
-        # dataframe = merge_informative_pair(dataframe, informative, self.timeframe, '15m', ffill=True)
-
-        # dataframe = resampled_merge(dataframe, informative)
-        # print(dataframe[resample("total_bullish_divergences_count")])
-        # for index, value in enumerate(dataframe[resample("total_bullish_divergences_count")]):
-        #     if value < 0.5:
-        #         dataframe[resample("total_bullish_divergences_count")][index] = None
-        #         dataframe[resample("total_bullish_divergences")][index] = None
-        #         dataframe[resample("total_bullish_divergences_names")][index] = None
-        #     else:
-        #         print(value)
-        #         print(dataframe[resample("total_bullish_divergences")][index])
-        #         print(dataframe[resample("total_bullish_divergences_names")][index])
-        self.plot_config = (
-            PlotConfig()
-            # .add_pivots_in_config()
-            # .add_divergence_in_config('rsi')
-            # .add_divergence_in_config('stoch')
-            # .add_divergence_in_config('roc')
-            # .add_divergence_in_config('uo')
-            # .add_divergence_in_config('ao')
-            # .add_divergence_in_config('macd')
-            # .add_divergence_in_config('cci')
-            # .add_divergence_in_config('cmf')
-            # .add_divergence_in_config('obv')
-            # .add_divergence_in_config('mfi')
-            # .add_divergence_in_config('adx')
-            .add_total_divergences_in_config(dataframe)
-            .config)
-
-        dataframe['chop'] = choppiness_index(dataframe['high'], dataframe['low'], dataframe['close'], window=14) 
-        
+        dataframe['chop'] = choppiness_index(dataframe['high'], dataframe['low'], dataframe['close'], window=14)
         dataframe['natr'] = ta.NATR(dataframe['high'], dataframe['low'], dataframe['close'], window=14)
-    
-        dataframe['natr_diff'] = dataframe['natr'] - dataframe['natr'].shift(1)  # Change in ATR
-        
-        dataframe['natr_direction_change'] = (dataframe['natr_diff'] * dataframe['natr_diff'].shift(1) < 0)
-        # Define the rolling mean of NATR
-        natr_mean = dataframe['natr'].rolling(window=12).mean()
 
-        # Check for an upward change in NATR (NATR crosses above its moving average)
-        dataframe['natr_upward_change'] = dataframe['natr'] > natr_mean
+        # Causal regime filters for a simpler band-reclaim long strategy.
+        dataframe['trend_long'] = (
+            (dataframe['ema20'] > dataframe['ema50']) &
+            (dataframe['ema50'] > dataframe['ema200']) &
+            (dataframe['close'] > dataframe['ema20'])
+        )
+        dataframe['trend_short'] = (
+            (dataframe['ema20'] < dataframe['ema50']) &
+            (dataframe['ema50'] < dataframe['ema200']) &
+            (dataframe['close'] < dataframe['ema20'])
+        )
+        dataframe['band_reclaim_long'] = (
+            (
+                qtpylib.crossed_above(dataframe['close'], dataframe['kc_lowerband']) |
+                qtpylib.crossed_above(dataframe['close'], dataframe['bollinger_lowerband'])
+            ) &
+            (dataframe['close'] > dataframe['open'])
+        )
+        dataframe['band_reject_short'] = (
+            (
+                qtpylib.crossed_below(dataframe['close'], dataframe['kc_upperband']) |
+                qtpylib.crossed_below(dataframe['close'], dataframe['bollinger_upperband'])
+            ) &
+            (dataframe['close'] < dataframe['open'])
+        )
 
-        # Check for a downward change in NATR (NATR crosses below its moving average)
-        dataframe['natr_downward_change'] = dataframe['natr'] < natr_mean
-
+        self.plot_config = PlotConfig().config
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Lookahead-sichere Entry-Bedingungen mit .shift(1)
         long_condition = (
-            (dataframe[resample('total_bullish_divergences')].shift(1) > 0) &
-            two_bands_check_long(dataframe) &
+            dataframe['trend_long'] &
+            dataframe['band_reclaim_long'] &
+            (dataframe['rsi'] > 52) &
+            (dataframe['rsi'] < 68) &
+            (dataframe['cmf'] > 0) &
+            (dataframe['adx'] > 18) &
+            (dataframe['chop'] < 55) &
             (dataframe['volume'] > 0)
         )
 
         short_condition = (
-            (dataframe[resample('total_bearish_divergences')].shift(1) > 0) &
-            two_bands_check_short(dataframe) &
+            self.can_short &
+            dataframe['trend_short'] &
+            dataframe['band_reject_short'] &
+            (dataframe['rsi'] < 48) &
+            (dataframe['cmf'] < 0) &
+            (dataframe['adx'] > 18) &
+            (dataframe['chop'] < 55) &
             (dataframe['volume'] > 0)
         )
 
-        # Setze Entry-Signale
         dataframe.loc[long_condition, 'enter_long'] = 1
         dataframe.loc[short_condition, 'enter_short'] = 1
 
-        # Tags getrennt, um Konflikte zu vermeiden
         dataframe['enter_tag_long'] = ''
         dataframe['enter_tag_short'] = ''
-        dataframe.loc[long_condition, 'enter_tag_long'] = 'Bull_D_Long'
-        dataframe.loc[short_condition, 'enter_tag_short'] = 'Bear_D_Short'
+        dataframe.loc[long_condition, 'enter_tag_long'] = 'BandReclaim_Long'
+        dataframe.loc[short_condition, 'enter_tag_short'] = 'BandReject_Short'
 
-        # Kombinierte Tag-Spalte für Visualisierung
         dataframe['enter_tag'] = dataframe['enter_tag_long'] + dataframe['enter_tag_short']
-
-        # Debug-Logging für letzte Candle
-        candle = dataframe.iloc[-1]
-        logger.info(
-            f"[{metadata['pair']}] {candle['date']} | Close: {candle['close']} | "
-            f"Long: {candle.get('enter_long', 0)} ({candle.get('enter_tag_long', '')}) | "
-            f"Short: {candle.get('enter_short', 0)} ({candle.get('enter_tag_short', '')})"
-        )
-
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """
-        Based on TA indicators, populates the sell signal for the given dataframe
-        :param dataframe: DataFrame populated with indicators
-        :param metadata: Additional information, like the currently traded pair
-        :return: DataFrame with exit signals
-        """
-
-        # Lookahead-sichere Bedingungen: nutze .shift(1) statt .shift(-1)
         short_exit_condition = (
-            (dataframe[resample('total_bullish_divergences')].shift(1) > 0)
-            #& (dataframe['total_bullish_divergences_count'].iloc[-1] > self.count_bullish_divergences.value)
-            # & (keltner_middleband_check(dataframe) & (ema_check(dataframe)) & (green_candle(dataframe)))
-            # | (keltner_lowerband_check(dataframe) & (ema_check(dataframe)))
-            # | (bollinger_lowerband_check(dataframe) & (ema_check(dataframe)))
-            & two_bands_check_long(dataframe)
-            & (dataframe['volume'] > 0)
-            #& (self.use_natr_direction_change.value & dataframe['natr_direction_change'])
+            self.can_short &
+            (
+                qtpylib.crossed_above(dataframe['close'], dataframe['ema20']) |
+                qtpylib.crossed_above(dataframe['rsi'], 52) |
+                (dataframe['cmf'] > 0)
+            ) &
+            (dataframe['volume'] > 0)
         )
 
         long_exit_condition = (
-            (dataframe[resample('total_bearish_divergences')].shift(1) > 0)
-            #& (dataframe['total_bearish_divergences_count'].iloc[-1] > self.count_bearish_divergences.value)
-            # & (keltner_middleband_check(dataframe) & (ema_check(dataframe)) & (green_candle(dataframe)))
-            # | (keltner_lowerband_check(dataframe) & (ema_check(dataframe)))
-            # | (bollinger_lowerband_check(dataframe) & (ema_check(dataframe)))
-            & two_bands_check_short(dataframe)
-            & (dataframe['volume'] > 0)
-            #& (self.use_natr_direction_change.value & dataframe['natr_direction_change'])
+            (
+                qtpylib.crossed_below(dataframe['close'], dataframe['ema20']) |
+                qtpylib.crossed_below(dataframe['rsi'], 48) |
+                qtpylib.crossed_below(dataframe['cmf'], 0)
+            ) &
+            (dataframe['volume'] > 0)
         )
 
-        # Setze Exit-Signale
         dataframe.loc[short_exit_condition, 'exit_short'] = 1
         dataframe.loc[long_exit_condition, 'exit_long'] = 1
 
-        # Setze Tags getrennt
         dataframe['exit_tag_short'] = ''
         dataframe['exit_tag_long'] = ''
 
-        dataframe.loc[short_exit_condition, 'exit_tag_short'] = 'Exit_Short_Div'
-        dataframe.loc[long_exit_condition, 'exit_tag_long'] = 'Exit_Long_Div'
+        dataframe.loc[short_exit_condition, 'exit_tag_short'] = 'TrendFlip_Short'
+        dataframe.loc[long_exit_condition, 'exit_tag_long'] = 'TrendFlip_Long'
 
-        # Kombinierte Tag-Spalte für Plot
         dataframe['exit_tag'] = dataframe['exit_tag_long'] + dataframe['exit_tag_short']
-
-        # Debug-Logging für letzte Candle
-        candle = dataframe.iloc[-1]
-        logger.info(
-            f"[{metadata['pair']}] {candle['date']} | Close: {candle['close']} | "
-            f"Exit Long: {candle.get('exit_long', 0)} ({candle.get('exit_tag_long', '')}) | "
-            f"Exit Short: {candle.get('exit_short', 0)} ({candle.get('exit_tag_short', '')})"
-        )
-
         return dataframe
 
 

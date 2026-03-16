@@ -267,23 +267,6 @@ services:
       --strategy-path user_data/strategies/GKD_TRANSFORMV55_ML
       --strategy GKD_FisherTransformV4_ML
 
-  # ATGDFV2 file strategy (runtime class AlexBandSniper)
-  freqtrade-atgdfv2:
-    <<: *common-settings
-    container_name: freqtrade-atgdfv2
-    ports:
-      - "127.0.0.1:8131:8080"
-    env_file:
-      - path: ./env-files/atgdfv2.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/atgdfv2-tradesv3.sqlite
-      --log-file user_data/logs/atgdfv2.log
-      --strategy-path user_data/strategies/ATGDFV2
-      --strategy AlexBandSniper
-
 networks:
   default:
     name: freqtrade-network
