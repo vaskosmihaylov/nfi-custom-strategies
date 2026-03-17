@@ -199,7 +199,7 @@ class Lmao(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
 
-    use_custom_stoploss = False
+    use_custom_stoploss = True
 
     process_only_new_candles = True
     startup_candle_count = 48
@@ -494,7 +494,9 @@ class Lmao(IStrategy):
         **kwargs,
     ) -> float:
 
-        HSL = self.pHSL.value
+        # The original hyperopt floor allows deep bag-holding, which is what
+        # dominated the recent force-exit losses in broader backtests.
+        HSL = max(self.pHSL.value, -0.05)
         PF_1 = self.pPF_1.value
         SL_1 = self.pSL_1.value
         PF_2 = self.pPF_2.value
@@ -1160,6 +1162,72 @@ class Lmao(IStrategy):
                     return None
 
         return None
+
+
+class LmaoStoplossClusterOpt(Lmao):
+    """
+    Narrow sell-space hyperopt target around the current DCA-on winner.
+
+    This keeps the live/default Lmao parameters stable while allowing a focused
+    search over the custom-stoploss transition cluster.
+    """
+
+    sell_params = {
+        "pHSL": -0.050,
+        "pPF_1": 0.016,
+        "pSL_1": 0.011,
+        "pPF_2": 0.080,
+        "pSL_2": 0.040,
+    }
+
+    pHSL = DecimalParameter(
+        -0.065,
+        -0.045,
+        default=-0.050,
+        decimals=3,
+        space="sell",
+        optimize=True,
+        load=True,
+    )
+    pPF_1 = DecimalParameter(
+        0.010, 0.018, default=0.016, decimals=3, space="sell", optimize=True, load=True
+    )
+    pSL_1 = DecimalParameter(
+        0.006, 0.016, default=0.011, decimals=3, space="sell", optimize=True, load=True
+    )
+    pPF_2 = DecimalParameter(
+        0.045, 0.085, default=0.080, decimals=3, space="sell", optimize=True, load=True
+    )
+    pSL_2 = DecimalParameter(
+        0.020, 0.055, default=0.040, decimals=3, space="sell", optimize=True, load=True
+    )
+
+    def custom_stoploss(
+        self,
+        pair: str,
+        trade: "Trade",
+        current_time: datetime,
+        current_rate: float,
+        current_profit: float,
+        **kwargs,
+    ) -> float:
+        HSL = self.pHSL.value
+        PF_1 = self.pPF_1.value
+        SL_1 = self.pSL_1.value
+        PF_2 = self.pPF_2.value
+        SL_2 = self.pSL_2.value
+
+        if current_profit > PF_2:
+            sl_profit = SL_2 + (current_profit - PF_2)
+        elif current_profit > PF_1:
+            sl_profit = SL_1 + ((current_profit - PF_1) * (SL_2 - SL_1) / (PF_2 - PF_1))
+        else:
+            sl_profit = HSL
+
+        if sl_profit >= current_profit:
+            return -0.99
+
+        return stoploss_from_open(sl_profit, current_profit)
 
 
 # --- pmax function moved outside the class ---

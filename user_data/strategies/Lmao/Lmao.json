@@ -1,0 +1,73 @@
+{
+  "strategy_name": "LmaoStoplossClusterOpt",
+  "params": {
+    "roi": {
+      "0": 0.006,
+      "15": 0.003,
+      "30": 0
+    },
+    "stoploss": {
+      "stoploss": -0.99
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": 0.003,
+      "trailing_stop_positive_offset": 0.007,
+      "trailing_only_offset_is_reached": true
+    },
+    "max_open_trades": {
+      "max_open_trades": 8
+    },
+    "buy": {
+      "base_nb_candles_buy": 5,
+      "bbdelta_close": 0.00082,
+      "bbdelta_tail": 0.85788,
+      "buy_bb_delta": 0.015,
+      "buy_bb_factor": 0.995,
+      "buy_bb_width": 0.035,
+      "buy_bb_width_1h": 1.074,
+      "buy_cci": -116,
+      "buy_cci_length": 25,
+      "buy_closedelta": 4.0,
+      "buy_clucha_bbdelta_close": 0.049,
+      "buy_clucha_bbdelta_tail": 1.146,
+      "buy_clucha_close_bblower": 0.018,
+      "buy_clucha_closedelta_close": 0.017,
+      "buy_clucha_rocr_1h": 0.526,
+      "buy_ema_diff": 0.025,
+      "buy_rmi": 49,
+      "buy_rmi_length": 17,
+      "buy_roc_1h": 10,
+      "buy_srsi_fk": 32,
+      "close_bblower": 0.00128,
+      "closedelta_close": 0.00987,
+      "low_offset": 0.991,
+      "rocr1_1h": 0.9346,
+      "rocr_1h": 0.65666
+    },
+    "sell": {
+      "base_nb_candles_sell": 8,
+      "sell_bbmiddle_close": 1.09092,
+      "sell_fisher": 0.46406,
+      "sell_trail_down_1": 0.03,
+      "sell_trail_down_2": 0.015,
+      "sell_trail_profit_max_1": 0.4,
+      "sell_trail_profit_max_2": 0.11,
+      "sell_trail_profit_min_1": 0.1,
+      "sell_trail_profit_min_2": 0.04,
+      "high_offset": 1.009,
+      "high_offset_2": 1.02,
+      "pHSL": -0.05,
+      "pPF_1": 0.015,
+      "pPF_2": 0.051,
+      "pSL_1": 0.007,
+      "pSL_2": 0.022,
+      "sell_deadfish_bb_factor": 1.16,
+      "sell_deadfish_bb_width": 0.463,
+      "sell_deadfish_profit": -0.079,
+      "sell_deadfish_volume_factor": 1.03
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-03-17 13:20:57.064479+00:00"
+}
