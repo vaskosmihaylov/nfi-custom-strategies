@@ -93,6 +93,23 @@ services:
       --strategy-path user_data/strategies/e0v1e
       --strategy binance
 
+  # BinHV27 Combined Strategy
+  freqtrade-binhv27:
+    <<: *common-settings
+    container_name: freqtrade-binhv27
+    ports:
+      - "127.0.0.1:8092:8080"
+    env_file:
+      - path: ./env-files/binhv27.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/binhv27-tradesv3.sqlite
+      --log-file user_data/logs/binhv27.log
+      --strategy-path user_data/strategies/BinClucMadV1
+      --strategy BinHV27_combined
+
   # Auto_EI_t4c0s Strategy (Longs - replaces EI4_t4c0s_V2_2)
   freqtrade-auto_ei_t4c0s:
     <<: *common-settings

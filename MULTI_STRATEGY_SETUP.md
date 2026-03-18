@@ -5,7 +5,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **18 active trading strategies** running in separate Docker containers
+- **17 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -19,6 +19,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
+                           ├── e0v1e_binance (Port 8114)
+                           ├── BinHV27_combined (Port 8092)
                            ├── Auto_EI_t4c0s (Port 8100)
                            ├── ETCG_Shorts (Port 8103)
                            ├── KamaFama (Port 8091)
@@ -47,6 +49,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
+- `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
+- `binhv27.env` - BinHV27 combined strategy
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
 - `kamafama.env` - KamaFama optimized long strategy (3x leverage, KAMA/FAMA mean-reversion)
@@ -133,6 +137,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
 | **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
 | **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
+| **e0v1e_binance** | `Vasko_E0V1E_Binance` | `http://freq.gaiaderma.com/e0v1e_binance` | `e0v1e_binance_user` | `e0v1e_binance_secure_password` |
+| **BinHV27_combined** | `Vasko_BinHV27` | `http://freq.gaiaderma.com/binhv27` | `binhv27_user` | `binhv27_secure_password` |
 | **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
 | **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
 | **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
@@ -185,6 +191,8 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
+curl http://127.0.0.1:8114/api/v1/ping  # e0v1e_binance
+curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
@@ -201,6 +209,8 @@ curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV58COptuna
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/e0v1e_binance/api/v1/ping
+curl http://freq.gaiaderma.com/binhv27/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
@@ -248,6 +258,8 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8080 | nfi-x7 | Longs | - |
 | 8098 | E0V1E | Longs | 3x |
 | 8099 | E0V1E_Shorts | Shorts | 3x |
+| 8114 | e0v1e_binance | Longs | Strategy-defined |
+| 8092 | BinHV27_combined | Longs + Shorts | Strategy-defined |
 | 8100 | Auto_EI_t4c0s | Longs | - |
 | 8103 | ETCG_Shorts | Shorts | 3x |
 | 8091 | KamaFama | Longs | 3x |
@@ -268,6 +280,8 @@ Each strategy uses its own SQLite database:
 - `nfi-x7-tradesv3.sqlite`
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
+- `e0v1e_binance-tradesv3.sqlite`
+- `binhv27-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
 - `etcg_shorts-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
@@ -381,7 +395,11 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 **Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`.
 
-**Last Updated**: March 16, 2026
+**Last Updated**: March 18, 2026
+
+## Recent Changes (March 18, 2026)
+- **Added**: `e0v1e_binance` reverse-proxy and documentation sync (port 8114, path `/e0v1e_binance`)
+- **Added**: `BinHV27_combined` multistrategy dry-run slot (port 8092, path `/binhv27`)
 
 ## Recent Changes (March 16, 2026)
 - **Added**: AlexBandSniperV58COptuna dry-run rollout (port 8132)
