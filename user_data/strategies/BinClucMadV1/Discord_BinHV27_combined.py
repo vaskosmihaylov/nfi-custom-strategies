@@ -240,6 +240,8 @@ class BinHV27_combined(IStrategy):
         inf_dataframe['allow_short'] = ((inf_dataframe['tsf'] / inf_dataframe['hlc3']) < 0.99)
 
         dataframe = merge_informative_pair(dataframe, inf_dataframe, self.timeframe, self.inf_timeframe, ffill=True)
+        dataframe[f'allow_long_{self.inf_timeframe}'] = dataframe[f'allow_long_{self.inf_timeframe}'].fillna(False).astype(bool)
+        dataframe[f'allow_short_{self.inf_timeframe}'] = dataframe[f'allow_short_{self.inf_timeframe}'].fillna(False).astype(bool)
 
         return dataframe
 
@@ -399,8 +401,9 @@ class BinHV27_combined(IStrategy):
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe.loc[(), ['exit_short', 'exit_tag']] = (0, 'no_short_exit')
-        dataframe.loc[(), ['exit_long', 'exit_tag']] = (0, 'no_long_exit')
+        dataframe['exit_short'] = 0
+        dataframe['exit_long'] = 0
+        dataframe['exit_tag'] = ''
         return dataframe
 
     def custom_exit(self, pair: str, trade: Trade, current_time: 'datetime', current_rate: float,
