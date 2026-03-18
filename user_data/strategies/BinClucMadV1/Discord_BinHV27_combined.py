@@ -240,8 +240,8 @@ class BinHV27_combined(IStrategy):
         inf_dataframe['allow_short'] = ((inf_dataframe['tsf'] / inf_dataframe['hlc3']) < 0.99)
 
         dataframe = merge_informative_pair(dataframe, inf_dataframe, self.timeframe, self.inf_timeframe, ffill=True)
-        dataframe[f'allow_long_{self.inf_timeframe}'] = dataframe[f'allow_long_{self.inf_timeframe}'].fillna(False).astype(bool)
-        dataframe[f'allow_short_{self.inf_timeframe}'] = dataframe[f'allow_short_{self.inf_timeframe}'].fillna(False).astype(bool)
+        dataframe[f'allow_long_{self.inf_timeframe}'] = dataframe[f'allow_long_{self.inf_timeframe}'].eq(True)
+        dataframe[f'allow_short_{self.inf_timeframe}'] = dataframe[f'allow_short_{self.inf_timeframe}'].eq(True)
 
         return dataframe
 
