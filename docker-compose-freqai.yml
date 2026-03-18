@@ -48,6 +48,22 @@ services:
       --log-file user_data/logs/${FREQTRADE__BOT_NAME:-QuickAdapter}-FreqAI-${FREQTRADE__EXCHANGE__NAME:-bybit}.log
       --strategy-path user_data/strategies/quickadapter
 
+  e0v1eai-freqai:
+    <<: *freqai-settings
+    container_name: freqtrade-e0v1eai-freqai
+    env_file:
+      - path: ./env-files/e0v1eai_freqai.env
+        required: true
+    ports:
+      - "127.0.0.1:8115:8080"
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config configs/freqai-addon.json
+      --db-url sqlite:////freqtrade/user_data/e0v1eai-freqai-tradesv3.sqlite
+      --log-file user_data/logs/e0v1eai-freqai.log
+      --strategy-path user_data/strategies/e0v1e
+
   # Add more FreqAI strategies here as needed
   # other-freqai-strategy:
   #   <<: *freqai-settings
