@@ -1,0 +1,35 @@
+{
+  "strategy_name": "MtfScalper",
+  "params": {
+    "trailing": {
+      "trailing_stop": true,
+      "trailing_stop_positive": 0.005,
+      "trailing_stop_positive_offset": 0.01,
+      "trailing_only_offset_is_reached": true
+    },
+    "max_open_trades": {
+      "max_open_trades": 4
+    },
+    "buy": {
+      "adx_thr_buy": 31,
+      "atr_threshold": 1,
+      "buy_rsi": 70
+    },
+    "sell": {
+      "adx_thr_sell": 28,
+      "sell_rsi": 45
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.112,
+      "16": 0.068,
+      "55": 0.024,
+      "134": 0
+    },
+    "stoploss": {
+      "stoploss": -0.318
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2025-09-27 17:49:44.858218+00:00"
+}

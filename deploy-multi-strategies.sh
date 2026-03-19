@@ -68,7 +68,8 @@ show_help() {
     echo "  bollingerbounce, bollingerbounce_shorts,"
     echo "  keltnerbounce, keltnerbounce_shorts,"
     echo "  ultrasmart_nostop_v2, lmao,"
-    echo "  gkd-transformv55-ml, alexbandsniper_v58c, atgdfv2"
+    echo "  highwinratescalper, mtfscalper, whaleflowscalper,"
+    echo "  alexbandsniper_v58c"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -94,7 +95,9 @@ show_help() {
     echo "  KeltnerBounce_Shorts:  http://freq.gaiaderma.com/keltnerbounce_shorts"
     echo "  UltraSmart_NoStop_v2:  http://freq.gaiaderma.com/ultrasmart_nostop_v2"
     echo "  Lmao:                  http://freq.gaiaderma.com/lmao"
-    echo "  GKD_FisherTransformV4_ML: http://freq.gaiaderma.com/gkd_transformv55_ml"
+    echo "  HighWinRateScalper:    http://freq.gaiaderma.com/highwinratescalper"
+    echo "  MtfScalper:            http://freq.gaiaderma.com/mtfscalper"
+    echo "  WhaleFlowScalper:      http://freq.gaiaderma.com/whaleflowscalper"
     echo "  AlexBandSniperV58COptuna: http://freq.gaiaderma.com/alexbandsniper_v58c"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
@@ -239,9 +242,10 @@ health_check() {
         "keltnerbounce_shorts:8127"
         "ultrasmart_nostop_v2:8128"
         "lmao:8129"
-        "gkd-transformv55-ml:8130"
+        "highwinratescalper:8130"
+        "mtfscalper:8131"
         "alexbandsniper_v58c:8132"
-        "atgdfv2:8131"
+        "whaleflowscalper:8133"
     )
     
     local healthy=0

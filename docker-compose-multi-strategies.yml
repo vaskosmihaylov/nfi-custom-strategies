@@ -284,22 +284,59 @@ services:
       --strategy-path user_data/strategies/Lmao
       --strategy Lmao
 
-  # GKD_FisherTransformV4_ML Strategy
-  freqtrade-gkd-transformv55-ml:
+  # HighWinRateScalper Strategy
+  freqtrade-highwinratescalper:
     <<: *common-settings
-    container_name: freqtrade-gkd-transformv55-ml
+    container_name: freqtrade-highwinratescalper
     ports:
       - "127.0.0.1:8130:8080"
     env_file:
-      - path: ./env-files/gkd_transformv55_ml.env
+      - path: ./env-files/highwinratescalper.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/gkd_transformv55_ml-tradesv3.sqlite
-      --log-file user_data/logs/gkd_transformv55_ml.log
-      --strategy-path user_data/strategies/GKD_TRANSFORMV55_ML
-      --strategy GKD_FisherTransformV4_ML
+      --config user_data/strategies/MtfScalper/HighWinRateScalper.json
+      --db-url sqlite:////freqtrade/user_data/highwinratescalper-tradesv3.sqlite
+      --log-file user_data/logs/highwinratescalper.log
+      --strategy-path user_data/strategies/MtfScalper
+      --strategy HighWinRateScalper
+
+  # MtfScalper Strategy
+  freqtrade-mtfscalper:
+    <<: *common-settings
+    container_name: freqtrade-mtfscalper
+    ports:
+      - "127.0.0.1:8131:8080"
+    env_file:
+      - path: ./env-files/mtfscalper.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config user_data/strategies/MtfScalper/MtfScalper.json
+      --db-url sqlite:////freqtrade/user_data/mtfscalper-tradesv3.sqlite
+      --log-file user_data/logs/mtfscalper.log
+      --strategy-path user_data/strategies/MtfScalper
+      --strategy MtfScalper
+
+  # WhaleFlowScalper Strategy
+  freqtrade-whaleflowscalper:
+    <<: *common-settings
+    container_name: freqtrade-whaleflowscalper
+    ports:
+      - "127.0.0.1:8133:8080"
+    env_file:
+      - path: ./env-files/whaleflowscalper.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config user_data/strategies/MtfScalper/WhaleFlowScalper.json
+      --db-url sqlite:////freqtrade/user_data/whaleflowscalper-tradesv3.sqlite
+      --log-file user_data/logs/whaleflowscalper.log
+      --strategy-path user_data/strategies/MtfScalper
+      --strategy WhaleFlowScalper
 
   # AlexBandSniperV58COptuna Strategy (Dry-run validation)
   freqtrade-alexbandsniper_v58c:

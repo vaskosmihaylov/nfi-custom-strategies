@@ -1,5 +1,5 @@
 """
-HighWinRateScalper Strategy - 100% Win Rate on 2h Timeframe
+WhaleFlowScalper Strategy - 2h Futures Scalper
 
 PROVEN PERFORMANCE:
 - 100% win rate on 2h timeframe (Oct 2025 - Jan 2026 backtest)
@@ -37,9 +37,9 @@ except ImportError:
     TradingConfig = None
 
 
-class HighWinRateScalper(IStrategy):
+class WhaleFlowScalper(IStrategy):
     """
-    High Win Rate Scalping Strategy - UNIVERSAL (All Exchanges)
+    Whale Flow Scalping Strategy - UNIVERSAL (All Exchanges)
 
     100% win rate on 2h timeframe (proven via backtesting)
 
