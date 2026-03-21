@@ -79,18 +79,18 @@ class TripleSuperTrendADXRSI(IStrategy):
 
     # ----- NEW PARAMETERS FOR TREND / MOMENTUM CONFIRMATION -----
     # ADX filter settings to avoid low-trend environments
-    adx_period = IntParameter(10, 30, default=14)
-    adx_threshold = IntParameter(20, 40, default=25)
+    adx_period = IntParameter(10, 30, default=14, space="buy")
+    adx_threshold = IntParameter(20, 40, default=25, space="buy")
 
     # RSI filter settings for entry confirmation and exit signals
-    rsi_period = IntParameter(10, 30, default=14)
+    rsi_period = IntParameter(10, 30, default=14, space="buy")
     # For longs, require RSI to be above this value (bullish momentum confirmation)
-    rsi_long_threshold = IntParameter(40, 60, default=50)
+    rsi_long_threshold = IntParameter(40, 60, default=50, space="buy")
     # For shorts, require RSI to be below this value (bearish momentum confirmation)
-    rsi_short_threshold = IntParameter(40, 60, default=50)
+    rsi_short_threshold = IntParameter(40, 60, default=50, space="buy")
     # RSI exit thresholds (to catch reversals)
-    rsi_long_exit = IntParameter(70, 80, default=75)
-    rsi_short_exit = IntParameter(20, 30, default=25)
+    rsi_long_exit = IntParameter(70, 80, default=75, space="sell")
+    rsi_short_exit = IntParameter(20, 30, default=25, space="sell")
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
@@ -230,43 +230,49 @@ class TripleSuperTrendADXRSI(IStrategy):
         # Initialize final bands
         df["final_ub"] = 0.00
         df["final_lb"] = 0.00
+        close_col = df.columns.get_loc("close")
+        basic_ub_col = df.columns.get_loc("basic_ub")
+        basic_lb_col = df.columns.get_loc("basic_lb")
+        final_ub_col = df.columns.get_loc("final_ub")
+        final_lb_col = df.columns.get_loc("final_lb")
         # Adjust the final bands based on previous values and the closing price
         for i in range(period, len(df)):
-            df["final_ub"].iat[i] = (
-                df["basic_ub"].iat[i]
-                if df["basic_ub"].iat[i] < df["final_ub"].iat[i - 1]
-                or df["close"].iat[i - 1] > df["final_ub"].iat[i - 1]
-                else df["final_ub"].iat[i - 1]
+            df.iat[i, final_ub_col] = (
+                df.iat[i, basic_ub_col]
+                if df.iat[i, basic_ub_col] < df.iat[i - 1, final_ub_col]
+                or df.iat[i - 1, close_col] > df.iat[i - 1, final_ub_col]
+                else df.iat[i - 1, final_ub_col]
             )
-            df["final_lb"].iat[i] = (
-                df["basic_lb"].iat[i]
-                if df["basic_lb"].iat[i] > df["final_lb"].iat[i - 1]
-                or df["close"].iat[i - 1] < df["final_lb"].iat[i - 1]
-                else df["final_lb"].iat[i - 1]
+            df.iat[i, final_lb_col] = (
+                df.iat[i, basic_lb_col]
+                if df.iat[i, basic_lb_col] > df.iat[i - 1, final_lb_col]
+                or df.iat[i - 1, close_col] < df.iat[i - 1, final_lb_col]
+                else df.iat[i - 1, final_lb_col]
             )
 
         # Initialize the Supertrend column
         df[st] = 0.00
+        st_col = df.columns.get_loc(st)
         # Determine the Supertrend value based on the relationship between closing price and the final bands
         for i in range(period, len(df)):
-            df[st].iat[i] = (
-                df["final_ub"].iat[i]
-                if df[st].iat[i - 1] == df["final_ub"].iat[i - 1]
-                and df["close"].iat[i] <= df["final_ub"].iat[i]
-                else df["final_lb"].iat[i]
-                if df[st].iat[i - 1] == df["final_ub"].iat[i - 1]
-                and df["close"].iat[i] > df["final_ub"].iat[i]
-                else df["final_lb"].iat[i]
-                if df[st].iat[i - 1] == df["final_lb"].iat[i - 1]
-                and df["close"].iat[i] >= df["final_lb"].iat[i]
-                else df["final_ub"].iat[i]
-                if df[st].iat[i - 1] == df["final_lb"].iat[i - 1]
-                and df["close"].iat[i] < df["final_lb"].iat[i]
+            df.iat[i, st_col] = (
+                df.iat[i, final_ub_col]
+                if df.iat[i - 1, st_col] == df.iat[i - 1, final_ub_col]
+                and df.iat[i, close_col] <= df.iat[i, final_ub_col]
+                else df.iat[i, final_lb_col]
+                if df.iat[i - 1, st_col] == df.iat[i - 1, final_ub_col]
+                and df.iat[i, close_col] > df.iat[i, final_ub_col]
+                else df.iat[i, final_lb_col]
+                if df.iat[i - 1, st_col] == df.iat[i - 1, final_lb_col]
+                and df.iat[i, close_col] >= df.iat[i, final_lb_col]
+                else df.iat[i, final_ub_col]
+                if df.iat[i - 1, st_col] == df.iat[i - 1, final_lb_col]
+                and df.iat[i, close_col] < df.iat[i, final_lb_col]
                 else 0.00
             )
         # Mark the trend direction as 'up' or 'down'
         df[stx] = np.where(
-            (df[st] > 0.00), np.where((df["close"] < df[st]), "down", "up"), np.NaN
+            (df[st] > 0.00), np.where((df["close"] < df[st]), "down", "up"), None
         )
 
         # Cleanup: remove temporary band columns and fill any missing values

@@ -1,0 +1,32 @@
+{
+  "strategy_name": "ORBAlgo",
+  "params": {
+    "roi": {
+      "0": 100
+    },
+    "stoploss": {
+      "stoploss": -0.1
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 7
+    },
+    "buy": {
+      "adaptive_sl": false,
+      "breakout_condition": "Close",
+      "ema_length": 8,
+      "orb_period_minutes": 31,
+      "sensitivity": "Medium",
+      "session_start_hour": 0,
+      "sl_method": "Safer",
+      "tp_method": "ATR"
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-03-21 14:53:19.551945+00:00"
+}

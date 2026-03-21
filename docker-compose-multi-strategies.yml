@@ -372,6 +372,23 @@ services:
       --strategy-path user_data/strategies/TripleSuperTrendADXRSI
       --strategy TripleSuperTrendADXRSI
 
+  # ORBAlgo Strategy (Longs + Shorts)
+  freqtrade-orbalgo:
+    <<: *common-settings
+    container_name: freqtrade-orbalgo
+    ports:
+      - "127.0.0.1:8135:8080"
+    env_file:
+      - path: ./env-files/orbalgo.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/orbalgo-tradesv3.sqlite
+      --log-file user_data/logs/orbalgo.log
+      --strategy-path user_data/strategies/ORB
+      --strategy ORBAlgo
+
 networks:
   default:
     name: freqtrade-network
