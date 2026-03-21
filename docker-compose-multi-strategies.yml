@@ -355,6 +355,23 @@ services:
       --strategy-path user_data/strategies/AlexNexus
       --strategy AlexBandSniperV58COptuna
 
+  # TripleSuperTrendADXRSI Strategy (Longs + Shorts)
+  freqtrade-triplesupertrendadxrsi:
+    <<: *common-settings
+    container_name: freqtrade-triplesupertrendadxrsi
+    ports:
+      - "127.0.0.1:8134:8080"
+    env_file:
+      - path: ./env-files/triplesupertrendadxrsi.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/triplesupertrendadxrsi-tradesv3.sqlite
+      --log-file user_data/logs/triplesupertrendadxrsi.log
+      --strategy-path user_data/strategies/TripleSuperTrendADXRSI
+      --strategy TripleSuperTrendADXRSI
+
 networks:
   default:
     name: freqtrade-network

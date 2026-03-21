@@ -5,7 +5,8 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 ## Overview
 
 The multi-strategy setup includes:
-- **19 active trading strategies** running in separate Docker containers
+
+- **20 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -34,20 +35,24 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── HighWinRateScalper (Port 8130)
                            ├── MtfScalper (Port 8131)
                            ├── AlexBandSniperV58COptuna (Port 8132)
-                           └── WhaleFlowScalper (Port 8133)
+                           ├── WhaleFlowScalper (Port 8133)
+                           └── TripleSuperTrendADXRSI (Port 8134)
 ```
 
 ## Files
 
 ### Docker Configuration
+
 - `docker-compose-multi-strategies.yml` - Multi-strategy Docker Compose file
 - `deploy-multi-strategies.sh` - Deployment and management script
 
 ### NGINX Configuration
+
 - `nginx-freqtrade-multi.conf` - NGINX configuration with proper path routing
 - `freqtrade-proxy-headers.conf` - Reusable proxy headers
 
 ### Environment Files (in `env-files/`)
+
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
@@ -67,6 +72,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
 - `alexbandsniper_v58c.env` - AlexBandSniperV58COptuna strategy (longs + shorts dry-run validation rollout)
 - `whaleflowscalper.env` - WhaleFlowScalper strategy (whale-flow futures scalper)
+- `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 
 ## Quick Start
 
@@ -105,6 +111,7 @@ sudo ./deploy-multi-strategies.sh setup-nginx
 ### Step 4: Access FreqUI
 
 Open your browser and navigate to:
+
 - **Main UI**: `http://freq.gaiaderma.com`
 - **Health Check**: `http://freq.gaiaderma.com/health/nfi-x7`
 
@@ -136,28 +143,30 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 
 ### Bot Configuration:
 
-| Strategy | Bot Name | API URL | Username | Password |
-|----------|----------|---------|----------|----------|
-| **nfi-x7** | `Vasko_NFI_X7` | `http://freq.gaiaderma.com/nfi-x7` | `nfi_x6_user` | `nfi_x6_secure_password` |
-| **E0V1E** | `Vasko_E0V1E` | `http://freq.gaiaderma.com/e0v1e` | `e0v1e_user` | `e0v1e_secure_password` |
-| **E0V1E_Shorts** | `Vasko_E0V1E_Shorts` | `http://freq.gaiaderma.com/e0v1e_shorts` | `e0v1e_shorts_user` | `e0v1e_shorts_secure_password` |
-| **e0v1e_binance** | `Vasko_E0V1E_Binance` | `http://freq.gaiaderma.com/e0v1e_binance` | `e0v1e_binance_user` | `e0v1e_binance_secure_password` |
-| **BinHV27_combined** | `Vasko_BinHV27` | `http://freq.gaiaderma.com/binhv27` | `binhv27_user` | `binhv27_secure_password` |
-| **Auto_EI_t4c0s** | `Vasko_Auto_EI_t4c0s` | `http://freq.gaiaderma.com/auto_ei_t4c0s` | `auto_ei_t4c0s_user` | `auto_ei_t4c0s_secure_password` |
-| **ETCG_Shorts** | `Vasko_ETCG_Shorts` | `http://freq.gaiaderma.com/etcg_shorts` | `etcg_shorts_user` | `etcg_shorts_secure_password` |
-| **KamaFama** | `Vasko_KamaFama` | `http://freq.gaiaderma.com/kamafama` | `kamafama_user` | `kamafama_secure_password` |
-| **ZaratustraDCA2_06** | `Vasko_ZaratustraDCA2_06` | `http://freq.gaiaderma.com/zaratustra` | `zaratustra_user` | `zaratustra_secure_password` |
-| **BollingerBounce** | `Vasko_BollingerBounce` | `http://freq.gaiaderma.com/bollingerbounce` | `bollingerbounce_user` | `bollingerbounce_secure_password` |
-| **BollingerBounce_Shorts** | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
-| **KeltnerBounce** | `Vasko_KeltnerBounce` | `http://freq.gaiaderma.com/keltnerbounce` | `keltnerbounce_user` | `keltnerbounce_secure_password` |
-| **KeltnerBounce_Shorts** | `Vasko_KeltnerBounce_Shorts` | `http://freq.gaiaderma.com/keltnerbounce_shorts` | `keltnerbounce_shorts_user` | `keltnerbounce_shorts_secure_password` |
-| **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2` | `http://freq.gaiaderma.com/ultrasmart_nostop_v2` | `ultrasmart_nostop_v2_user` | `ultrasmart_nostop_v2_secure_password` |
-| **Lmao** | `Vasko_Lmao` | `http://freq.gaiaderma.com/lmao` | `lmao_user` | `lmao_secure_password` |
-| **HighWinRateScalper** | `Vasko_HighWinRateScalper` | `http://freq.gaiaderma.com/highwinratescalper` | `highwinratescalper_user` | `highwinratescalper_secure_password` |
-| **MtfScalper** | `Vasko_MtfScalper` | `http://freq.gaiaderma.com/mtfscalper` | `mtfscalper_user` | `mtfscalper_secure_password` |
-| **AlexBandSniperV58COptuna** | `Vasko_AlexBandSniper_V58C` | `http://freq.gaiaderma.com/alexbandsniper_v58c` | `alexbandsniper_v58c_user` | `alexbandsniper_v58c_secure_password` |
-| **WhaleFlowScalper** | `Vasko_WhaleFlowScalper` | `http://freq.gaiaderma.com/whaleflowscalper` | `whaleflowscalper_user` | `whaleflowscalper_secure_password` |
+| Strategy                             | Bot Name                       | API URL                                            | Username                      | Password                                 |
+| ------------------------------------ | ------------------------------ | -------------------------------------------------- | ----------------------------- | ---------------------------------------- |
+| **nfi-x7**                           | `Vasko_NFI_X7`                 | `http://freq.gaiaderma.com/nfi-x7`                 | `nfi_x6_user`                 | `nfi_x6_secure_password`                 |
+| **E0V1E**                            | `Vasko_E0V1E`                  | `http://freq.gaiaderma.com/e0v1e`                  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
+| **E0V1E_Shorts**                     | `Vasko_E0V1E_Shorts`           | `http://freq.gaiaderma.com/e0v1e_shorts`           | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
+| **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
+| **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
+| **Auto_EI_t4c0s**                    | `Vasko_Auto_EI_t4c0s`          | `http://freq.gaiaderma.com/auto_ei_t4c0s`          | `auto_ei_t4c0s_user`          | `auto_ei_t4c0s_secure_password`          |
+| **ETCG_Shorts**                      | `Vasko_ETCG_Shorts`            | `http://freq.gaiaderma.com/etcg_shorts`            | `etcg_shorts_user`            | `etcg_shorts_secure_password`            |
+| **KamaFama**                         | `Vasko_KamaFama`               | `http://freq.gaiaderma.com/kamafama`               | `kamafama_user`               | `kamafama_secure_password`               |
+| **ZaratustraDCA2_06**                | `Vasko_ZaratustraDCA2_06`      | `http://freq.gaiaderma.com/zaratustra`             | `zaratustra_user`             | `zaratustra_secure_password`             |
+| **BollingerBounce**                  | `Vasko_BollingerBounce`        | `http://freq.gaiaderma.com/bollingerbounce`        | `bollingerbounce_user`        | `bollingerbounce_secure_password`        |
+| **BollingerBounce_Shorts**           | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
+| **KeltnerBounce**                    | `Vasko_KeltnerBounce`          | `http://freq.gaiaderma.com/keltnerbounce`          | `keltnerbounce_user`          | `keltnerbounce_secure_password`          |
+| **KeltnerBounce_Shorts**             | `Vasko_KeltnerBounce_Shorts`   | `http://freq.gaiaderma.com/keltnerbounce_shorts`   | `keltnerbounce_shorts_user`   | `keltnerbounce_shorts_secure_password`   |
+| **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2`   | `http://freq.gaiaderma.com/ultrasmart_nostop_v2`   | `ultrasmart_nostop_v2_user`   | `ultrasmart_nostop_v2_secure_password`   |
+| **Lmao**                             | `Vasko_Lmao`                   | `http://freq.gaiaderma.com/lmao`                   | `lmao_user`                   | `lmao_secure_password`                   |
+| **HighWinRateScalper**               | `Vasko_HighWinRateScalper`     | `http://freq.gaiaderma.com/highwinratescalper`     | `highwinratescalper_user`     | `highwinratescalper_secure_password`     |
+| **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
+| **AlexBandSniperV58COptuna**         | `Vasko_AlexBandSniper_V58C`    | `http://freq.gaiaderma.com/alexbandsniper_v58c`    | `alexbandsniper_v58c_user`    | `alexbandsniper_v58c_secure_password`    |
+| **WhaleFlowScalper**                 | `Vasko_WhaleFlowScalper`       | `http://freq.gaiaderma.com/whaleflowscalper`       | `whaleflowscalper_user`       | `whaleflowscalper_secure_password`       |
+
 ### URL Flow Example:
+
 1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
 2. **FreqUI automatically appends**: `/api/v1/token/login`
 3. **Final request**: `http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/token/login`
@@ -166,20 +175,25 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 ## Security Considerations
 
 ### Environment Files
+
 - Store API credentials securely
 - Use strong, unique passwords for each strategy
 - Consider using Docker secrets for production
 
 ### NGINX Security
+
 - The configuration includes security headers
 - Consider adding SSL/TLS for production use
 
 ### Network Security
+
 - All strategies bind to `127.0.0.1` (localhost only)
 - Only NGINX is exposed to external traffic
 
 ### CORS Configuration
+
 Each environment file includes proper CORS configuration:
+
 ```bash
 # Correct format for environment variables (comma-separated)
 FREQTRADE__API_SERVER__CORS_ORIGINS=https://freq.gaiaderma.com,http://freq.gaiaderma.com
@@ -189,6 +203,7 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 ## Monitoring and Logs
 
 ### Health Monitoring
+
 ```bash
 # Check all strategies health
 ./deploy-multi-strategies.sh health-check
@@ -236,6 +251,7 @@ curl http://freq.gaiaderma.com/whaleflowscalper/api/v1/ping
 ```
 
 ### Log Management
+
 ```bash
 # View all logs
 ./deploy-multi-strategies.sh logs
@@ -248,7 +264,9 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 ```
 
 ### File-based Logs
+
 Each strategy logs to separate files in `user_data/logs/`:
+
 - `nfi-x7.log`
 - `e0v1e.log`, `e0v1e_shorts.log`
 - `auto_ei_t4c0s.log`
@@ -259,36 +277,39 @@ Each strategy logs to separate files in `user_data/logs/`:
 ## Configuration Details
 
 ### Shared Configuration
+
 All strategies use the same base configuration (`user_data/strategies/config.json`) but can be customized via environment variables.
 
 ### Port Allocation
 
-| Port | Strategy | Direction | Leverage |
-|------|----------|-----------|----------|
-| 8080 | nfi-x7 | Longs | - |
-| 8098 | E0V1E | Longs | 3x |
-| 8099 | E0V1E_Shorts | Shorts | 3x |
-| 8114 | e0v1e_binance | Longs | Strategy-defined |
-| 8092 | BinHV27_combined | Longs + Shorts | Strategy-defined |
-| 8100 | Auto_EI_t4c0s | Longs | - |
-| 8103 | ETCG_Shorts | Shorts | 3x |
-| 8091 | KamaFama | Longs | 3x |
-| 8119 | ZaratustraDCA2_06 | Longs + Shorts | Config-defined |
-| 8124 | BollingerBounce | Longs | 3x |
-| 8125 | BollingerBounce_Shorts | Shorts | 3x |
-| 8126 | KeltnerBounce | Longs | 3x |
-| 8127 | KeltnerBounce_Shorts | Shorts | 3x |
-| 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs | Config-defined |
-| 8129 | Lmao | Longs | Config-defined |
-| 8130 | HighWinRateScalper | Longs + Shorts | Strategy-defined |
-| 8131 | MtfScalper | Longs + Shorts | Strategy-defined |
-| 8132 | AlexBandSniperV58COptuna | Longs + Shorts | Strategy-defined |
-| 8133 | WhaleFlowScalper | Longs + Shorts | Strategy-defined |
+| Port | Strategy                         | Direction      | Leverage         |
+| ---- | -------------------------------- | -------------- | ---------------- |
+| 8080 | nfi-x7                           | Longs          | -                |
+| 8098 | E0V1E                            | Longs          | 3x               |
+| 8099 | E0V1E_Shorts                     | Shorts         | 3x               |
+| 8114 | e0v1e_binance                    | Longs          | Strategy-defined |
+| 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
+| 8100 | Auto_EI_t4c0s                    | Longs          | -                |
+| 8103 | ETCG_Shorts                      | Shorts         | 3x               |
+| 8091 | KamaFama                         | Longs          | 3x               |
+| 8119 | ZaratustraDCA2_06                | Longs + Shorts | Config-defined   |
+| 8124 | BollingerBounce                  | Longs          | 3x               |
+| 8125 | BollingerBounce_Shorts           | Shorts         | 3x               |
+| 8126 | KeltnerBounce                    | Longs          | 3x               |
+| 8127 | KeltnerBounce_Shorts             | Shorts         | 3x               |
+| 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs          | Config-defined   |
+| 8129 | Lmao                             | Longs          | Config-defined   |
+| 8130 | HighWinRateScalper               | Longs + Shorts | Strategy-defined |
+| 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
+| 8132 | AlexBandSniperV58COptuna         | Longs + Shorts | Strategy-defined |
+| 8133 | WhaleFlowScalper                 | Longs + Shorts | Strategy-defined |
 
 **Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8134+
 
 ### Database Separation
+
 Each strategy uses its own SQLite database:
+
 - `nfi-x7-tradesv3.sqlite`
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
@@ -310,7 +331,9 @@ Each strategy uses its own SQLite database:
 - `whaleflowscalper-tradesv3.sqlite`
 
 ### NGINX Path Routing
+
 The NGINX configuration uses simple base paths without complex rewrites:
+
 ```nginx
 # Strategy-specific paths (FreqUI appends /api/v1/* to these)
 location /auto_ei_t4c0s/ {
@@ -329,6 +352,7 @@ location /auto_ei_t4c0s/ {
    **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`
 
 2. **Port Conflicts**
+
    ```bash
    # Check if ports are in use
    netstat -tulpn | grep :8[01][0-9][0-9]
@@ -342,6 +366,7 @@ location /auto_ei_t4c0s/ {
    ```
 
 3. **NGINX Configuration Errors**
+
    ```bash
    # Test NGINX configuration
    sudo nginx -t
@@ -351,6 +376,7 @@ location /auto_ei_t4c0s/ {
    ```
 
 4. **Strategy Not Starting**
+
    ```bash
    # Check strategy logs
    ./deploy-multi-strategies.sh logs strategy-name
@@ -360,6 +386,7 @@ location /auto_ei_t4c0s/ {
    ```
 
 5. **API Connection Issues**
+
    ```bash
    # Test direct API access
    curl http://127.0.0.1:8080/api/v1/ping
@@ -372,7 +399,9 @@ location /auto_ei_t4c0s/ {
    ```
 
 ### CORS Troubleshooting
+
 If CORS issues persist:
+
 1. **Check environment variable format**: Must be comma-separated, not JSON array
 2. **Verify CORS headers**: Use browser Developer Tools > Network tab
 3. **Check NGINX configuration**: Ensure proxy headers are set correctly
@@ -411,17 +440,21 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 **Last Updated**: March 18, 2026
 
 ## Recent Changes (March 18, 2026)
+
 - **Added**: `e0v1e_binance` reverse-proxy and documentation sync (port 8114, path `/e0v1e_binance`)
 - **Added**: `BinHV27_combined` multistrategy dry-run slot (port 8092, path `/binhv27`)
 
 ## Recent Changes (March 16, 2026)
+
 - **Added**: AlexBandSniperV58COptuna dry-run rollout (port 8132)
 - **Removed**: SimpleRSI (port 8124) and SimpleRSI_Shorts (port 8125)
 - **Added**: BollingerBounce (longs, port 8124) and BollingerBounce_Shorts (shorts, port 8125), both 3x leverage
 - **Added**: KeltnerBounce (longs, port 8126) and KeltnerBounce_Shorts (shorts, port 8127), both 3x leverage
 
 ## Recent Changes (March 11, 2026)
+
 - **Added**: ZaratustraDCA2_06 (mixed long/short, port 8119) with `/zaratustra` reverse-proxy routing
 
 ## Recent Changes (February 9, 2026)
+
 - **Removed**: BinClucMadV1 strategy (port 8092)
