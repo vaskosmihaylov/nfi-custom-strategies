@@ -16,6 +16,7 @@
 # - Saves user configuration for reuse
 # - Optional Telegram notifications
 # - Docker Compose integration for container restart
+# - systemd service integration for container restart
 # - Comprehensive logging
 #
 # Initial setup:
@@ -229,7 +230,7 @@ create_config() {
     echo ""
 
     # Step 1: Strategy Files (MULTIPLE ALLOWED)
-    print_header "1/6" "REQUIRED - Strategy Files"
+    print_header "1/7" "REQUIRED - Strategy Files"
     print_input "  Which strategy files do you want to update?"
     print_info "Examples: NostalgiaForInfinityX7.py"
     print_warn "IMPORTANT: Separate with commas, NO SPACES! (e.g., file1.py,file2.py)"
@@ -249,7 +250,7 @@ create_config() {
     print_ok "Will save to: $strategy_dest"
 
     # Step 2: Configuration Files (MULTIPLE ALLOWED)
-    print_header "2/6" "REQUIRED - Configuration JSON Files"
+    print_header "2/7" "REQUIRED - Configuration JSON Files"
     print_input "  Which configuration files do you want to update?"
     print_info "Examples: blacklist-binance.json,pairlist-volume-binance-usdt.json"
     print_warn "IMPORTANT: Separate with commas, NO SPACES! (e.g., file1.json,file2.json)"
@@ -270,7 +271,7 @@ create_config() {
     print_ok "Will save to: $config_dest"
 
     # Step 3: Ask if user wants Additional Files
-    print_header "3/6" "OPTIONAL - Additional Files"
+    print_header "3/7" "OPTIONAL - Additional Files"
     print_input "  Do you want to monitor additional files?"
 
     cecho "$RED" "╔════════════════════════════════════════════════════════════════════╗"
@@ -339,7 +340,7 @@ create_config() {
     fi
 
     # Step 4: Docker Compose
-    print_header "4/6" "OPTIONAL - Docker Compose"
+    print_header "4/7" "OPTIONAL - Docker Compose"
 
     local docker_compose_path=""
     if yes_no_prompt "Do you want to restart Docker containers on update?" "y"; then
@@ -351,8 +352,24 @@ create_config() {
         print_info "Docker integration disabled"
     fi
 
-    # Step 5: Cleanup
-    print_header "5/6" "OPTIONAL - Cleanup"
+    # Step 5: systemd Service
+    print_header "5/7" "OPTIONAL - systemd Service"
+
+    local systemd_service_name=""
+    if yes_no_prompt "Do you want to restart a systemd service on update?" "n"; then
+        echo ""
+        read -p "$(cecho $CYAN '  ➜ ')$(cecho $WHITE 'Service name (e.g., freqtrade): ')" systemd_service_name
+        if [[ -n "$systemd_service_name" ]]; then
+            print_ok "systemd service set to: $systemd_service_name"
+        else
+            print_warn "Service name empty - systemd integration disabled"
+        fi
+    else
+        print_info "systemd integration disabled"
+    fi
+
+    # Step 6: Cleanup
+    print_header "6/7" "OPTIONAL - Cleanup"
 
     local cleanup_old_files="n"
     if yes_no_prompt "Clean up temporary files after update?" "y"; then
@@ -363,8 +380,8 @@ create_config() {
         print_ok "Cleanup: Disabled"
     fi
 
-    # Step 6: Telegram
-    print_header "6/6" "OPTIONAL - Telegram Notifications"
+    # Step 7: Telegram
+    print_header "7/7" "OPTIONAL - Telegram Notifications"
 
     local telegram_bot_token=""
     local telegram_chat_id=""
@@ -403,6 +420,9 @@ additional_root="$additional_root"
 
 # OPTIONAL: Docker Compose
 docker_compose_path="$docker_compose_path"
+
+# OPTIONAL: systemd Service
+systemd_service_name="$systemd_service_name"
 
 # OPTIONAL: Cleanup
 cleanup_old_files="$cleanup_old_files"
@@ -449,6 +469,16 @@ EOF
     if [[ -n "$docker_compose_path" ]]; then
         print_ok "Enabled"
         print_info "Path: $docker_compose_path"
+    else
+        print_warn "Disabled"
+    fi
+
+    echo ""
+    cecho "$CYAN" "  ⚙️  SYSTEMD SERVICE"
+    print_sep_small
+    if [[ -n "$systemd_service_name" ]]; then
+        print_ok "Enabled"
+        print_info "Service: $systemd_service_name"
     else
         print_warn "Disabled"
     fi
@@ -781,6 +811,11 @@ main() {
     log "Loading configuration..."
     source "$CONFIG_FILE" || log_error "Failed to load config"
 
+    # Check systemctl dependency only if systemd service is configured
+    if [[ -n "$systemd_service_name" ]]; then
+        check_dependency "systemctl"
+    fi
+
     # Enable strict mode now that we have config
     set -e
     RUNTIME_MODE=true
@@ -846,6 +881,17 @@ main() {
         fi
     fi
 
+    systemd_stopped=false
+    if [[ -n "$systemd_service_name" ]]; then
+        log "Stopping systemd service: $systemd_service_name..."
+        if sudo systemctl stop "$systemd_service_name.service"; then
+            log "✓ $systemd_service_name stopped."
+            systemd_stopped=true
+        else
+            log "WARNING: Failed to stop $systemd_service_name!"
+        fi
+    fi
+
     UPDATED_FILES_ARRAY=()
 
     # Update files
@@ -865,6 +911,16 @@ main() {
     # Start docker again
     if [[ "$docker_stopped" == "true" ]]; then
         start_docker_compose "$docker_compose_path"
+    fi
+
+    # Start systemd service again
+    if [[ "$systemd_stopped" == "true" ]]; then
+        log "Starting systemd service: $systemd_service_name..."
+        if sudo systemctl start "$systemd_service_name.service"; then
+            log "✓ $systemd_service_name started."
+        else
+            log "WARNING: Failed to start $systemd_service_name!"
+        fi
     fi
 
     # Send telegram
