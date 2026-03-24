@@ -69,7 +69,8 @@ show_help() {
     echo "  keltnerbounce, keltnerbounce_shorts,"
     echo "  ultrasmart_nostop_v2, lmao,"
     echo "  highwinratescalper, mtfscalper, whaleflowscalper,"
-    echo "  alexbandsniper_v58c, triplesupertrendadxrsi, orbalgo"
+    echo "  alexbandsniper_v58c, triplesupertrendadxrsi, orbalgo,"
+    echo "  ichiv1_plus"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -101,6 +102,7 @@ show_help() {
     echo "  AlexBandSniperV58COptuna: http://freq.gaiaderma.com/alexbandsniper_v58c"
     echo "  TripleSuperTrendADXRSI: http://freq.gaiaderma.com/triplesupertrendadxrsi"
     echo "  ORBAlgo:               http://freq.gaiaderma.com/orbalgo"
+    echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -250,6 +252,7 @@ health_check() {
         "whaleflowscalper:8133"
         "triplesupertrendadxrsi:8134"
         "orbalgo:8135"
+        "ichiv1_plus:8136"
     )
     
     local healthy=0

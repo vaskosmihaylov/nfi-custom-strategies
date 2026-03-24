@@ -389,6 +389,23 @@ services:
       --strategy-path user_data/strategies/ORB
       --strategy ORBAlgo
 
+  # IchimokuCloudBreakoutStrategy (Longs + Shorts)
+  freqtrade-ichiv1_plus:
+    <<: *common-settings
+    container_name: freqtrade-ichiv1_plus
+    ports:
+      - "127.0.0.1:8136:8080"
+    env_file:
+      - path: ./env-files/ichiv1_plus.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/ichiv1_plus-tradesv3.sqlite
+      --log-file user_data/logs/ichiv1_plus.log
+      --strategy-path user_data/strategies/ichiv1_plus
+      --strategy IchimokuCloudBreakoutStrategy
+
 networks:
   default:
     name: freqtrade-network

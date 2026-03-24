@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **21 active trading strategies** running in separate Docker containers
+- **22 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -37,7 +37,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── AlexBandSniperV58COptuna (Port 8132)
                            ├── WhaleFlowScalper (Port 8133)
                            ├── TripleSuperTrendADXRSI (Port 8134)
-                           └── ORBAlgo (Port 8135)
+                           ├── ORBAlgo (Port 8135)
+                           └── IchimokuCloudBreakoutStrategy (Port 8136)
 ```
 
 ## Files
@@ -75,6 +76,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `whaleflowscalper.env` - WhaleFlowScalper strategy (whale-flow futures scalper)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
+- `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
 
 ## Quick Start
 
@@ -168,6 +170,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **WhaleFlowScalper**                 | `Vasko_WhaleFlowScalper`       | `http://freq.gaiaderma.com/whaleflowscalper`       | `whaleflowscalper_user`       | `whaleflowscalper_secure_password`       |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
+| **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
 
 ### URL Flow Example:
 
@@ -234,6 +237,7 @@ curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV58COptuna
 curl http://127.0.0.1:8133/api/v1/ping  # WhaleFlowScalper
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
+curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
@@ -256,6 +260,7 @@ curl http://freq.gaiaderma.com/alexbandsniper_v58c/api/v1/ping
 curl http://freq.gaiaderma.com/whaleflowscalper/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
+curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
 ```
 
 ### Log Management
