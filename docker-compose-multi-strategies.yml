@@ -347,7 +347,7 @@ services:
         required: true
     command: >
       trade
-      --config user_data/strategies/config-orbalgo.json
+      --config user_data/strategies/config.json
       --db-url sqlite:////freqtrade/user_data/orbalgo-tradesv3.sqlite
       --log-file user_data/logs/orbalgo.log
       --strategy-path user_data/strategies/ORB
@@ -365,6 +365,7 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
+      --config user_data/strategies/ORB/ORBAlgo.json
       --db-url sqlite:////freqtrade/user_data/ichiv1_plus-tradesv3.sqlite
       --log-file user_data/logs/ichiv1_plus.log
       --strategy-path user_data/strategies/ichiv1_plus
