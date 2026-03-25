@@ -76,6 +76,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `whaleflowscalper.env` - WhaleFlowScalper strategy (whale-flow futures scalper)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
+  ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
 
 ## Quick Start

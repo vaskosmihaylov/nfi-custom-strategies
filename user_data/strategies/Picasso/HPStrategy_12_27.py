@@ -1203,7 +1203,7 @@ class HPStrategyJSTKR(HPStrategyTFJPA):
                     calculated_dca_stake = self.calculate_dca_price(base_value=trade.stake_amount, decline=current_profit * 100, target_percent=1)  # Datový typ: float
                     # Upravení velikosti sázky, pokud je vyšší než dostupný zůstatek
                     while calculated_dca_stake >= total_stake_amount:
-                        calculated_dca_stake = calculated_dca_stake / 4  # Datový typ: float
+                        calculated_dca_stake = calculated_dca_stake / 4  # Datový typ: flцаoat
                     # Logování informací o upravené sázce
                     logging.info(f'AP2 {trade.pair}, DCA: {calculated_dca_stake}')
                     # Vrácení upravené velikosti sázky

@@ -118,6 +118,7 @@ class ORBAlgo(IStrategy):
     ATR_TP1_MULT = 0.75
     ATR_TP2_MULT = 1.50
     ATR_TP3_MULT = 2.25
+    ATR_TOTAL_MULT = 1.0
 
     # --- Sensitivity -> retests mapping ---
     RETESTS_MAP = {"High": 0, "Medium": 1, "Low": 2, "Lowest": 3}
@@ -406,18 +407,32 @@ class ORBAlgo(IStrategy):
 
         # Adaptive SL: move to breakeven once TP1 has been reached
         # Pine: after tp1 is hit with adaptiveSL, slPrice = entryPrice
+        tp_stage = trade.get_custom_data(key="orb_tp_stage")
         if self.adaptive_sl.value:
-            tp_stage = trade.get_custom_data(key="orb_tp_stage")
             if tp_stage is not None and tp_stage >= 1:
                 if not trade.is_short:
                     sl_price = max(sl_price, trade.open_rate)
                 else:
                     sl_price = min(sl_price, trade.open_rate)
 
+        # Pine skips SL on the same bar where a TP was just hit.
+        # When custom_exit advances the TP stage, it stores the candle date
+        # in orb_tp_advance_date.  Suppress SL on that same candle so the
+        # trade survives to the next TP stage.
+        tp_advance_date = trade.get_custom_data(key="orb_tp_advance_date")
+        if tp_advance_date is not None:
+            candle_date = current_candle.get("date")
+            if candle_date is not None and str(candle_date) == str(tp_advance_date):
+                sl_distance = abs(current_rate - sl_price) / current_rate
+                return -sl_distance
+
         # SL already breached -> exit immediately
-        if not trade.is_short and current_rate <= sl_price:
+        # Pine uses candle low (long) / high (short) for SL detection.
+        candle_low = current_candle.get("low")
+        candle_high = current_candle.get("high")
+        if not trade.is_short and not pd.isna(candle_low) and candle_low < sl_price:
             return -0.001
-        if trade.is_short and current_rate >= sl_price:
+        if trade.is_short and not pd.isna(candle_high) and candle_high > sl_price:
             return -0.001
 
         # Return negative distance ratio from current rate
@@ -505,6 +520,7 @@ class ORBAlgo(IStrategy):
         if tp_stage == 0 and profit_pct >= self.MIN_PROFIT_PCT:
             trade.set_custom_data(key="orb_tp_stage", value=1)
             trade.set_custom_data(key="orb_last_tp_price", value=float(ema))
+            trade.set_custom_data(key="orb_tp_advance_date", value=str(candle.get("date")))
             logger.info(f"{trade.pair} ORB TP1 hit at EMA={ema:.6f} (profit {profit_pct:.2f}%)")
             return None  # No exit yet — only SL tightens
 
@@ -515,6 +531,7 @@ class ORBAlgo(IStrategy):
             if ema_beyond_tp1 and increment_pct >= self.MIN_PROFIT_INCREMENT_PCT:
                 trade.set_custom_data(key="orb_tp_stage", value=2)
                 trade.set_custom_data(key="orb_last_tp_price", value=float(ema))
+                trade.set_custom_data(key="orb_tp_advance_date", value=str(candle.get("date")))
                 logger.info(f"{trade.pair} ORB TP2 hit at EMA={ema:.6f} (increment {increment_pct:.2f}%)")
                 return None  # No exit yet
 
@@ -543,10 +560,12 @@ class ORBAlgo(IStrategy):
         _pending_entry_atr dict). Pine: lastORB.entryATR := atr at entry.
 
         TP levels are computed once from entry ATR:
-        - TP1 = entry + entryATR * 0.75
-        - TP2 = entry + entryATR * 1.50
-        - TP3 = entry + entryATR * 2.25
+        - TP1 = entry + entryATR * 0.75 * atrTotalMult
+        - TP2 = entry + entryATR * 1.50 * atrTotalMult
+        - TP3 = entry + entryATR * 2.25 * atrTotalMult
 
+        Pine checks candle high/low (not close) for ATR TP hits,
+        so intra-bar wicks that touch the target count.
         Only TP3 triggers a full exit. TP1 tightens SL to breakeven.
         """
         # Retrieve entry-time ATR
@@ -555,34 +574,44 @@ class ORBAlgo(IStrategy):
             return None
 
         direction = -1 if trade.is_short else 1
-        tp1 = trade.open_rate + entry_atr * self.ATR_TP1_MULT * direction
-        tp2 = trade.open_rate + entry_atr * self.ATR_TP2_MULT * direction
-        tp3 = trade.open_rate + entry_atr * self.ATR_TP3_MULT * direction
+        mult = self.ATR_TOTAL_MULT
+        tp1 = trade.open_rate + entry_atr * self.ATR_TP1_MULT * mult * direction
+        tp2 = trade.open_rate + entry_atr * self.ATR_TP2_MULT * mult * direction
+        tp3 = trade.open_rate + entry_atr * self.ATR_TP3_MULT * mult * direction
 
         is_long = not trade.is_short
 
+        # Pine uses candle high (long) / low (short) for ATR TP detection,
+        # allowing intra-bar wicks to trigger the level.
+        candle_high = candle.get("high")
+        candle_low = candle.get("low")
+        if pd.isna(candle_high) or pd.isna(candle_low):
+            return None
+
         # TP1 check
         if tp_stage < 1:
-            tp1_hit = (current_rate >= tp1) if is_long else (current_rate <= tp1)
+            tp1_hit = (candle_high >= tp1) if is_long else (candle_low <= tp1)
             if tp1_hit:
                 trade.set_custom_data(key="orb_tp_stage", value=1)
-                logger.info(f"{trade.pair} ORB ATR TP1 hit at {current_rate:.6f} (target {tp1:.6f})")
+                trade.set_custom_data(key="orb_tp_advance_date", value=str(candle.get("date")))
+                logger.info(f"{trade.pair} ORB ATR TP1 hit at high/low (target {tp1:.6f})")
                 return None  # SL tightens via custom_stoploss
 
         # TP2 check
         if tp_stage == 1:
-            tp2_hit = (current_rate >= tp2) if is_long else (current_rate <= tp2)
+            tp2_hit = (candle_high >= tp2) if is_long else (candle_low <= tp2)
             if tp2_hit:
                 trade.set_custom_data(key="orb_tp_stage", value=2)
-                logger.info(f"{trade.pair} ORB ATR TP2 hit at {current_rate:.6f} (target {tp2:.6f})")
+                trade.set_custom_data(key="orb_tp_advance_date", value=str(candle.get("date")))
+                logger.info(f"{trade.pair} ORB ATR TP2 hit at high/low (target {tp2:.6f})")
                 return None
 
         # TP3 check -> full exit
         if tp_stage == 2:
-            tp3_hit = (current_rate >= tp3) if is_long else (current_rate <= tp3)
+            tp3_hit = (candle_high >= tp3) if is_long else (candle_low <= tp3)
             if tp3_hit:
                 trade.set_custom_data(key="orb_tp_stage", value=3)
-                logger.info(f"{trade.pair} ORB ATR TP3 hit at {current_rate:.6f} -> full exit")
+                logger.info(f"{trade.pair} ORB ATR TP3 hit at high/low -> full exit")
                 return "orb_tp3_atr"
 
         return None
