@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **22 active trading strategies** running in separate Docker containers
+- **20 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -32,10 +32,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KeltnerBounce_Shorts (Port 8127)
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
                            ├── Lmao (Port 8129)
-                           ├── HighWinRateScalper (Port 8130)
                            ├── MtfScalper (Port 8131)
                            ├── AlexBandSniperV58COptuna (Port 8132)
-                           ├── WhaleFlowScalper (Port 8133)
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── ORBAlgo (Port 8135)
                            └── IchimokuCloudBreakoutStrategy (Port 8136)
@@ -70,10 +68,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
 - `lmao.env` - Lmao strategy (long-only Lmao family strategy)
-- `highwinratescalper.env` - HighWinRateScalper strategy (2h mean-reversion futures scalper)
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
 - `alexbandsniper_v58c.env` - AlexBandSniperV58COptuna strategy (longs + shorts dry-run validation rollout)
-- `whaleflowscalper.env` - WhaleFlowScalper strategy (whale-flow futures scalper)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
   ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
@@ -165,10 +161,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **KeltnerBounce_Shorts**             | `Vasko_KeltnerBounce_Shorts`   | `http://freq.gaiaderma.com/keltnerbounce_shorts`   | `keltnerbounce_shorts_user`   | `keltnerbounce_shorts_secure_password`   |
 | **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2`   | `http://freq.gaiaderma.com/ultrasmart_nostop_v2`   | `ultrasmart_nostop_v2_user`   | `ultrasmart_nostop_v2_secure_password`   |
 | **Lmao**                             | `Vasko_Lmao`                   | `http://freq.gaiaderma.com/lmao`                   | `lmao_user`                   | `lmao_secure_password`                   |
-| **HighWinRateScalper**               | `Vasko_HighWinRateScalper`     | `http://freq.gaiaderma.com/highwinratescalper`     | `highwinratescalper_user`     | `highwinratescalper_secure_password`     |
 | **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
 | **AlexBandSniperV58COptuna**         | `Vasko_AlexBandSniper_V58C`    | `http://freq.gaiaderma.com/alexbandsniper_v58c`    | `alexbandsniper_v58c_user`    | `alexbandsniper_v58c_secure_password`    |
-| **WhaleFlowScalper**                 | `Vasko_WhaleFlowScalper`       | `http://freq.gaiaderma.com/whaleflowscalper`       | `whaleflowscalper_user`       | `whaleflowscalper_secure_password`       |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
@@ -232,10 +226,8 @@ curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
 curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # Lmao
-curl http://127.0.0.1:8130/api/v1/ping  # HighWinRateScalper
 curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
 curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV58COptuna
-curl http://127.0.0.1:8133/api/v1/ping  # WhaleFlowScalper
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
@@ -255,10 +247,8 @@ curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/lmao/api/v1/ping
-curl http://freq.gaiaderma.com/highwinratescalper/api/v1/ping
 curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
 curl http://freq.gaiaderma.com/alexbandsniper_v58c/api/v1/ping
-curl http://freq.gaiaderma.com/whaleflowscalper/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
@@ -313,12 +303,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8127 | KeltnerBounce_Shorts             | Shorts         | 3x               |
 | 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs          | Config-defined   |
 | 8129 | Lmao                             | Longs          | Config-defined   |
-| 8130 | HighWinRateScalper               | Longs + Shorts | Strategy-defined |
 | 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
 | 8132 | AlexBandSniperV58COptuna         | Longs + Shorts | Strategy-defined |
-| 8133 | WhaleFlowScalper                 | Longs + Shorts | Strategy-defined |
+| 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
+| 8135 | ORBAlgo                          | Longs + Shorts | Strategy-defined |
+| 8136 | IchimokuCloudBreakoutStrategy    | Longs + Shorts | Strategy-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8134+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8137+
 
 ### Database Separation
 
@@ -339,10 +330,8 @@ Each strategy uses its own SQLite database:
 - `keltnerbounce_shorts-tradesv3.sqlite`
 - `ultrasmart_nostop_v2-tradesv3.sqlite`
 - `lmao-tradesv3.sqlite`
-- `highwinratescalper-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
 - `alexbandsniper_v58c-tradesv3.sqlite`
-- `whaleflowscalper-tradesv3.sqlite`
 
 ### NGINX Path Routing
 
