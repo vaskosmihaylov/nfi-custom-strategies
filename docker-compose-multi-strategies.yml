@@ -371,6 +371,23 @@ services:
       --strategy-path user_data/strategies/ichiv1_plus
       --strategy IchimokuCloudBreakoutStrategy
 
+  # Picasso CE/CTI/STC/EMA Strategy (Longs + Shorts dry-run evaluation)
+  freqtrade-picasso_ce:
+    <<: *common-settings
+    container_name: freqtrade-picasso_ce
+    ports:
+      - "127.0.0.1:8137:8080"
+    env_file:
+      - path: ./env-files/picasso_ce.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/picasso_ce-tradesv3.sqlite
+      --log-file user_data/logs/picasso_ce.log
+      --strategy-path user_data/strategies/Picasso
+      --strategy picasso_CE_CTI_STC_EMA_1h_V5_4x_3mt_Jan16_np_Jan20
+
 networks:
   default:
     name: freqtrade-network

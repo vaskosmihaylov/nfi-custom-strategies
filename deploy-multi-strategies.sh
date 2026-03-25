@@ -70,7 +70,7 @@ show_help() {
     echo "  ultrasmart_nostop_v2, lmao,"
     echo "  mtfscalper,"
     echo "  alexbandsniper_v58c, triplesupertrendadxrsi, orbalgo,"
-    echo "  ichiv1_plus"
+    echo "  ichiv1_plus, picasso_ce"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -101,6 +101,7 @@ show_help() {
     echo "  TripleSuperTrendADXRSI: http://freq.gaiaderma.com/triplesupertrendadxrsi"
     echo "  ORBAlgo:               http://freq.gaiaderma.com/orbalgo"
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
+    echo "  Picasso_CE:            http://freq.gaiaderma.com/picasso_ce"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -249,6 +250,7 @@ health_check() {
         "triplesupertrendadxrsi:8134"
         "orbalgo:8135"
         "ichiv1_plus:8136"
+        "picasso_ce:8137"
     )
     
     local healthy=0

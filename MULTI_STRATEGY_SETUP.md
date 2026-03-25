@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **20 active trading strategies** running in separate Docker containers
+- **21 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -36,7 +36,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── AlexBandSniperV58COptuna (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── ORBAlgo (Port 8135)
-                           └── IchimokuCloudBreakoutStrategy (Port 8136)
+                           ├── IchimokuCloudBreakoutStrategy (Port 8136)
+                           └── Picasso CE/CTI/STC/EMA (Port 8137)
 ```
 
 ## Files
@@ -74,6 +75,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
   ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
+- `picasso_ce.env` - Picasso CE/CTI/STC/EMA strategy (longs + shorts dry-run evaluation on Bybit futures)
 
 ## Quick Start
 
@@ -166,6 +168,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
+| **Picasso CE/CTI/STC/EMA**           | `Vasko_Picasso_CE`             | `http://freq.gaiaderma.com/picasso_ce`             | `picasso_ce_user`             | `picasso_ce_secure_password`             |
 
 ### URL Flow Example:
 
@@ -231,6 +234,7 @@ curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV58COptuna
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
+curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
@@ -252,6 +256,7 @@ curl http://freq.gaiaderma.com/alexbandsniper_v58c/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
+curl http://freq.gaiaderma.com/picasso_ce/api/v1/ping
 ```
 
 ### Log Management
