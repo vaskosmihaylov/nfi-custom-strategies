@@ -33,7 +33,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
                            ├── Lmao (Port 8129)
                            ├── MtfScalper (Port 8131)
-                           ├── AlexBandSniperV58COptuna (Port 8132)
+                           ├── AlexBandSniperV10AI (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── ORBAlgo (Port 8135)
                            ├── IchimokuCloudBreakoutStrategy (Port 8136)
@@ -70,7 +70,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
 - `lmao.env` - Lmao strategy (long-only Lmao family strategy)
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
-- `alexbandsniper_v58c.env` - AlexBandSniperV58COptuna strategy (longs + shorts dry-run validation rollout)
+- `alexbandsniper_v10ai.env` - AlexBandSniperV10AI strategy (longs + shorts dry-run validation rollout)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
   ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
@@ -164,7 +164,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2`   | `http://freq.gaiaderma.com/ultrasmart_nostop_v2`   | `ultrasmart_nostop_v2_user`   | `ultrasmart_nostop_v2_secure_password`   |
 | **Lmao**                             | `Vasko_Lmao`                   | `http://freq.gaiaderma.com/lmao`                   | `lmao_user`                   | `lmao_secure_password`                   |
 | **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
-| **AlexBandSniperV58COptuna**         | `Vasko_AlexBandSniper_V58C`    | `http://freq.gaiaderma.com/alexbandsniper_v58c`    | `alexbandsniper_v58c_user`    | `alexbandsniper_v58c_secure_password`    |
+| **AlexBandSniperV10AI**              | `Vasko_AlexBandSniper_V10AI`   | `http://freq.gaiaderma.com/alexbandsniper_v10ai`   | `alexbandsniper_v10ai_user`   | `alexbandsniper_v10ai_secure_password`   |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
@@ -230,7 +230,7 @@ curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # Lmao
 curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
-curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV58COptuna
+curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV10AI
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
@@ -252,7 +252,7 @@ curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/lmao/api/v1/ping
 curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
-curl http://freq.gaiaderma.com/alexbandsniper_v58c/api/v1/ping
+curl http://freq.gaiaderma.com/alexbandsniper_v10ai/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
@@ -309,7 +309,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs          | Config-defined   |
 | 8129 | Lmao                             | Longs          | Config-defined   |
 | 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
-| 8132 | AlexBandSniperV58COptuna         | Longs + Shorts | Strategy-defined |
+| 8132 | AlexBandSniperV10AI              | Longs + Shorts | Strategy-defined |
 | 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
 | 8135 | ORBAlgo                          | Longs + Shorts | Strategy-defined |
 | 8136 | IchimokuCloudBreakoutStrategy    | Longs + Shorts | Strategy-defined |
@@ -336,7 +336,7 @@ Each strategy uses its own SQLite database:
 - `ultrasmart_nostop_v2-tradesv3.sqlite`
 - `lmao-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
-- `alexbandsniper_v58c-tradesv3.sqlite`
+- `alexbandsniper_v10ai-tradesv3.sqlite`
 
 ### NGINX Path Routing
 
@@ -454,7 +454,7 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 ## Recent Changes (March 16, 2026)
 
-- **Added**: AlexBandSniperV58COptuna dry-run rollout (port 8132)
+- **Replaced**: AlexBandSniperV58COptuna with AlexBandSniperV10AI in the port 8132 dry-run slot
 - **Removed**: SimpleRSI (port 8124) and SimpleRSI_Shorts (port 8125)
 - **Added**: BollingerBounce (longs, port 8124) and BollingerBounce_Shorts (shorts, port 8125), both 3x leverage
 - **Added**: KeltnerBounce (longs, port 8126) and KeltnerBounce_Shorts (shorts, port 8127), both 3x leverage

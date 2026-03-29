@@ -302,22 +302,22 @@ services:
       --strategy-path user_data/strategies/MtfScalper
       --strategy MtfScalper
 
-  # AlexBandSniperV58COptuna Strategy (Dry-run validation)
-  freqtrade-alexbandsniper_v58c:
+  # AlexBandSniperV10AI Strategy (Dry-run validation)
+  freqtrade-alexbandsniper_v10ai:
     <<: *common-settings
-    container_name: freqtrade-alexbandsniper_v58c
+    container_name: freqtrade-alexbandsniper_v10ai
     ports:
       - "127.0.0.1:8132:8080"
     env_file:
-      - path: ./env-files/alexbandsniper_v58c.env
+      - path: ./env-files/alexbandsniper_v10ai.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/alexbandsniper_v58c-tradesv3.sqlite
-      --log-file user_data/logs/alexbandsniper_v58c.log
+      --db-url sqlite:////freqtrade/user_data/alexbandsniper_v10ai-tradesv3.sqlite
+      --log-file user_data/logs/alexbandsniper_v10ai.log
       --strategy-path user_data/strategies/AlexNexus
-      --strategy AlexBandSniperV58COptuna
+      --strategy AlexBandSniperV10AI
 
   # TripleSuperTrendADXRSI Strategy (Longs + Shorts)
   freqtrade-triplesupertrendadxrsi:
