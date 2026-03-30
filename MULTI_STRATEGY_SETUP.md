@@ -31,7 +31,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── KeltnerBounce (Port 8126)
                            ├── KeltnerBounce_Shorts (Port 8127)
                            ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
-                           ├── Lmao (Port 8129)
+                           ├── FenixTopProfit (Port 8129)
                            ├── MtfScalper (Port 8131)
                            ├── AlexBandSniperV10AI (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
@@ -68,7 +68,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `keltnerbounce.env` - KeltnerBounce strategy (longs with 3x leverage)
 - `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
-- `lmao.env` - Lmao strategy (long-only Lmao family strategy)
+- `fenix.env` - FenixTopProfit strategy (longs + shorts 1h trend-following strategy)
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
 - `alexbandsniper_v10ai.env` - AlexBandSniperV10AI strategy (longs + shorts dry-run validation rollout)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
@@ -162,7 +162,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **KeltnerBounce**                    | `Vasko_KeltnerBounce`          | `http://freq.gaiaderma.com/keltnerbounce`          | `keltnerbounce_user`          | `keltnerbounce_secure_password`          |
 | **KeltnerBounce_Shorts**             | `Vasko_KeltnerBounce_Shorts`   | `http://freq.gaiaderma.com/keltnerbounce_shorts`   | `keltnerbounce_shorts_user`   | `keltnerbounce_shorts_secure_password`   |
 | **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2`   | `http://freq.gaiaderma.com/ultrasmart_nostop_v2`   | `ultrasmart_nostop_v2_user`   | `ultrasmart_nostop_v2_secure_password`   |
-| **Lmao**                             | `Vasko_Lmao`                   | `http://freq.gaiaderma.com/lmao`                   | `lmao_user`                   | `lmao_secure_password`                   |
+| **FenixTopProfit**                   | `Vasko_FenixTopProfit`         | `http://freq.gaiaderma.com/fenix`                  | `fenix_user`                  | `fenix_secure_password`                  |
 | **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
 | **AlexBandSniperV10AI**              | `Vasko_AlexBandSniper_V10AI`   | `http://freq.gaiaderma.com/alexbandsniper_v10ai`   | `alexbandsniper_v10ai_user`   | `alexbandsniper_v10ai_secure_password`   |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
@@ -228,7 +228,7 @@ curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
 curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
 curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
 curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
-curl http://127.0.0.1:8129/api/v1/ping  # Lmao
+curl http://127.0.0.1:8129/api/v1/ping  # FenixTopProfit
 curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
 curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV10AI
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
@@ -250,7 +250,7 @@ curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
-curl http://freq.gaiaderma.com/lmao/api/v1/ping
+curl http://freq.gaiaderma.com/fenix/api/v1/ping
 curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
 curl http://freq.gaiaderma.com/alexbandsniper_v10ai/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
@@ -307,7 +307,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8126 | KeltnerBounce                    | Longs          | 3x               |
 | 8127 | KeltnerBounce_Shorts             | Shorts         | 3x               |
 | 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs          | Config-defined   |
-| 8129 | Lmao                             | Longs          | Config-defined   |
+| 8129 | FenixTopProfit                   | Longs + Shorts | Config-defined   |
 | 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
 | 8132 | AlexBandSniperV10AI              | Longs + Shorts | Strategy-defined |
 | 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
@@ -334,7 +334,7 @@ Each strategy uses its own SQLite database:
 - `keltnerbounce-tradesv3.sqlite`
 - `keltnerbounce_shorts-tradesv3.sqlite`
 - `ultrasmart_nostop_v2-tradesv3.sqlite`
-- `lmao-tradesv3.sqlite`
+- `fenix-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
 - `alexbandsniper_v10ai-tradesv3.sqlite`
 

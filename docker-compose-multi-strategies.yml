@@ -267,22 +267,22 @@ services:
       --strategy-path user_data/strategies/Lmao
       --strategy UltraSmartStrategy_NoStoploss_v2
 
-  # Lmao Strategy (Longs)
-  freqtrade-lmao:
+  # FenixTopProfit Strategy (Longs + Shorts)
+  freqtrade-fenix:
     <<: *common-settings
-    container_name: freqtrade-lmao
+    container_name: freqtrade-fenix
     ports:
       - "127.0.0.1:8129:8080"
     env_file:
-      - path: ./env-files/lmao.env
+      - path: ./env-files/fenix.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/lmao-tradesv3.sqlite
-      --log-file user_data/logs/lmao.log
-      --strategy-path user_data/strategies/Lmao
-      --strategy Lmao
+      --db-url sqlite:////freqtrade/user_data/fenix-tradesv3.sqlite
+      --log-file user_data/logs/fenix.log
+      --strategy-path user_data/strategies/Fenix
+      --strategy FenixTopProfit
 
   # MtfScalper Strategy
   freqtrade-mtfscalper:
