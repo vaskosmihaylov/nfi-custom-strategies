@@ -1685,6 +1685,58 @@ class AlexBandSniperV10AI(IStrategy):
         pairs = self.dp.current_whitelist()
         return [(pair, '1h') for pair in pairs]
 
+    def _get_historical_data_settings(self) -> Tuple[Path, str, str]:
+        """Resolve exchange data location and format for local historical loads."""
+        exchange_name = self.config.get('exchange', {}).get('name', 'bybit')
+        data_dir = Path(f"user_data/data/{exchange_name}")
+        data_format = self.config.get('dataformat_ohlcv', 'feather')
+        trading_mode = str(self.config.get('trading_mode', '')).lower()
+        candle_type = self.config.get('candle_type_def')
+
+        if not candle_type:
+            candle_type = 'futures' if trading_mode == 'futures' else 'spot'
+
+        return data_dir, str(data_format), str(candle_type)
+
+    def _historical_pair_glob_pattern(self, timeframe: str, data_format: str, candle_type: str) -> str:
+        """Build the filename pattern used by freqtrade historical pair files."""
+        if candle_type == 'spot':
+            return f"*-{timeframe}.{data_format}"
+        return f"*-{timeframe}-{candle_type}.{data_format}"
+
+    def _scan_historical_pairs(self, timeframe: str, data_dir: Path, data_format: str, candle_type: str) -> List[str]:
+        """Scan locally downloaded candles and rebuild pair names from filenames."""
+        scan_dir = data_dir / candle_type if candle_type != 'spot' else data_dir
+        if not scan_dir.exists():
+            logger.warning(f"⚠️ [ML BACKTEST] Historical data directory missing: {scan_dir}")
+            return []
+
+        pattern = self._historical_pair_glob_pattern(timeframe, data_format, candle_type)
+        pair_files = sorted(scan_dir.glob(pattern))
+        pairs: List[str] = []
+
+        for path in pair_files:
+            stem = path.stem
+            suffix = f"-{timeframe}" if candle_type == 'spot' else f"-{timeframe}-{candle_type}"
+            if not stem.endswith(suffix):
+                continue
+
+            pair_token = stem[:-len(suffix)]
+            parts = pair_token.split("_")
+
+            if candle_type == 'spot':
+                if len(parts) >= 2:
+                    base = parts[0]
+                    quote = "_".join(parts[1:])
+                    pairs.append(f"{base}/{quote}")
+            elif len(parts) >= 3:
+                base = parts[0]
+                quote = parts[1]
+                settle = "_".join(parts[2:])
+                pairs.append(f"{base}/{quote}:{settle}")
+
+        return sorted(set(pairs))
+
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """Enhanced indicator population with Optuna optimization and live adaptation"""
         
@@ -1779,16 +1831,14 @@ class AlexBandSniperV10AI(IStrategy):
             else:
                 # During ML training, load from disk
                 from freqtrade.data.history import load_pair_history
-                from pathlib import Path
-                exchange_name = self.config.get('exchange', {}).get('name', 'bybit')
-                data_dir = Path(f"user_data/data/{exchange_name}")
+                data_dir, data_format, candle_type = self._get_historical_data_settings()
                 
                 informative_1h = load_pair_history(
                     datadir=data_dir,
                     timeframe='1h',
                     pair=pair,
-                    data_format='json',
-                    candle_type=self.config.get('candle_type_def', 'spot')
+                    data_format=data_format,
+                    candle_type=candle_type
                 )
             
             if informative_1h is not None and len(informative_1h) > 50 and not informative_1h.empty:
@@ -4026,18 +4076,18 @@ class AlexBandSniperV10AI(IStrategy):
             logger.info("🎯 [ML BACKTEST] Starting backtest-based training from disk files")
             logger.info("=" * 80)
             
-            from pathlib import Path
             import time
             from freqtrade.data.history import load_pair_history
             
             start_time = time.time()
             training_samples = []
             
-            # Get exchange name from config
-            exchange_name = self.config.get('exchange', {}).get('name', 'bybit')
-            data_dir = Path(f"user_data/data/{exchange_name}")
+            data_dir, data_format, candle_type = self._get_historical_data_settings()
             
-            logger.info(f"📂 [ML BACKTEST] Loading data from: {data_dir}")
+            logger.info(
+                f"📂 [ML BACKTEST] Loading data from: {data_dir} "
+                f"(format={data_format}, candle_type={candle_type})"
+            )
             
             # Get list of pairs - try whitelist first, then scan directory
             try:
@@ -4048,9 +4098,7 @@ class AlexBandSniperV10AI(IStrategy):
             # If no pairs from whitelist, scan data directory
             if not pairs:
                 logger.info("📂 [ML BACKTEST] Scanning data directory for available pairs...")
-                timeframe_str = self.timeframe.replace('m', '')
-                json_files = list(data_dir.glob(f"*-{self.timeframe}.json"))
-                pairs = [f.stem.replace(f"-{self.timeframe}", "").replace("_", "/") for f in json_files]
+                pairs = self._scan_historical_pairs(self.timeframe, data_dir, data_format, candle_type)
                 logger.info(f"📂 [ML BACKTEST] Found {len(pairs)} pairs with data files")
             
             if not pairs:
@@ -4069,8 +4117,8 @@ class AlexBandSniperV10AI(IStrategy):
                         datadir=data_dir,
                         timeframe=self.timeframe,
                         pair=pair,
-                        data_format='json',
-                        candle_type=self.config.get('candle_type_def', 'spot')
+                        data_format=data_format,
+                        candle_type=candle_type
                     )
                     
                     if dataframe is None or len(dataframe) < 500:
