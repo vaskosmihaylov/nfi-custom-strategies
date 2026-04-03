@@ -15,6 +15,12 @@ minimal_roi = {
 # Stoploss:
 stoploss = -0.253
 
+# Risk containment for Bounce dry-run validation.
+trade_leverage = 2.0
+stoploss_guard_lookback_candles = 288
+stoploss_guard_duration_candles = 288
+stoploss_guard_trade_limit = 1
+
 # Trailing stop:
 trailing_stop = True
 trailing_stop_positive = 0.288

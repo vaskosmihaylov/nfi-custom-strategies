@@ -46,6 +46,18 @@ class BollingerBounce_Shorts(IStrategy):
     ignore_roi_if_entry_signal = Config.ignore_roi_if_entry_signal
     order_types = Config.order_types
 
+    @property
+    def protections(self):
+        return [
+            {
+                "method": "StoplossGuard",
+                "lookback_period_candles": Config.stoploss_guard_lookback_candles,
+                "trade_limit": Config.stoploss_guard_trade_limit,
+                "stop_duration_candles": Config.stoploss_guard_duration_candles,
+                "only_per_pair": True,
+            }
+        ]
+
     def informative_pairs(self):
         return []
 
@@ -132,4 +144,4 @@ class BollingerBounce_Shorts(IStrategy):
     def leverage(self, pair: str, current_time, current_rate: float,
                  proposed_leverage: float, max_leverage: float, entry_tag,
                  side: str, **kwargs) -> float:
-        return min(3.0, max_leverage)
+        return min(Config.trade_leverage, max_leverage)
