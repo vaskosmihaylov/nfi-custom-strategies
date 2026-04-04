@@ -1,6 +1,6 @@
 site_name: NostalgiaForInfinity
 use_directory_urls: true
-repo_url: https://github.com/pimpmyname2/NostalgiaForInfinity
+repo_url: https://github.com/iterativv/NostalgiaForInfinity
 theme:
   name: material
   features:
