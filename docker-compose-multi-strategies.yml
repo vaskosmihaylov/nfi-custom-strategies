@@ -127,22 +127,22 @@ services:
       --strategy-path user_data/strategies/El
       --strategy Auto_EI_t4c0s
 
-  # ETCG_Shorts Strategy (Shorts-only)
-  freqtrade-etcg_shorts:
+  # Fibonacci EMA Trend Strategy
+  freqtrade-fibonacciematrend:
     <<: *common-settings
-    container_name: freqtrade-etcg_shorts
+    container_name: freqtrade-fibonacciematrend
     ports:
       - "127.0.0.1:8103:8080"
     env_file:
-      - path: ./env-files/etcg_shorts.env
+      - path: ./env-files/fibonacciematrend.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/etcg_shorts-tradesv3.sqlite
-      --log-file user_data/logs/etcg_shorts.log
-      --strategy-path user_data/strategies/ETCG
-      --strategy ETCG_Shorts
+      --db-url sqlite:////freqtrade/user_data/fibonacciematrend-tradesv3.sqlite
+      --log-file user_data/logs/fibonacciematrend.log
+      --strategy-path user_data/strategies/Fibbo
+      --strategy FibonacciEMATrendStrategy
 
   # KamaFama Strategy (Longs)
   freqtrade-kamafama:

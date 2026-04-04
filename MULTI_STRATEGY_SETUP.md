@@ -23,7 +23,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── e0v1e_binance (Port 8114)
                            ├── BinHV27_combined (Port 8092)
                            ├── Auto_EI_t4c0s (Port 8100)
-                           ├── ETCG_Shorts (Port 8103)
+                           ├── FibonacciEMATrendStrategy (Port 8103)
                            ├── KamaFama (Port 8091)
                            ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
@@ -60,7 +60,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
 - `binhv27.env` - BinHV27 combined strategy
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
-- `etcg_shorts.env` - ETCG_Shorts strategy (shorts-only, multi-entry)
+- `fibonacciematrend.env` - FibonacciEMATrendStrategy (1h/4h EMA trend strategy, longs + shorts, no FreqAI)
 - `kamafama.env` - KamaFama optimized long strategy (3x leverage, KAMA/FAMA mean-reversion)
 - `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
 - `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
@@ -154,7 +154,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
 | **Auto_EI_t4c0s**                    | `Vasko_Auto_EI_t4c0s`          | `http://freq.gaiaderma.com/auto_ei_t4c0s`          | `auto_ei_t4c0s_user`          | `auto_ei_t4c0s_secure_password`          |
-| **ETCG_Shorts**                      | `Vasko_ETCG_Shorts`            | `http://freq.gaiaderma.com/etcg_shorts`            | `etcg_shorts_user`            | `etcg_shorts_secure_password`            |
+| **FibonacciEMATrendStrategy**        | `Vasko_FibonacciEMATrend`      | `http://freq.gaiaderma.com/fibonacciematrend`      | `fibonacciematrend_user`      | `fibonacciematrend_secure_password`      |
 | **KamaFama**                         | `Vasko_KamaFama`               | `http://freq.gaiaderma.com/kamafama`               | `kamafama_user`               | `kamafama_secure_password`               |
 | **ZaratustraDCA2_06**                | `Vasko_ZaratustraDCA2_06`      | `http://freq.gaiaderma.com/zaratustra`             | `zaratustra_user`             | `zaratustra_secure_password`             |
 | **BollingerBounce**                  | `Vasko_BollingerBounce`        | `http://freq.gaiaderma.com/bollingerbounce`        | `bollingerbounce_user`        | `bollingerbounce_secure_password`        |
@@ -220,7 +220,7 @@ curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8114/api/v1/ping  # e0v1e_binance
 curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
-curl http://127.0.0.1:8103/api/v1/ping  # ETCG_Shorts
+curl http://127.0.0.1:8103/api/v1/ping  # FibonacciEMATrendStrategy
 curl http://127.0.0.1:8091/api/v1/ping  # KamaFama
 curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
 curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
@@ -242,7 +242,7 @@ curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance/api/v1/ping
 curl http://freq.gaiaderma.com/binhv27/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
-curl http://freq.gaiaderma.com/etcg_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/fibonacciematrend/api/v1/ping
 curl http://freq.gaiaderma.com/kamafama/api/v1/ping
 curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
@@ -279,7 +279,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `nfi-x7.log`
 - `e0v1e.log`, `e0v1e_shorts.log`
 - `auto_ei_t4c0s.log`
-- `etcg_shorts.log`
+- `fibonacciematrend.log`
 - `kamafama.log`
 - etc.
 
@@ -299,7 +299,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8114 | e0v1e_binance                    | Longs          | Strategy-defined |
 | 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
 | 8100 | Auto_EI_t4c0s                    | Longs          | -                |
-| 8103 | ETCG_Shorts                      | Shorts         | 3x               |
+| 8103 | FibonacciEMATrendStrategy        | Longs + Shorts | Strategy-defined |
 | 8091 | KamaFama                         | Longs          | 3x               |
 | 8119 | ZaratustraDCA2_06                | Longs + Shorts | Config-defined   |
 | 8124 | BollingerBounce                  | Longs          | 3x               |
@@ -326,7 +326,7 @@ Each strategy uses its own SQLite database:
 - `e0v1e_binance-tradesv3.sqlite`
 - `binhv27-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
-- `etcg_shorts-tradesv3.sqlite`
+- `fibonacciematrend-tradesv3.sqlite`
 - `kamafama-tradesv3.sqlite`
 - `zaratustra-tradesv3.sqlite`
 - `bollingerbounce-tradesv3.sqlite`
