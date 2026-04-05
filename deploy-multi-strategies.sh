@@ -5,6 +5,9 @@
 
 set -e
 
+MULTI_COMPOSE_FILE="docker-compose-multi-strategies.yml"
+NNPREDICT_COMPOSE_FILE="docker-compose-nnpredict.yml"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -27,6 +30,16 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+get_compose_file_for_strategy() {
+    local strategy=$1
+
+    if [ "$strategy" = "nnpredict" ]; then
+        echo "$NNPREDICT_COMPOSE_FILE"
+    else
+        echo "$MULTI_COMPOSE_FILE"
+    fi
 }
 
 # Function to check if a service is running
@@ -70,7 +83,7 @@ show_help() {
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
     echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, orbalgo,"
-    echo "  ichiv1_plus, picasso_ce"
+    echo "  ichiv1_plus, picasso_ce, nnpredict"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -102,7 +115,9 @@ show_help() {
     echo "  ORBAlgo:               http://freq.gaiaderma.com/orbalgo"
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
     echo "  Picasso_CE:            http://freq.gaiaderma.com/picasso_ce"
+    echo "  NNPredict:             http://freq.gaiaderma.com/nnpredict"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
+    echo "  (NNPredict runs from docker-compose-nnpredict.yml with docker/Dockerfile.nnpredict)"
 }
 
 # Function to start strategies
@@ -111,10 +126,11 @@ start_strategies() {
     
     if [ -n "$strategy" ]; then
         print_status "Starting $strategy strategy..."
-        docker compose -f docker-compose-multi-strategies.yml up -d freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d freqtrade-$strategy
     else
         print_status "Starting all strategies..."
-        docker compose -f docker-compose-multi-strategies.yml up -d
+        docker compose -f "$MULTI_COMPOSE_FILE" up -d
+        docker compose -f "$NNPREDICT_COMPOSE_FILE" up -d
     fi
     
     print_success "Started strategies"
@@ -128,10 +144,11 @@ stop_strategies() {
     
     if [ -n "$strategy" ]; then
         print_status "Stopping $strategy strategy..."
-        docker compose -f docker-compose-multi-strategies.yml stop freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" stop freqtrade-$strategy
     else
         print_status "Stopping all strategies..."
-        docker compose -f docker-compose-multi-strategies.yml down
+        docker compose -f "$MULTI_COMPOSE_FILE" down
+        docker compose -f "$NNPREDICT_COMPOSE_FILE" down
     fi
     
     print_success "Stopped strategies"
@@ -145,10 +162,11 @@ restart_strategies() {
         print_status "Restarting $strategy strategy (reloading env vars)..."
         # Use up -d --force-recreate to reload env files
         # docker compose restart does NOT reload env files!
-        docker compose -f docker-compose-multi-strategies.yml up -d --force-recreate freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d --force-recreate freqtrade-$strategy
     else
         print_status "Restarting all strategies (reloading env vars)..."
-        docker compose -f docker-compose-multi-strategies.yml up -d --force-recreate
+        docker compose -f "$MULTI_COMPOSE_FILE" up -d --force-recreate
+        docker compose -f "$NNPREDICT_COMPOSE_FILE" up -d --force-recreate
     fi
 
     print_success "Restarted strategies"
@@ -159,7 +177,9 @@ restart_strategies() {
 # Function to show status
 show_status() {
     print_status "Checking status of all strategies..."
-    docker compose -f docker-compose-multi-strategies.yml ps
+    docker compose -f "$MULTI_COMPOSE_FILE" ps
+    echo ""
+    docker compose -f "$NNPREDICT_COMPOSE_FILE" ps
 }
 
 # Function to show logs
@@ -168,10 +188,11 @@ show_logs() {
     
     if [ -n "$strategy" ]; then
         print_status "Showing logs for $strategy strategy..."
-        docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" logs -f freqtrade-$strategy
     else
         print_status "Showing logs for all strategies..."
-        docker compose -f docker-compose-multi-strategies.yml logs -f
+        print_warning "Streaming combined logs from the main stack only. Use '$0 logs nnpredict' for the dedicated NNPredict stack."
+        docker compose -f "$MULTI_COMPOSE_FILE" logs -f
     fi
 }
 
@@ -250,6 +271,7 @@ health_check() {
         "orbalgo:8135"
         "ichiv1_plus:8136"
         "picasso_ce:8137"
+        "nnpredict:8138"
     )
     
     local healthy=0

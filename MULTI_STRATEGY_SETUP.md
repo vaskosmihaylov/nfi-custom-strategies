@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **21 active trading strategies** running in separate Docker containers
+- **22 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -37,7 +37,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── ORBAlgo (Port 8135)
                            ├── IchimokuCloudBreakoutStrategy (Port 8136)
-                           └── Picasso CE/CTI/STC/EMA (Port 8137)
+                           ├── Picasso CE/CTI/STC/EMA (Port 8137)
+                           └── NNPredict (Port 8138)
 ```
 
 ## Files
@@ -45,7 +46,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 ### Docker Configuration
 
 - `docker-compose-multi-strategies.yml` - Multi-strategy Docker Compose file
+- `docker-compose-nnpredict.yml` - Dedicated Docker Compose file for the TensorFlow-based NNPredict service
 - `deploy-multi-strategies.sh` - Deployment and management script
+- `docker/Dockerfile.nnpredict` - Dedicated NNPredict image with TensorFlow/Keras runtime dependencies
 
 ### NGINX Configuration
 
@@ -76,6 +79,13 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
   ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
 - `picasso_ce.env` - Picasso CE/CTI/STC/EMA strategy (longs + shorts dry-run evaluation on Bybit futures)
+- `nnpredict.env` - NNPredict strategy (long-only LSTM predictor; requires TensorFlow/Keras support in the container image)
+
+### Strategy-Specific Runtime Notes
+
+- `NNPredict` runs as a dedicated Compose stack because the shared multi-strategy image intentionally does not include TensorFlow/Keras.
+- Start only `NNPredict` with `./deploy-multi-strategies.sh start nnpredict` or `docker compose -f docker-compose-nnpredict.yml up -d`.
+- The dedicated image in `docker/Dockerfile.nnpredict` installs `tensorflow` and `h5py`. Adjust that file if you need a GPU-oriented TensorFlow build.
 
 ## Quick Start
 
@@ -169,6 +179,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
 | **Picasso CE/CTI/STC/EMA**           | `Vasko_Picasso_CE`             | `http://freq.gaiaderma.com/picasso_ce`             | `picasso_ce_user`             | `picasso_ce_secure_password`             |
+| **NNPredict**                        | `Vasko_NNPredict`              | `http://freq.gaiaderma.com/nnpredict`              | `nnpredict_user`              | `nnpredict_secure_password`              |
 
 ### URL Flow Example:
 
@@ -235,6 +246,7 @@ curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
+curl http://127.0.0.1:8138/api/v1/ping  # NNPredict
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
@@ -257,6 +269,7 @@ curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
 curl http://freq.gaiaderma.com/picasso_ce/api/v1/ping
+curl http://freq.gaiaderma.com/nnpredict/api/v1/ping
 ```
 
 ### Log Management

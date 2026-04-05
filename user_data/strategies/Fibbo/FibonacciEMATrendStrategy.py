@@ -62,34 +62,26 @@ class FibonacciEMATrendStrategy(IStrategy):
     ema_slow = IntParameter(8, 21, default=13, space="buy", optimize=True)
 
     # Parabolic SAR
-    psar_af = DecimalParameter(
-        0.01, 0.05, default=0.02, decimals=2, space="buy", optimize=False
-    )
-    psar_max_af = DecimalParameter(
-        0.1, 0.3, default=0.2, decimals=1, space="buy", optimize=False
-    )
+    psar_af = DecimalParameter(0.01, 0.05, default=0.02, decimals=2, space="buy", optimize=False)
+    psar_max_af = DecimalParameter(0.1, 0.3, default=0.2, decimals=1, space="buy", optimize=False)
 
     # Swing Point Lookback
     swing_lookback = IntParameter(3, 10, default=5, space="sell", optimize=True)
 
     # Stop Loss Buffer
-    sl_buffer_pct = DecimalParameter(
-        0.1, 0.8, default=0.3, decimals=1, space="sell", optimize=True
-    )
+    sl_buffer_pct = DecimalParameter(0.1, 0.8, default=0.3, decimals=1, space="sell", optimize=True)
 
     # Risk Reward Ratio
-    risk_reward_ratio = DecimalParameter(
-        2.0, 4.0, default=3.0, decimals=1, space="sell", optimize=True
-    )
+    risk_reward_ratio = DecimalParameter(2.0, 4.0, default=3.0, decimals=1, space="sell", optimize=True)
 
     # ==================== INFORMATIVE TIMEFRAME ====================
 
     @informative("4h")
     def populate_indicators_4h(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """Calculate 4H EMAs for MTF confirmation."""
-        dataframe["ema_fast_4h"] = ta.EMA(dataframe, timeperiod=self.ema_fast.value)
-        dataframe["ema_mid_4h"] = ta.EMA(dataframe, timeperiod=self.ema_mid.value)
-        dataframe["ema_slow_4h"] = ta.EMA(dataframe, timeperiod=self.ema_slow.value)
+        dataframe["ema_fast"] = ta.EMA(dataframe, timeperiod=self.ema_fast.value)
+        dataframe["ema_mid"] = ta.EMA(dataframe, timeperiod=self.ema_mid.value)
+        dataframe["ema_slow"] = ta.EMA(dataframe, timeperiod=self.ema_slow.value)
         return dataframe
 
     # ==================== INDICATORS ====================
@@ -103,17 +95,11 @@ class FibonacciEMATrendStrategy(IStrategy):
         dataframe["ema_slow"] = ta.EMA(dataframe, timeperiod=self.ema_slow.value)
 
         # Parabolic SAR
-        dataframe["sar"] = ta.SAR(
-            dataframe, acceleration=self.psar_af.value, maximum=self.psar_max_af.value
-        )
+        dataframe["sar"] = ta.SAR(dataframe, acceleration=self.psar_af.value, maximum=self.psar_max_af.value)
 
         # Swing High/Low (for stop loss calculation)
-        dataframe["swing_high"] = (
-            dataframe["high"].rolling(window=self.swing_lookback.value).max()
-        )
-        dataframe["swing_low"] = (
-            dataframe["low"].rolling(window=self.swing_lookback.value).min()
-        )
+        dataframe["swing_high"] = dataframe["high"].rolling(window=self.swing_lookback.value).max()
+        dataframe["swing_low"] = dataframe["low"].rolling(window=self.swing_lookback.value).min()
 
         return dataframe
 
@@ -129,9 +115,7 @@ class FibonacciEMATrendStrategy(IStrategy):
         dataframe["enter_tag"] = ""
 
         # 1H Bullish Stack
-        stack_1h_bull = (dataframe["ema_fast"] > dataframe["ema_mid"]) & (
-            dataframe["ema_mid"] > dataframe["ema_slow"]
-        )
+        stack_1h_bull = (dataframe["ema_fast"] > dataframe["ema_mid"]) & (dataframe["ema_mid"] > dataframe["ema_slow"])
 
         # 4H Bullish Stack (MTF confirmation)
         stack_4h_bull = (dataframe["ema_fast_4h"] > dataframe["ema_mid_4h"]) & (
@@ -140,19 +124,14 @@ class FibonacciEMATrendStrategy(IStrategy):
 
         # Long Entry
         long_conditions = (
-            stack_1h_bull
-            & stack_4h_bull
-            & (dataframe["close"] > dataframe["sar"])
-            & (dataframe["volume"] > 0)
+            stack_1h_bull & stack_4h_bull & (dataframe["close"] > dataframe["sar"]) & (dataframe["volume"] > 0)
         )
 
         dataframe.loc[long_conditions, "enter_long"] = 1
         dataframe.loc[long_conditions, "enter_tag"] = "fib_ema_mtf_long"
 
         # 1H Bearish Stack
-        stack_1h_bear = (dataframe["ema_fast"] < dataframe["ema_mid"]) & (
-            dataframe["ema_mid"] < dataframe["ema_slow"]
-        )
+        stack_1h_bear = (dataframe["ema_fast"] < dataframe["ema_mid"]) & (dataframe["ema_mid"] < dataframe["ema_slow"])
 
         # 4H Bearish Stack
         stack_4h_bear = (dataframe["ema_fast_4h"] < dataframe["ema_mid_4h"]) & (
@@ -161,10 +140,7 @@ class FibonacciEMATrendStrategy(IStrategy):
 
         # Short Entry
         short_conditions = (
-            stack_1h_bear
-            & stack_4h_bear
-            & (dataframe["close"] < dataframe["sar"])
-            & (dataframe["volume"] > 0)
+            stack_1h_bear & stack_4h_bear & (dataframe["close"] < dataframe["sar"]) & (dataframe["volume"] > 0)
         )
 
         dataframe.loc[short_conditions, "enter_short"] = 1
