@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.3.1063"
+    return "v17.3.1064"
 
   stoploss = -0.99
 
@@ -12307,6 +12307,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["close"] > (df["high_max_24_1h"] * 0.40)) | (df["STOCHRSIk_14_14_3_3_1h"] < 45.0))
             # big drop in the last 4 days, 1h high
             & ((df["close"] > (df["high_max_24_4h"] * 0.20)) | (df["AROONU_14_1h"] < 70.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -12952,6 +12958,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 80.0) | (df["ROC_9_1h"] < 10.0) | (df["ROC_9_1d"] < 80.0))
             # 1d high, 4h & 1d overbought
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 80.0) | (df["ROC_9_4h"] < 60.0) | (df["ROC_9_1d"] < 60.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
             # drop in last 20 days, 1h high, 1d downtrend
             & ((df["close"] > (df["high_max_20_1d"] * 0.20)) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -70.0))
             # drop in last 20 days. 4h high
@@ -13599,6 +13611,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["change_pct_1d"] < 40.0) | (df["RSI_3_4h"] > 35.0) | (df["AROONU_14_4h"] < 40.0))
             # 1d top wick, 4h down move, 1d overbought
             & ((df["top_wick_pct_1d"] < 50.0) | (df["RSI_3_4h"] > 35.0) | (df["ROC_9_1d"] < 60.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -13858,6 +13876,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1h"] < 80.0) | (df["ROC_9_4h"] < 80.0))
             # 4h & 1d overbought
             & ((df["ROC_9_4h"] < 100.0) | (df["ROC_9_1d"] < 200.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
             # drop in last 20 days, 1h high, 1d downtrend
             & ((df["close"] > (df["high_max_20_1d"] * 0.20)) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -70.0))
           )
@@ -14168,6 +14192,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 90.0) | (df["ROC_9_4h"] < 40.0) | (df["ROC_9_1d"] < 100.0))
             # 1d P&D, dh downtrend
             & ((df["change_pct_1d"] > -50.0) | (df["change_pct_1d"].shift(288) < 50.0) | (df["RSI_3_4h"] > 15.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
             # drop in last 20 days, 1h high, 1d downtrend
             & ((df["close"] > (df["high_max_20_1d"] * 0.20)) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -70.0))
             # drop in last 20 days. 4h high
@@ -14887,6 +14917,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 90.0) | (df["ROC_9_1h"] < 30.0) | (df["ROC_9_1d"] < 100.0))
             # 1d P&D, dh downtrend
             & ((df["change_pct_1d"] > -50.0) | (df["change_pct_1d"].shift(288) < 50.0) | (df["RSI_3_4h"] > 15.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
             # drop in last 20 days, 1h high, 1d downtrend
             & ((df["close"] > (df["high_max_20_1d"] * 0.20)) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -70.0))
             # drop in last 20 days. 4h high
@@ -15706,6 +15742,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 90.0) | (df["ROC_9_4h"] < 100.0) | (df["ROC_9_1d"] < 100.0))
             # 1d P&D, 4h overbought
             & ((df["change_pct_1d"] > -10.0) | (df["change_pct_1d"].shift(288) < 30.0) | (df["ROC_9_4h"] < 10.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -16220,6 +16262,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_4h"] < 90.0) | (df["ROC_9_4h"] < 20.0) | (df["ROC_9_1d"] < 80.0))
             # 1d still high, 4h & 1d downtrend
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 50.0) | (df["ROC_9_4h"] > -30.0) | (df["ROC_9_1d"] > -30.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -16693,6 +16741,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_1d"] < 90.0) | (df["ROC_9_4h"] < 20.0) | (df["ROC_9_1d"] < 100.0))
             # 1h & 4h overbought, 1d downtrend
             & ((df["ROC_9_1h"] < 40.0) | (df["ROC_9_4h"] < 50.0) | (df["ROC_9_1d"] > -30.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -16992,6 +17046,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["ROC_9_15m"] > -60.0) | (df["ROC_9_1d"] < 200.0))
             # 1h downtrend, 1d overbought
             & ((df["ROC_9_1h"] > -60.0) | (df["ROC_9_1d"] < 200.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -17296,6 +17356,12 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append((df["close"] > (df["high_max_20_1d"] * 0.25)) | (df["RSI_3_1h"] > 15.0))
           # big drop in the last 20 days, 1h down move
           long_entry_logic.append((df["close"] > (df["high_max_20_1d"] * 0.10)) | (df["RSI_3_1h"] > 20.0))
+          # big drop in the last 20 days, 1d high, 1d downtrend
+          long_entry_logic.append(
+            (df["close"] > (df["high_max_20_1d"] * 0.20))
+            | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+            | (df["ROC_9_1d"] > -15.0)
+          )
           # big drop in the last 30 days, 4h down move, 4h still high
           long_entry_logic.append(
             (df["close"] > (df["high_max_30_1d"] * 0.25)) | (df["RSI_3_4h"] > 45.0) | (df["RSI_14_4h"] < 40.0)
@@ -17896,6 +17962,12 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["STOCHRSIk_14_14_3_3_4h"] < 90.0) | (df["ROC_9_1h"] < 20.0) | (df["ROC_9_4h"] < 50.0))
             # 1h & 4h overbought
             & ((df["ROC_9_1h"] < 100.0) | (df["ROC_9_4h"] < 100.0))
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -18683,10 +18755,16 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["change_pct_1d"] < 30.0) | (df["top_wick_pct_1d"] < 20.0) | (df["AROONU_14_4h"] < 80.0))
             # 1d top wick, 4h down move, 1d overbought
             & ((df["top_wick_pct_1d"] < 50.0) | (df["RSI_3_4h"] > 35.0) | (df["ROC_9_1d"] < 60.0))
+            # drop in last 20 days, 4h high
+            & ((df["close"] > (df["high_max_20_1d"] * 0.10)) | (df["STOCHRSIk_14_14_3_3_4h"] < 90.0))
             # drop in last 20 days, 1h high, 1d downtrend
             & ((df["close"] > (df["high_max_20_1d"] * 0.20)) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -70.0))
-            # drop in last 20 days. 4h high
-            & ((df["close"] > (df["high_max_20_1d"] * 0.10)) | (df["STOCHRSIk_14_14_3_3_4h"] < 90.0))
+            # drop in last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
+            )
           )
 
           # Logic
@@ -19124,6 +19202,12 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append((df["close"] > (df["high_max_20_1d"] * 0.10)) | (df["RSI_3_4h"] > 30.0))
           # big drop in the last 20 days, 1h still high
           long_entry_logic.append((df["close"] > (df["high_max_20_1d"] * 0.05)) | (df["AROONU_14_1h"] < 50.0))
+          # big drop in the last 20 days, 1d high, 1d downtrend
+          long_entry_logic.append(
+            (df["close"] > (df["high_max_20_1d"] * 0.20))
+            | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+            | (df["ROC_9_1d"] > -15.0)
+          )
           # big drop in the last 30 days, 1h down move
           long_entry_logic.append((df["close"] > (df["high_max_30_1d"] * 0.25)) | (df["RSI_3_1h"] > 15.0))
 
@@ -22517,6 +22601,12 @@ class NostalgiaForInfinityX7(IStrategy):
               (df["close"] > (df["high_max_20_1d"] * 0.30))
               | (df["RSI_3_1h"] > 30.0)
               | (df["STOCHRSIk_14_14_3_3_1h"] < 75.0)
+            )
+            # big drop in the last 20 days, 1d high, 1d downtrend
+            & (
+              (df["close"] > (df["high_max_20_1d"] * 0.20))
+              | (df["STOCHRSIk_14_14_3_3_1d"] < 70.0)
+              | (df["ROC_9_1d"] > -15.0)
             )
           )
 
