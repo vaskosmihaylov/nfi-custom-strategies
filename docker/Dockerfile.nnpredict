@@ -8,6 +8,14 @@ RUN pip install --upgrade pip
 
 USER ftuser
 RUN --mount=type=cache,target=/home/ftuser/.cache/pip \
-    pip install --user --no-cache-dir tensorflow h5py
+    pip install --user --no-cache-dir \
+    tensorflow \
+    h5py \
+    PyWavelets \
+    scipy \
+    scikit-learn \
+    finta \
+    technical \
+    tqdm
 
 ENV PATH=/home/ftuser/.local/bin:$PATH
