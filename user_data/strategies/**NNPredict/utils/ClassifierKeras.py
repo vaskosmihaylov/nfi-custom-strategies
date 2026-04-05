@@ -73,14 +73,25 @@ class ClassifierKeras():
         logging.disable(logging.WARNING)
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
-        # workaround for memory leak in tensorflow 2.10
+        # Legacy builds used an explicit TF v1 session to constrain GPU usage.
+        # Keras 3 removed `set_session`, so keep this as a best-effort compatibility path.
         os.environ['TF_RUN_EAGER_OP_AS_FUNCTION'] = '0'
+        try:
+            tf.config.set_visible_devices([], 'GPU')
+        except Exception:
+            pass
+
         mem_fraction = 0.4
-        config = tf.compat.v1.ConfigProto(device_count={'GPU': 0})
-        config.gpu_options.allow_growth = True
-        config.gpu_options.per_process_gpu_memory_fraction = mem_fraction
-        sess = tf.compat.v1.Session(config=config)
-        tf.compat.v1.keras.backend.set_session(sess)
+        try:
+            config = tf.compat.v1.ConfigProto(device_count={'GPU': 0})
+            config.gpu_options.allow_growth = True
+            config.gpu_options.per_process_gpu_memory_fraction = mem_fraction
+            set_session = getattr(tf.compat.v1.keras.backend, "set_session", None)
+            if callable(set_session):
+                sess = tf.compat.v1.Session(config=config)
+                set_session(sess)
+        except Exception as exc:
+            log.debug("Skipping legacy TensorFlow session configuration: %s", exc)
 
         seed = 42
         os.environ['PYTHONHASHSEED'] = str(seed)
