@@ -13,6 +13,8 @@ from freqtrade.strategy import CategoricalParameter, DecimalParameter, IntParame
 # Optional for additional indicators
 import pandas_ta as pta
 
+logger = logging.getLogger(__name__)
+
 
 class CompleteIndicatorStrategy2(IStrategy):
     """
@@ -47,7 +49,8 @@ class CompleteIndicatorStrategy2(IStrategy):
 
     # Trailing Stop
     trailing_stop = True
-    trailing_stop_positive = DecimalParameter(0.01, 0.10, default=0.03, space="sell")
+    trailing_stop_positive = 0.03
+    trailing_stop_positive_opt = DecimalParameter(0.01, 0.10, default=0.03, space="sell")
 
     # Bullish Candlestick Pattern Weights
     hammer_weight = IntParameter(low=1, high=5, default=3, space="buy")
@@ -98,6 +101,15 @@ class CompleteIndicatorStrategy2(IStrategy):
     # =====================================================================
     timeframe = '1h'
     startup_candle_count = 52  # For Ichimoku + other extended indicators
+
+    def bot_start(self, **kwargs) -> None:
+        """
+        Sync hyperopt-backed values into the runtime config fields that Freqtrade
+        validates as plain scalars during trading startup.
+        """
+        super().bot_start(**kwargs)
+        self.trailing_stop_positive = float(self.trailing_stop_positive_opt.value)
+        logger.info("Using trailing_stop_positive=%s", self.trailing_stop_positive)
 
     # =====================================================================
     # POPULATE INDICATORS
