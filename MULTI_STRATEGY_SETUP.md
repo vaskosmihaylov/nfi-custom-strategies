@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **22 active trading strategies** running in separate Docker containers
+- **23 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -35,10 +35,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── MtfScalper (Port 8131)
                            ├── AlexBandSniperV10AI (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
-                           ├── ORBAlgo (Port 8135)
+                           ├── Best5m (Port 8135)
                            ├── IchimokuCloudBreakoutStrategy (Port 8136)
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
-                           └── NNPredict (Port 8138)
+                           ├── NNPredict (Port 8138)
+                           └── CompleteIndicatorStrategy2 (Port 8139)
 ```
 
 ## Files
@@ -75,11 +76,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
 - `alexbandsniper_v10ai.env` - AlexBandSniperV10AI strategy (longs + shorts dry-run validation rollout)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
-- `orbalgo.env` - ORBAlgo strategy (opening-range breakout futures strategy, longs + shorts)
-  ORBAlgo uses `user_data/strategies/config-orbalgo.json` so pairlist overrides remain isolated from the rest of the stack.
+- `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
 - `picasso_ce.env` - Picasso CE/CTI/STC/EMA strategy (longs + shorts dry-run evaluation on Bybit futures)
 - `nnpredict.env` - NNPredict strategy (long-only LSTM predictor; requires TensorFlow/Keras support in the container image)
+- `completeindicatorstrategy22.env` - CompleteIndicatorStrategy2 strategy from `user_data/strategies/Best5m/CompleteIndicatorStrategy22.py` (longs + shorts dry-run evaluation on Bybit futures)
 
 ### Strategy-Specific Runtime Notes
 
@@ -176,10 +177,11 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
 | **AlexBandSniperV10AI**              | `Vasko_AlexBandSniper_V10AI`   | `http://freq.gaiaderma.com/alexbandsniper_v10ai`   | `alexbandsniper_v10ai_user`   | `alexbandsniper_v10ai_secure_password`   |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
-| **ORBAlgo**                          | `Vasko_ORBAlgo`                | `http://freq.gaiaderma.com/orbalgo`                | `orbalgo_user`                | `orbalgo_secure_password`                |
+| **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
 | **Picasso CE/CTI/STC/EMA**           | `Vasko_Picasso_CE`             | `http://freq.gaiaderma.com/picasso_ce`             | `picasso_ce_user`             | `picasso_ce_secure_password`             |
 | **NNPredict**                        | `Vasko_NNPredict`              | `http://freq.gaiaderma.com/nnpredict`              | `nnpredict_user`              | `nnpredict_secure_password`              |
+| **CompleteIndicatorStrategy2**       | `Vasko_CompleteIndicatorStrategy22` | `http://freq.gaiaderma.com/completeindicatorstrategy22` | `completeindicatorstrategy22_user` | `completeindicatorstrategy22_secure_password` |
 
 ### URL Flow Example:
 
@@ -243,10 +245,11 @@ curl http://127.0.0.1:8129/api/v1/ping  # FenixTopProfit
 curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
 curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV10AI
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
-curl http://127.0.0.1:8135/api/v1/ping  # ORBAlgo
+curl http://127.0.0.1:8135/api/v1/ping  # Best5m
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
 curl http://127.0.0.1:8138/api/v1/ping  # NNPredict
+curl http://127.0.0.1:8139/api/v1/ping  # CompleteIndicatorStrategy2
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
@@ -266,10 +269,11 @@ curl http://freq.gaiaderma.com/fenix/api/v1/ping
 curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
 curl http://freq.gaiaderma.com/alexbandsniper_v10ai/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
-curl http://freq.gaiaderma.com/orbalgo/api/v1/ping
+curl http://freq.gaiaderma.com/best5m/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
 curl http://freq.gaiaderma.com/picasso_ce/api/v1/ping
 curl http://freq.gaiaderma.com/nnpredict/api/v1/ping
+curl http://freq.gaiaderma.com/completeindicatorstrategy22/api/v1/ping
 ```
 
 ### Log Management
@@ -324,10 +328,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
 | 8132 | AlexBandSniperV10AI              | Longs + Shorts | Strategy-defined |
 | 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
-| 8135 | ORBAlgo                          | Longs + Shorts | Strategy-defined |
+| 8135 | Best5m                           | Longs + Shorts | Strategy-defined |
 | 8136 | IchimokuCloudBreakoutStrategy    | Longs + Shorts | Strategy-defined |
+| 8137 | Picasso CE/CTI/STC/EMA           | Longs + Shorts | Strategy-defined |
+| 8138 | NNPredict                        | Longs          | Strategy-defined |
+| 8139 | CompleteIndicatorStrategy2       | Longs + Shorts | Strategy-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8137+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8140+
 
 ### Database Separation
 
@@ -350,6 +357,8 @@ Each strategy uses its own SQLite database:
 - `fenix-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
 - `alexbandsniper_v10ai-tradesv3.sqlite`
+- `best5m-tradesv3.sqlite`
+- `completeindicatorstrategy22-tradesv3.sqlite`
 
 ### NGINX Path Routing
 

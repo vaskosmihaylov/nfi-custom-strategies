@@ -82,8 +82,8 @@ show_help() {
     echo "  keltnerbounce, keltnerbounce_shorts,"
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
-    echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, orbalgo,"
-    echo "  ichiv1_plus, picasso_ce, nnpredict"
+    echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, best5m,"
+    echo "  ichiv1_plus, picasso_ce, nnpredict, completeindicatorstrategy22"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -112,10 +112,11 @@ show_help() {
     echo "  MtfScalper:            http://freq.gaiaderma.com/mtfscalper"
     echo "  AlexBandSniperV10AI:    http://freq.gaiaderma.com/alexbandsniper_v10ai"
     echo "  TripleSuperTrendADXRSI: http://freq.gaiaderma.com/triplesupertrendadxrsi"
-    echo "  ORBAlgo:               http://freq.gaiaderma.com/orbalgo"
+    echo "  Best5m:                http://freq.gaiaderma.com/best5m"
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
     echo "  Picasso_CE:            http://freq.gaiaderma.com/picasso_ce"
     echo "  NNPredict:             http://freq.gaiaderma.com/nnpredict"
+    echo "  CompleteIndicatorStrategy22: http://freq.gaiaderma.com/completeindicatorstrategy22"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
     echo "  (NNPredict runs from docker-compose-nnpredict.yml with docker/Dockerfile.nnpredict)"
 }
@@ -268,10 +269,11 @@ health_check() {
         "mtfscalper:8131"
         "alexbandsniper_v10ai:8132"
         "triplesupertrendadxrsi:8134"
-        "orbalgo:8135"
+        "best5m:8135"
         "ichiv1_plus:8136"
         "picasso_ce:8137"
         "nnpredict:8138"
+        "completeindicatorstrategy22:8139"
     )
     
     local healthy=0
