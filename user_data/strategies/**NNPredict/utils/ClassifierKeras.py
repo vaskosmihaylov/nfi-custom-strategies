@@ -511,6 +511,9 @@ class ClassifierKeras():
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         keras.models.save_model(self.model, filepath=path, save_format=self.model_ext)
+        # Once the model has been trained and persisted, strategy logic should
+        # treat it as ready for prediction/trading in the current process.
+        ClassifierKeras.new_model = False
         return
 
     # ---------------------------
