@@ -78,7 +78,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
-- `picasso_ce.env` - Picasso EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
+- `edtma.env` - EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
 - `nnpredict.env` - NNPredict strategy (long-only LSTM predictor; requires TensorFlow/Keras support in the container image)
 - `completeindicatorstrategy22.env` - CompleteIndicatorStrategy2 strategy from `user_data/strategies/Best5m/CompleteIndicatorStrategy22.py` (longs + shorts dry-run evaluation on Bybit futures)
 
@@ -179,7 +179,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
-| **Picasso EDTMA**                    | `Vasko_Picasso_EDTMA`          | `http://freq.gaiaderma.com/picasso_ce`             | `picasso_ce_user`             | `picasso_ce_secure_password`             |
+| **EDTMA**                            | `Vasko_EDTMA`                  | `http://freq.gaiaderma.com/edtma`                  | `edtma_user`                  | `edtma_secure_password`                  |
 | **NNPredict**                        | `Vasko_NNPredict`              | `http://freq.gaiaderma.com/nnpredict`              | `nnpredict_user`              | `nnpredict_secure_password`              |
 | **CompleteIndicatorStrategy2**       | `Vasko_CompleteIndicatorStrategy22` | `http://freq.gaiaderma.com/completeindicatorstrategy22` | `completeindicatorstrategy22_user` | `completeindicatorstrategy22_secure_password` |
 
@@ -271,7 +271,7 @@ curl http://freq.gaiaderma.com/alexbandsniper_v10ai/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/best5m/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
-curl http://freq.gaiaderma.com/picasso_ce/api/v1/ping
+curl http://freq.gaiaderma.com/edtma/api/v1/ping
 curl http://freq.gaiaderma.com/nnpredict/api/v1/ping
 curl http://freq.gaiaderma.com/completeindicatorstrategy22/api/v1/ping
 ```

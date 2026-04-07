@@ -371,20 +371,20 @@ services:
       --strategy-path user_data/strategies/ichiv1_plus
       --strategy IchimokuCloudBreakoutStrategy
 
-  # Picasso EDTMA Strategy (Longs + Shorts dry-run validation)
-  freqtrade-picasso_ce:
+  # EDTMA Strategy (Longs + Shorts dry-run validation)
+  freqtrade-edtma:
     <<: *common-settings
-    container_name: freqtrade-picasso_ce
+    container_name: freqtrade-edtma
     ports:
       - "127.0.0.1:8137:8080"
     env_file:
-      - path: ./env-files/picasso_ce.env
+      - path: ./env-files/edtma.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/picasso_ce-tradesv3.sqlite
-      --log-file user_data/logs/picasso_ce.log
+      --db-url sqlite:////freqtrade/user_data/edtma-tradesv3.sqlite
+      --log-file user_data/logs/edtma.log
       --strategy-path user_data/strategies/Picasso
       --strategy EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March
 
