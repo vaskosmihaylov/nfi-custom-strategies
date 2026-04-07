@@ -114,7 +114,7 @@ show_help() {
     echo "  TripleSuperTrendADXRSI: http://freq.gaiaderma.com/triplesupertrendadxrsi"
     echo "  Best5m:                http://freq.gaiaderma.com/best5m"
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
-    echo "  Picasso_CE:            http://freq.gaiaderma.com/picasso_ce"
+    echo "  Picasso_EDTMA:         http://freq.gaiaderma.com/picasso_ce"
     echo "  NNPredict:             http://freq.gaiaderma.com/nnpredict"
     echo "  CompleteIndicatorStrategy22: http://freq.gaiaderma.com/completeindicatorstrategy22"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"

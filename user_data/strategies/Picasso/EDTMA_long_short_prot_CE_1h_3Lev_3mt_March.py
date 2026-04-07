@@ -166,7 +166,7 @@ class EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March(IStrategy):
     use_custom_stoploss = False
     is_optimize_32 = True
 
-    s_buy_adx_enabled = CategoricalParameter([True, False], default=True)
+    s_buy_adx_enabled = CategoricalParameter([True, False], default=True, space="buy")
 
     s_buy_adx = IntParameter(20, 75, default=26, space="buy", optimize=s_buy_adx_enabled)
     s_buy_dema = IntParameter(45, 65, default=53, space="buy")
@@ -182,7 +182,7 @@ class EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March(IStrategy):
     # s_sell_ema = IntParameter(100, 210, default=159, space="sell")
     # s_sell_tema = IntParameter(6, 20, default=10, space="sell")
 
-    buy_adx_enabled = CategoricalParameter([True, False], default=True)
+    buy_adx_enabled = CategoricalParameter([True, False], default=True, space="buy")
 
 
     buy_adx = IntParameter(20, 75, default=35, space="buy", optimize=buy_adx_enabled)
