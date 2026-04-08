@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **23 active trading strategies** running in separate Docker containers
+- **24 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -21,6 +21,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── E0V1E (Port 8098)
                            ├── E0V1E_Shorts (Port 8099)
                            ├── e0v1e_binance (Port 8114)
+                           ├── e0v1e_binance_shorts (Port 8115)
                            ├── BinHV27_combined (Port 8092)
                            ├── Auto_EI_t4c0s (Port 8100)
                            ├── FibonacciEMATrendStrategy (Port 8103)
@@ -62,6 +63,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
 - `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
 - `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
+- `e0v1e_binance_shorts.env` - E0V1E Binance-tuned shorts isolated dry-run variant
 - `binhv27.env` - BinHV27 combined strategy
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `fibonacciematrend.env` - FibonacciEMATrendStrategy (1h/4h EMA trend strategy, longs + shorts, no FreqAI)
@@ -163,6 +165,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **E0V1E**                            | `Vasko_E0V1E`                  | `http://freq.gaiaderma.com/e0v1e`                  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
 | **E0V1E_Shorts**                     | `Vasko_E0V1E_Shorts`           | `http://freq.gaiaderma.com/e0v1e_shorts`           | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
 | **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
+| **e0v1e_binance_shorts**             | `Vasko_E0V1E_Binance_Shorts`   | `http://freq.gaiaderma.com/e0v1e_binance_shorts`   | `e0v1e_binance_shorts_user`   | `e0v1e_binance_shorts_secure_password`   |
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
 | **Auto_EI_t4c0s**                    | `Vasko_Auto_EI_t4c0s`          | `http://freq.gaiaderma.com/auto_ei_t4c0s`          | `auto_ei_t4c0s_user`          | `auto_ei_t4c0s_secure_password`          |
 | **FibonacciEMATrendStrategy**        | `Vasko_FibonacciEMATrend`      | `http://freq.gaiaderma.com/fibonacciematrend`      | `fibonacciematrend_user`      | `fibonacciematrend_secure_password`      |
@@ -231,6 +234,7 @@ curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
 curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
 curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
 curl http://127.0.0.1:8114/api/v1/ping  # e0v1e_binance
+curl http://127.0.0.1:8115/api/v1/ping  # e0v1e_binance_shorts
 curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # FibonacciEMATrendStrategy
@@ -255,6 +259,7 @@ curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance/api/v1/ping
+curl http://freq.gaiaderma.com/e0v1e_binance_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/binhv27/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/fibonacciematrend/api/v1/ping
@@ -314,6 +319,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8098 | E0V1E                            | Longs          | 3x               |
 | 8099 | E0V1E_Shorts                     | Shorts         | 3x               |
 | 8114 | e0v1e_binance                    | Longs          | Strategy-defined |
+| 8115 | e0v1e_binance_shorts             | Shorts         | Strategy-defined |
 | 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
 | 8100 | Auto_EI_t4c0s                    | Longs          | -                |
 | 8103 | FibonacciEMATrendStrategy        | Longs + Shorts | Strategy-defined |
@@ -344,6 +350,7 @@ Each strategy uses its own SQLite database:
 - `e0v1e-tradesv3.sqlite`
 - `e0v1e_shorts-tradesv3.sqlite`
 - `e0v1e_binance-tradesv3.sqlite`
+- `e0v1e_binance_shorts-tradesv3.sqlite`
 - `binhv27-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
 - `fibonacciematrend-tradesv3.sqlite`

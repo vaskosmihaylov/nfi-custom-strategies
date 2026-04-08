@@ -93,6 +93,23 @@ services:
       --strategy-path user_data/strategies/e0v1e
       --strategy binance
 
+  # E0V1E Binance-tuned Shorts Strategy (isolated dry-run variant)
+  freqtrade-e0v1e_binance_shorts:
+    <<: *common-settings
+    container_name: freqtrade-e0v1e_binance_shorts
+    ports:
+      - "127.0.0.1:8115:8080"
+    env_file:
+      - path: ./env-files/e0v1e_binance_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/e0v1e_binance_shorts-tradesv3.sqlite
+      --log-file user_data/logs/e0v1e_binance_shorts.log
+      --strategy-path user_data/strategies/e0v1e
+      --strategy binance_shorts
+
   # BinHV27 Combined Strategy
   freqtrade-binhv27:
     <<: *common-settings
