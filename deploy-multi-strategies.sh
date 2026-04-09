@@ -6,7 +6,7 @@
 set -e
 
 MULTI_COMPOSE_FILE="docker-compose-multi-strategies.yml"
-NNPREDICT_COMPOSE_FILE="docker-compose-nnpredict.yml"
+DEDICATED_DONCHIAN_COMPOSE_FILE="docker-compose-nnpredict.yml"
 
 # Colors for output
 RED='\033[0;31m'
@@ -32,11 +32,26 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-get_compose_file_for_strategy() {
+normalize_strategy_name() {
     local strategy=$1
 
-    if [ "$strategy" = "nnpredict" ]; then
-        echo "$NNPREDICT_COMPOSE_FILE"
+    case "$strategy" in
+        nnpredict)
+            echo "donchian_adx_chop"
+            ;;
+        *)
+            echo "$strategy"
+            ;;
+    esac
+}
+
+get_compose_file_for_strategy() {
+    local strategy=$1
+    local normalized
+    normalized=$(normalize_strategy_name "$strategy")
+
+    if [ "$normalized" = "donchian_adx_chop" ]; then
+        echo "$DEDICATED_DONCHIAN_COMPOSE_FILE"
     else
         echo "$MULTI_COMPOSE_FILE"
     fi
@@ -83,7 +98,8 @@ show_help() {
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
     echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, best5m,"
-    echo "  ichiv1_plus, edtma, nnpredict, completeindicatorstrategy22"
+    echo "  ichiv1_plus, edtma, donchian_adx_chop, completeindicatorstrategy22"
+    echo "  Legacy alias: nnpredict -> donchian_adx_chop"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -116,23 +132,29 @@ show_help() {
     echo "  Best5m:                http://freq.gaiaderma.com/best5m"
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
     echo "  EDTMA:                 http://freq.gaiaderma.com/edtma"
-    echo "  NNPredict:             http://freq.gaiaderma.com/nnpredict"
+    echo "  Donchian_ADX_CHOP:     http://freq.gaiaderma.com/donchian_adx_chop"
+    echo "  Legacy alias:          http://freq.gaiaderma.com/nnpredict"
     echo "  CompleteIndicatorStrategy22: http://freq.gaiaderma.com/completeindicatorstrategy22"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
-    echo "  (NNPredict runs from docker-compose-nnpredict.yml with docker/Dockerfile.nnpredict)"
+    echo "  (The former NNPredict slot now runs Donchian_ADX_CHOPStrategy from docker-compose-nnpredict.yml)"
 }
 
 # Function to start strategies
 start_strategies() {
     local strategy=$1
+    local normalized=""
+
+    if [ -n "$strategy" ]; then
+        normalized=$(normalize_strategy_name "$strategy")
+    fi
     
     if [ -n "$strategy" ]; then
         print_status "Starting $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d freqtrade-$normalized
     else
         print_status "Starting all strategies..."
         docker compose -f "$MULTI_COMPOSE_FILE" up -d
-        docker compose -f "$NNPREDICT_COMPOSE_FILE" up -d
+        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" up -d
     fi
     
     print_success "Started strategies"
@@ -143,14 +165,19 @@ start_strategies() {
 # Function to stop strategies
 stop_strategies() {
     local strategy=$1
+    local normalized=""
+
+    if [ -n "$strategy" ]; then
+        normalized=$(normalize_strategy_name "$strategy")
+    fi
     
     if [ -n "$strategy" ]; then
         print_status "Stopping $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" stop freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" stop freqtrade-$normalized
     else
         print_status "Stopping all strategies..."
         docker compose -f "$MULTI_COMPOSE_FILE" down
-        docker compose -f "$NNPREDICT_COMPOSE_FILE" down
+        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" down
     fi
     
     print_success "Stopped strategies"
@@ -159,16 +186,21 @@ stop_strategies() {
 # Function to restart strategies
 restart_strategies() {
     local strategy=$1
+    local normalized=""
+
+    if [ -n "$strategy" ]; then
+        normalized=$(normalize_strategy_name "$strategy")
+    fi
 
     if [ -n "$strategy" ]; then
         print_status "Restarting $strategy strategy (reloading env vars)..."
         # Use up -d --force-recreate to reload env files
         # docker compose restart does NOT reload env files!
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d --force-recreate freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d --force-recreate freqtrade-$normalized
     else
         print_status "Restarting all strategies (reloading env vars)..."
         docker compose -f "$MULTI_COMPOSE_FILE" up -d --force-recreate
-        docker compose -f "$NNPREDICT_COMPOSE_FILE" up -d --force-recreate
+        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" up -d --force-recreate
     fi
 
     print_success "Restarted strategies"
@@ -181,19 +213,24 @@ show_status() {
     print_status "Checking status of all strategies..."
     docker compose -f "$MULTI_COMPOSE_FILE" ps
     echo ""
-    docker compose -f "$NNPREDICT_COMPOSE_FILE" ps
+    docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" ps
 }
 
 # Function to show logs
 show_logs() {
     local strategy=$1
+    local normalized=""
+
+    if [ -n "$strategy" ]; then
+        normalized=$(normalize_strategy_name "$strategy")
+    fi
     
     if [ -n "$strategy" ]; then
         print_status "Showing logs for $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" logs -f freqtrade-$strategy
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" logs -f freqtrade-$normalized
     else
         print_status "Showing logs for all strategies..."
-        print_warning "Streaming combined logs from the main stack only. Use '$0 logs nnpredict' for the dedicated NNPredict stack."
+        print_warning "Streaming combined logs from the main stack only. Use '$0 logs donchian_adx_chop' for the dedicated Donchian slot. The legacy alias '$0 logs nnpredict' also works."
         docker compose -f "$MULTI_COMPOSE_FILE" logs -f
     fi
 }
@@ -274,7 +311,7 @@ health_check() {
         "best5m:8135"
         "ichiv1_plus:8136"
         "edtma:8137"
-        "nnpredict:8138"
+        "donchian_adx_chop:8138"
         "completeindicatorstrategy22:8139"
     )
     

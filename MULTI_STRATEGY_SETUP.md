@@ -39,7 +39,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── Best5m (Port 8135)
                            ├── IchimokuCloudBreakoutStrategy (Port 8136)
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
-                           ├── NNPredict (Port 8138)
+                           ├── Donchian_ADX_CHOPStrategy (Port 8138)
                            └── CompleteIndicatorStrategy2 (Port 8139)
 ```
 
@@ -48,9 +48,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 ### Docker Configuration
 
 - `docker-compose-multi-strategies.yml` - Multi-strategy Docker Compose file
-- `docker-compose-nnpredict.yml` - Dedicated Docker Compose file for the TensorFlow-based NNPredict service
+- `docker-compose-nnpredict.yml` - Dedicated Docker Compose file for the Donchian_ADX_CHOPStrategy slot that replaced the former NNPredict service
 - `deploy-multi-strategies.sh` - Deployment and management script
-- `docker/Dockerfile.nnpredict` - Dedicated NNPredict image with TensorFlow/Keras runtime dependencies
+- `docker/Dockerfile.custom` - Shared custom Freqtrade image used by the multi-strategy stack and the Donchian_ADX_CHOPStrategy dedicated slot
 
 ### NGINX Configuration
 
@@ -81,14 +81,15 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
 - `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
 - `edtma.env` - EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
-- `nnpredict.env` - NNPredict strategy (long-only LSTM predictor; requires TensorFlow/Keras support in the container image)
+- `donchian_adx_chop.env` - Donchian_ADX_CHOPStrategy strategy (1h futures Donchian breakout with ADX, CHOP, volume confirmation, and Turtle-style exits)
 - `completeindicatorstrategy22.env` - CompleteIndicatorStrategy2 strategy from `user_data/strategies/Best5m/CompleteIndicatorStrategy22.py` (longs + shorts dry-run evaluation on Bybit futures)
 
 ### Strategy-Specific Runtime Notes
 
-- `NNPredict` runs as a dedicated Compose stack because the shared multi-strategy image intentionally does not include TensorFlow/Keras.
-- Start only `NNPredict` with `./deploy-multi-strategies.sh start nnpredict` or `docker compose -f docker-compose-nnpredict.yml up -d`.
-- The dedicated image in `docker/Dockerfile.nnpredict` installs `tensorflow` and `h5py`. Adjust that file if you need a GPU-oriented TensorFlow build.
+- `Donchian_ADX_CHOPStrategy` runs as a dedicated Compose stack in the former NNPredict slot on port `8138`.
+- Start only `Donchian_ADX_CHOPStrategy` with `./deploy-multi-strategies.sh start donchian_adx_chop` or `docker compose -f docker-compose-nnpredict.yml up -d`.
+- The legacy alias `./deploy-multi-strategies.sh start nnpredict` still maps to the Donchian slot for compatibility.
+- The canonical FreqUI path is `/donchian_adx_chop`; the legacy `/nnpredict` reverse-proxy path still routes to the same container.
 
 ## Quick Start
 
@@ -183,7 +184,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
 | **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
 | **EDTMA**                            | `Vasko_EDTMA`                  | `http://freq.gaiaderma.com/edtma`                  | `edtma_user`                  | `edtma_secure_password`                  |
-| **NNPredict**                        | `Vasko_NNPredict`              | `http://freq.gaiaderma.com/nnpredict`              | `nnpredict_user`              | `nnpredict_secure_password`              |
+| **Donchian_ADX_CHOPStrategy**        | `Vasko_Donchian_ADX_CHOP`      | `http://freq.gaiaderma.com/donchian_adx_chop`      | `donchian_adx_chop_user`      | `donchian_adx_chop_secure_password`      |
 | **CompleteIndicatorStrategy2**       | `Vasko_CompleteIndicatorStrategy22` | `http://freq.gaiaderma.com/completeindicatorstrategy22` | `completeindicatorstrategy22_user` | `completeindicatorstrategy22_secure_password` |
 
 ### URL Flow Example:
@@ -252,7 +253,7 @@ curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # Best5m
 curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
-curl http://127.0.0.1:8138/api/v1/ping  # NNPredict
+curl http://127.0.0.1:8138/api/v1/ping  # Donchian_ADX_CHOPStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CompleteIndicatorStrategy2
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
@@ -277,7 +278,8 @@ curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/best5m/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
 curl http://freq.gaiaderma.com/edtma/api/v1/ping
-curl http://freq.gaiaderma.com/nnpredict/api/v1/ping
+curl http://freq.gaiaderma.com/donchian_adx_chop/api/v1/ping
+curl http://freq.gaiaderma.com/nnpredict/api/v1/ping  # legacy alias
 curl http://freq.gaiaderma.com/completeindicatorstrategy22/api/v1/ping
 ```
 
@@ -337,7 +339,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8135 | Best5m                           | Longs + Shorts | Strategy-defined |
 | 8136 | IchimokuCloudBreakoutStrategy    | Longs + Shorts | Strategy-defined |
 | 8137 | Picasso CE/CTI/STC/EMA           | Longs + Shorts | Strategy-defined |
-| 8138 | NNPredict                        | Longs          | Strategy-defined |
+| 8138 | Donchian_ADX_CHOPStrategy       | Longs + Shorts | Strategy-defined |
 | 8139 | CompleteIndicatorStrategy2       | Longs + Shorts | Strategy-defined |
 
 **Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8140+
@@ -364,6 +366,7 @@ Each strategy uses its own SQLite database:
 - `fenix-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
 - `alexbandsniper_v10ai-tradesv3.sqlite`
+- `donchian_adx_chop-tradesv3.sqlite`
 - `best5m-tradesv3.sqlite`
 - `completeindicatorstrategy22-tradesv3.sqlite`
 

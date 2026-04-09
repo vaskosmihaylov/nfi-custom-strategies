@@ -1,19 +1,19 @@
 ---
-# Dedicated Docker Compose stack for NNPredict.
-# Keeps TensorFlow/Keras dependencies isolated from the main multi-strategy image.
+# Dedicated Docker Compose stack for Donchian_ADX_CHOPStrategy.
+# This replaces the former NNPredict slot while preserving port 8138.
 
 services:
-  freqtrade-nnpredict:
-    image: freqtradeorg/freqtrade:nnpredict
+  freqtrade-donchian_adx_chop:
+    image: freqtradeorg/freqtrade:stable
     build:
       context: .
-      dockerfile: "./docker/Dockerfile.nnpredict"
-    container_name: freqtrade-nnpredict
+      dockerfile: "./docker/Dockerfile.custom"
+    container_name: freqtrade-donchian_adx_chop
     restart: unless-stopped
     ports:
       - "127.0.0.1:8138:8080"
     env_file:
-      - path: ./env-files/nnpredict.env
+      - path: ./env-files/donchian_adx_chop.env
         required: true
     volumes:
       - "./user_data:/freqtrade/user_data"
@@ -29,10 +29,10 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/nnpredict-tradesv3.sqlite
-      --log-file user_data/logs/nnpredict.log
-      --strategy-path user_data/strategies/**NNPredict
-      --strategy NNPredict
+      --db-url sqlite:////freqtrade/user_data/donchian_adx_chop-tradesv3.sqlite
+      --log-file user_data/logs/donchian_adx_chop.log
+      --strategy-path user_data/strategies/Donchian_ADX_CHOPStrategy
+      --strategy Donchian_ADX_CHOPStrategy
 
 networks:
   default:
