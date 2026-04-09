@@ -48,9 +48,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 ### Docker Configuration
 
 - `docker-compose-multi-strategies.yml` - Multi-strategy Docker Compose file
-- `docker-compose-nnpredict.yml` - Dedicated Docker Compose file for the Donchian_ADX_CHOPStrategy slot that replaced the former NNPredict service
 - `deploy-multi-strategies.sh` - Deployment and management script
-- `docker/Dockerfile.custom` - Shared custom Freqtrade image used by the multi-strategy stack and the Donchian_ADX_CHOPStrategy dedicated slot
+- `docker/Dockerfile.custom` - Shared custom Freqtrade image used by the full multi-strategy stack, including Donchian_ADX_CHOPStrategy
 
 ### NGINX Configuration
 
@@ -86,10 +85,9 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 ### Strategy-Specific Runtime Notes
 
-- `Donchian_ADX_CHOPStrategy` runs as a dedicated Compose stack in the former NNPredict slot on port `8138`.
-- Start only `Donchian_ADX_CHOPStrategy` with `./deploy-multi-strategies.sh start donchian_adx_chop` or `docker compose -f docker-compose-nnpredict.yml up -d`.
-- The legacy alias `./deploy-multi-strategies.sh start nnpredict` still maps to the Donchian slot for compatibility.
-- The canonical FreqUI path is `/donchian_adx_chop`; the legacy `/nnpredict` reverse-proxy path still routes to the same container.
+- `Donchian_ADX_CHOPStrategy` now runs directly inside `docker-compose-multi-strategies.yml` on port `8138`.
+- Start only `Donchian_ADX_CHOPStrategy` with `./deploy-multi-strategies.sh start donchian_adx_chop`.
+- The canonical FreqUI path is `/donchian_adx_chop`.
 
 ## Quick Start
 
@@ -279,7 +277,6 @@ curl http://freq.gaiaderma.com/best5m/api/v1/ping
 curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
 curl http://freq.gaiaderma.com/edtma/api/v1/ping
 curl http://freq.gaiaderma.com/donchian_adx_chop/api/v1/ping
-curl http://freq.gaiaderma.com/nnpredict/api/v1/ping  # legacy alias
 curl http://freq.gaiaderma.com/completeindicatorstrategy22/api/v1/ping
 ```
 

@@ -6,7 +6,6 @@
 set -e
 
 MULTI_COMPOSE_FILE="docker-compose-multi-strategies.yml"
-DEDICATED_DONCHIAN_COMPOSE_FILE="docker-compose-nnpredict.yml"
 
 # Colors for output
 RED='\033[0;31m'
@@ -32,29 +31,8 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-normalize_strategy_name() {
-    local strategy=$1
-
-    case "$strategy" in
-        nnpredict)
-            echo "donchian_adx_chop"
-            ;;
-        *)
-            echo "$strategy"
-            ;;
-    esac
-}
-
 get_compose_file_for_strategy() {
-    local strategy=$1
-    local normalized
-    normalized=$(normalize_strategy_name "$strategy")
-
-    if [ "$normalized" = "donchian_adx_chop" ]; then
-        echo "$DEDICATED_DONCHIAN_COMPOSE_FILE"
-    else
-        echo "$MULTI_COMPOSE_FILE"
-    fi
+    echo "$MULTI_COMPOSE_FILE"
 }
 
 # Function to check if a service is running
@@ -99,7 +77,6 @@ show_help() {
     echo "  mtfscalper,"
     echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, best5m,"
     echo "  ichiv1_plus, edtma, donchian_adx_chop, completeindicatorstrategy22"
-    echo "  Legacy alias: nnpredict -> donchian_adx_chop"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -133,28 +110,20 @@ show_help() {
     echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
     echo "  EDTMA:                 http://freq.gaiaderma.com/edtma"
     echo "  Donchian_ADX_CHOP:     http://freq.gaiaderma.com/donchian_adx_chop"
-    echo "  Legacy alias:          http://freq.gaiaderma.com/nnpredict"
     echo "  CompleteIndicatorStrategy22: http://freq.gaiaderma.com/completeindicatorstrategy22"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
-    echo "  (The former NNPredict slot now runs Donchian_ADX_CHOPStrategy from docker-compose-nnpredict.yml)"
 }
 
 # Function to start strategies
 start_strategies() {
     local strategy=$1
-    local normalized=""
-
-    if [ -n "$strategy" ]; then
-        normalized=$(normalize_strategy_name "$strategy")
-    fi
     
     if [ -n "$strategy" ]; then
         print_status "Starting $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d freqtrade-$normalized
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d freqtrade-$strategy
     else
         print_status "Starting all strategies..."
         docker compose -f "$MULTI_COMPOSE_FILE" up -d
-        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" up -d
     fi
     
     print_success "Started strategies"
@@ -165,19 +134,13 @@ start_strategies() {
 # Function to stop strategies
 stop_strategies() {
     local strategy=$1
-    local normalized=""
-
-    if [ -n "$strategy" ]; then
-        normalized=$(normalize_strategy_name "$strategy")
-    fi
     
     if [ -n "$strategy" ]; then
         print_status "Stopping $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" stop freqtrade-$normalized
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" stop freqtrade-$strategy
     else
         print_status "Stopping all strategies..."
         docker compose -f "$MULTI_COMPOSE_FILE" down
-        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" down
     fi
     
     print_success "Stopped strategies"
@@ -186,21 +149,15 @@ stop_strategies() {
 # Function to restart strategies
 restart_strategies() {
     local strategy=$1
-    local normalized=""
-
-    if [ -n "$strategy" ]; then
-        normalized=$(normalize_strategy_name "$strategy")
-    fi
 
     if [ -n "$strategy" ]; then
         print_status "Restarting $strategy strategy (reloading env vars)..."
         # Use up -d --force-recreate to reload env files
         # docker compose restart does NOT reload env files!
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d --force-recreate freqtrade-$normalized
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" up -d --force-recreate freqtrade-$strategy
     else
         print_status "Restarting all strategies (reloading env vars)..."
         docker compose -f "$MULTI_COMPOSE_FILE" up -d --force-recreate
-        docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" up -d --force-recreate
     fi
 
     print_success "Restarted strategies"
@@ -212,25 +169,17 @@ restart_strategies() {
 show_status() {
     print_status "Checking status of all strategies..."
     docker compose -f "$MULTI_COMPOSE_FILE" ps
-    echo ""
-    docker compose -f "$DEDICATED_DONCHIAN_COMPOSE_FILE" ps
 }
 
 # Function to show logs
 show_logs() {
     local strategy=$1
-    local normalized=""
-
-    if [ -n "$strategy" ]; then
-        normalized=$(normalize_strategy_name "$strategy")
-    fi
     
     if [ -n "$strategy" ]; then
         print_status "Showing logs for $strategy strategy..."
-        docker compose -f "$(get_compose_file_for_strategy "$strategy")" logs -f freqtrade-$normalized
+        docker compose -f "$(get_compose_file_for_strategy "$strategy")" logs -f freqtrade-$strategy
     else
         print_status "Showing logs for all strategies..."
-        print_warning "Streaming combined logs from the main stack only. Use '$0 logs donchian_adx_chop' for the dedicated Donchian slot. The legacy alias '$0 logs nnpredict' also works."
         docker compose -f "$MULTI_COMPOSE_FILE" logs -f
     fi
 }

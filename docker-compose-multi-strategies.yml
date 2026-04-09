@@ -405,6 +405,23 @@ services:
       --strategy-path user_data/strategies/Picasso
       --strategy EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March
 
+  # Donchian_ADX_CHOPStrategy (Longs + Shorts 1h Donchian breakout)
+  freqtrade-donchian_adx_chop:
+    <<: *common-settings
+    container_name: freqtrade-donchian_adx_chop
+    ports:
+      - "127.0.0.1:8138:8080"
+    env_file:
+      - path: ./env-files/donchian_adx_chop.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/donchian_adx_chop-tradesv3.sqlite
+      --log-file user_data/logs/donchian_adx_chop.log
+      --strategy-path user_data/strategies/Donchian_ADX_CHOPStrategy
+      --strategy Donchian_ADX_CHOPStrategy
+
   # CompleteIndicatorStrategy2 Strategy (Longs + Shorts)
   freqtrade-completeindicatorstrategy22:
     <<: *common-settings
