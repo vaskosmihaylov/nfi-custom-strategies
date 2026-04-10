@@ -46,6 +46,43 @@ If you like to help, you can also use the following links to sign up to various 
 - [BitMart: (20% lifetime discount on trading fees)](https://www.bitmart.com/invite/nfinfinity/en-US)
 - [HTX: (Welcome Bonus worth 241 USDT upon completion of a deposit and trade)](https://www.htx.com/invite/en-us/1f?invite_code=ubpt2223)
 
+## Automatic Updates (Docker)
+
+The repository includes an `nfi-updater` sidecar service for Docker Compose users that keeps the strategy, blacklist, and pairlist automatically up to date without manual intervention.
+
+**What it does:**
+- Checks the strategy file, blacklist, and pairlist against the latest version on GitHub on a configurable schedule (default: every day at 10:00 AM in your timezone)
+- Watches the blacklist file via HTTP ETag every 60 seconds and applies critical updates immediately
+- Automatically restarts the freqtrade container only when a file actually changed
+
+**How to enable it:**
+
+The `nfi-updater` service is already defined in `docker-compose.yml`. It starts alongside freqtrade automatically when you run:
+
+```bash
+docker compose up -d --build
+```
+
+**Configuration (add to your `.env`):**
+
+```env
+# Timezone for the cron schedule
+TZ=Europe/London
+
+# How often to check for updates (cron syntax, default: daily at 10:00 AM)
+NFI_UPDATE_CRON=0 10 * * *
+
+# Docker Compose project name — must match what 'docker compose ls' shows
+# Docker uses the lowercase folder name by default
+COMPOSE_PROJECT_NAME=nostalgiaforinfinity
+```
+
+**View updater logs:**
+
+```bash
+docker compose logs -f nfi-updater
+```
+
 ## Donations
 Absolutely not required. However, will be accepted as a token of appreciation.
 

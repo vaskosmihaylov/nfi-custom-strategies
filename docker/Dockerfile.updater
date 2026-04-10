@@ -1,0 +1,9 @@
+FROM docker:cli
+
+# bash + wget (downloads), curl (ETag checks), tzdata (TZ env var support)
+RUN apk add --no-cache bash curl wget tzdata
+
+COPY docker/updater/ /scripts/
+RUN chmod +x /scripts/*.sh
+
+ENTRYPOINT ["/scripts/entrypoint.sh"]
