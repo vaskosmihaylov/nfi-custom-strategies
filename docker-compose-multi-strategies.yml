@@ -43,7 +43,7 @@ services:
       --strategy NostalgiaForInfinityX7
 
   # FastSupertrend_optim3_rsi_70 in the /e0v1e slot
-  freqtrade-e0v1e:
+  freqtrade-fastsupertrend_rsi_70:
     <<: *common-settings
     container_name: freqtrade-fastsupertrend_rsi_70
     ports:
@@ -60,7 +60,7 @@ services:
       --strategy FastSupertrend_optim3_rsi_70
 
   # FastSupertrend_optim_quick3 in the /e0v1e_shorts slot
-  freqtrade-e0v1e_shorts:
+  freqtrade-fastsupertrend_quick3:
     <<: *common-settings
     container_name: freqtrade-fastsupertrend_quick3
     ports:

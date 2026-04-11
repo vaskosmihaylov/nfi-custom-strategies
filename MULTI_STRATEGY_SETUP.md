@@ -59,8 +59,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 ### Environment Files (in `env-files/`)
 
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
-- `e0v1e.env` - FastSupertrend_optim3_rsi_70 served on the `/e0v1e` slot
-- `e0v1e_shorts.env` - FastSupertrend_optim_quick3 served on the `/e0v1e_shorts` slot
+- `e0v1e.env` - FastSupertrend_optim3_rsi_70 runtime env file
+- `e0v1e_shorts.env` - FastSupertrend_optim_quick3 runtime env file
 - `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
 - `e0v1e_binance_shorts.env` - E0V1E Binance-tuned shorts isolated dry-run variant
 - `binhv27.env` - BinHV27 combined strategy
@@ -161,8 +161,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | Strategy                             | Bot Name                       | API URL                                            | Username                      | Password                                 |
 | ------------------------------------ | ------------------------------ | -------------------------------------------------- | ----------------------------- | ---------------------------------------- |
 | **nfi-x7**                           | `Vasko_NFI_X7`                 | `http://freq.gaiaderma.com/nfi-x7`                 | `nfi_x6_user`                 | `nfi_x6_secure_password`                 |
-| **FastSupertrend_optim3_rsi_70**     | `Vasko_FastSupertrend_rsi_70`  | `http://freq.gaiaderma.com/e0v1e`                  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
-| **FastSupertrend_optim_quick3**      | `Vasko_FastSupertrend_quick3`  | `http://freq.gaiaderma.com/e0v1e_shorts`           | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
+| **FastSupertrend_optim3_rsi_70**     | `Vasko_FastSupertrend_rsi_70`  | `http://freq.gaiaderma.com/fastsupertrend_rsi_70`  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
+| **FastSupertrend_optim_quick3**      | `Vasko_FastSupertrend_quick3`  | `http://freq.gaiaderma.com/fastsupertrend_quick3`  | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
 | **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
 | **e0v1e_binance_shorts**             | `Vasko_E0V1E_Binance_Shorts`   | `http://freq.gaiaderma.com/e0v1e_binance_shorts`   | `e0v1e_binance_shorts_user`   | `e0v1e_binance_shorts_secure_password`   |
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
@@ -255,8 +255,8 @@ curl http://127.0.0.1:8138/api/v1/ping  # Donchian_ADX_CHOPStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CompleteIndicatorStrategy2
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
-curl http://freq.gaiaderma.com/e0v1e/api/v1/ping
-curl http://freq.gaiaderma.com/e0v1e_shorts/api/v1/ping
+curl http://freq.gaiaderma.com/fastsupertrend_rsi_70/api/v1/ping
+curl http://freq.gaiaderma.com/fastsupertrend_quick3/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/binhv27/api/v1/ping
