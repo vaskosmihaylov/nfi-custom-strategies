@@ -204,11 +204,11 @@ class Donchian_ADX_CHOPStrategy(IStrategy):
     # Can this strategy go short?
     can_short: bool = True
 
-    # Minimal ROI (disabled since we use trailing SL only)
+    # Minimal ROI (disabled; exits handled by custom_exit and custom_stoploss)
     minimal_roi = {"0": 100}
 
-    # Initial stoploss: ~5% adverse price move at 3x leverage
-    stoploss = -0.10
+    # Initial stoploss: wide enough to let custom_stoploss ATR logic take control
+    stoploss = -0.50
 
     # Trailing stoploss (disabled; handled in custom_stoploss)
     trailing_stop = False
@@ -246,6 +246,17 @@ class Donchian_ADX_CHOPStrategy(IStrategy):
     atr_multiplier = DecimalParameter(
         low=1.5,
         high=3.0,
+        default=2.0,
+        decimals=1,
+        space="sell",
+        optimize=True,
+        load=True,
+    )
+
+    # Hyperoptable parameters - Risk:Reward ratio for TP
+    rr_ratio = DecimalParameter(
+        low=1.0,
+        high=4.0,
         default=2.0,
         decimals=1,
         space="sell",
@@ -419,6 +430,74 @@ class Donchian_ADX_CHOPStrategy(IStrategy):
 
         return dataframe
 
+    def _get_entry_atr(self, pair: str, trade: Trade):
+        """Get the entry candle ATR and dataframe slice from entry to current."""
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        if dataframe is None or len(dataframe) == 0:
+            return None
+
+        candle_date = timeframe_to_prev_date(self.timeframe, trade.open_date_utc)
+        entry_candles = dataframe.loc[dataframe["date"] == candle_date]
+        if entry_candles.empty:
+            return None
+
+        entry_candle = entry_candles.iloc[-1]
+        entry_atr = entry_candle["atr"]
+        if pd.isna(entry_atr) or entry_atr <= 0:
+            return None
+
+        current_candle = dataframe.iloc[-1]
+        current_atr = current_candle["atr"]
+        if pd.isna(current_atr) or current_atr <= 0:
+            current_atr = entry_atr
+
+        entry_idx = dataframe.index.get_loc(entry_candles.index[0])
+        current_idx = len(dataframe) - 1
+        slice_df = dataframe.iloc[entry_idx : current_idx + 1]
+
+        return {
+            "entry_atr": entry_atr,
+            "current_atr": current_atr,
+            "slice_df": slice_df,
+            "entry_idx": entry_idx,
+            "current_idx": current_idx,
+        }
+
+    def custom_exit(
+        self,
+        pair: str,
+        trade: Trade,
+        current_time: datetime,
+        current_rate: float,
+        current_profit: float,
+        **kwargs,
+    ) -> Optional[Union[str, bool]]:
+        """
+        ATR-based R:R take-profit.
+
+        Risk = atr_multiplier * entry_ATR (same as initial SL distance).
+        TP triggers when unrealized profit >= rr_ratio * risk.
+        """
+        info = self._get_entry_atr(pair, trade)
+        if info is None:
+            return None
+
+        entry_atr = info["entry_atr"]
+        multiplier = self.atr_multiplier.value
+        risk_distance = multiplier * entry_atr
+        tp_distance = self.rr_ratio.value * risk_distance
+
+        if not trade.is_short:
+            tp_price = trade.open_rate + tp_distance
+            if current_rate >= tp_price:
+                return f"tp_rr_{self.rr_ratio.value}"
+        else:
+            tp_price = trade.open_rate - tp_distance
+            if current_rate <= tp_price:
+                return f"tp_rr_{self.rr_ratio.value}"
+
+        return None
+
     def custom_stoploss(
         self,
         pair: str,
@@ -430,56 +509,44 @@ class Donchian_ADX_CHOPStrategy(IStrategy):
         **kwargs,
     ) -> float:
         """
-        Custom trailing stoploss: ATR-based trailing SL.
+        ATR-based trailing stoploss with breakeven logic.
 
-        Logic:
-        - Long: Trail from highest high since entry - (ATR * multiplier)
-        - Short: Trail from lowest low since entry + (ATR * multiplier)
-
-        This creates a trailing stop that follows favorable price movement
-        while maintaining a fixed ATR-based distance.
+        Phases:
+        1. Initial: SL at entry - (ATR * multiplier)
+        2. Breakeven: once price moves 1x ATR in favor, move SL to entry (breakeven)
+        3. Trailing: trail from highest high (long) / lowest low (short) - (ATR * multiplier)
 
         Returns relative stoploss (negative value).
         """
-        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-        if dataframe is None or len(dataframe) == 0:
+        info = self._get_entry_atr(pair, trade)
+        if info is None:
             return -1
 
-        # Get the signal candle
-        candle_date = timeframe_to_prev_date(self.timeframe, trade.open_date_utc)
-        entry_candles = dataframe.loc[dataframe["date"] == candle_date]
-        if entry_candles.empty:
-            return -1
-
-        entry_candle = entry_candles.iloc[-1]
+        entry_atr = info["entry_atr"]
+        current_atr = info["current_atr"]
+        slice_df = info["slice_df"]
         multiplier = self.atr_multiplier.value
 
-        # Use current ATR (adapts to volatility changes during trade)
-        current_candle = dataframe.iloc[-1]
-        current_atr = current_candle["atr"]
-        if pd.isna(current_atr) or current_atr <= 0:
-            current_atr = entry_candle["atr"]
+        if not trade.is_short:
+            max_high = slice_df["high"].max()
+            favorable_move = max_high - trade.open_rate
 
-        # Find entry index
-        entry_idx = dataframe.index.get_loc(dataframe[dataframe["date"] == candle_date].index[0])
-        current_idx = len(dataframe) - 1
-
-        if entry_idx >= current_idx:
-            # Initial SL based on entry candle
-            if not trade.is_short:
+            if favorable_move >= entry_atr:
+                # Phase 2+3: at least breakeven, trailing from max_high
+                sl_abs = max(trade.open_rate, max_high - (multiplier * current_atr))
+            else:
+                # Phase 1: initial ATR stop
                 sl_abs = trade.open_rate - (multiplier * current_atr)
-            else:
-                sl_abs = trade.open_rate + (multiplier * current_atr)
         else:
-            # Trailing: find max high (long) or min low (short) since entry
-            slice_df = dataframe.iloc[entry_idx : current_idx + 1]
-            if not trade.is_short:
-                max_high = slice_df["high"].max()
-                sl_abs = max_high - (multiplier * current_atr)
-            else:
-                min_low = slice_df["low"].min()
-                sl_abs = min_low + (multiplier * current_atr)
+            min_low = slice_df["low"].min()
+            favorable_move = trade.open_rate - min_low
 
-        # Convert to relative stoploss
+            if favorable_move >= entry_atr:
+                # Phase 2+3: at least breakeven, trailing from min_low
+                sl_abs = min(trade.open_rate, min_low + (multiplier * current_atr))
+            else:
+                # Phase 1: initial ATR stop
+                sl_abs = trade.open_rate + (multiplier * current_atr)
+
         sl_rel = stoploss_from_absolute(sl_abs, current_rate, is_short=trade.is_short)
         return sl_rel

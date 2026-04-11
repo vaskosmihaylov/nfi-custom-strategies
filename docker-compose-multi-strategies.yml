@@ -42,7 +42,7 @@ services:
       --strategy-path user_data/strategies
       --strategy NostalgiaForInfinityX7
 
-  # E0V1E Strategy (Longs)
+  # FastSupertrend_optim3_rsi_70 in the /e0v1e slot
   freqtrade-e0v1e:
     <<: *common-settings
     container_name: freqtrade-e0v1e
@@ -54,12 +54,12 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/e0v1e-tradesv3.sqlite
-      --log-file user_data/logs/e0v1e.log
-      --strategy-path user_data/strategies/e0v1e
-      --strategy E0V1E
+      --db-url sqlite:////freqtrade/user_data/fastsupertrend_rsi_70-tradesv3.sqlite
+      --log-file user_data/logs/fastsupertrend_rsi_70.log
+      --strategy-path user_data/strategies/fastsupertrend
+      --strategy FastSupertrend_optim3_rsi_70
 
-  # E0V1E_Shorts Strategy (Shorts-only parallel test)
+  # FastSupertrend_optim_quick3 in the /e0v1e_shorts slot
   freqtrade-e0v1e_shorts:
     <<: *common-settings
     container_name: freqtrade-e0v1e_shorts
@@ -71,10 +71,10 @@ services:
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/e0v1e_shorts-tradesv3.sqlite
-      --log-file user_data/logs/e0v1e_shorts.log
-      --strategy-path user_data/strategies/e0v1e
-      --strategy E0V1E_Shorts
+      --db-url sqlite:////freqtrade/user_data/fastsupertrend_quick3-tradesv3.sqlite
+      --log-file user_data/logs/fastsupertrend_quick3.log
+      --strategy-path user_data/strategies/fastsupertrend
+      --strategy FastSupertrend_optim_quick3
 
   # E0V1E Binance-tuned Strategy (isolated variant)
   freqtrade-e0v1e_binance:

@@ -18,8 +18,8 @@ The multi-strategy setup includes:
 ```
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
-                           ├── E0V1E (Port 8098)
-                           ├── E0V1E_Shorts (Port 8099)
+                           ├── FastSupertrend_optim3_rsi_70 (Port 8098)
+                           ├── FastSupertrend_optim_quick3 (Port 8099)
                            ├── e0v1e_binance (Port 8114)
                            ├── e0v1e_binance_shorts (Port 8115)
                            ├── BinHV27_combined (Port 8092)
@@ -59,8 +59,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 ### Environment Files (in `env-files/`)
 
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
-- `e0v1e.env` - E0V1E strategy (longs-only with 3x leverage)
-- `e0v1e_shorts.env` - E0V1E_Shorts strategy (shorts-only with 3x leverage)
+- `e0v1e.env` - FastSupertrend_optim3_rsi_70 served on the `/e0v1e` slot
+- `e0v1e_shorts.env` - FastSupertrend_optim_quick3 served on the `/e0v1e_shorts` slot
 - `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
 - `e0v1e_binance_shorts.env` - E0V1E Binance-tuned shorts isolated dry-run variant
 - `binhv27.env` - BinHV27 combined strategy
@@ -161,8 +161,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | Strategy                             | Bot Name                       | API URL                                            | Username                      | Password                                 |
 | ------------------------------------ | ------------------------------ | -------------------------------------------------- | ----------------------------- | ---------------------------------------- |
 | **nfi-x7**                           | `Vasko_NFI_X7`                 | `http://freq.gaiaderma.com/nfi-x7`                 | `nfi_x6_user`                 | `nfi_x6_secure_password`                 |
-| **E0V1E**                            | `Vasko_E0V1E`                  | `http://freq.gaiaderma.com/e0v1e`                  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
-| **E0V1E_Shorts**                     | `Vasko_E0V1E_Shorts`           | `http://freq.gaiaderma.com/e0v1e_shorts`           | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
+| **FastSupertrend_optim3_rsi_70**     | `Vasko_FastSupertrend_rsi_70`  | `http://freq.gaiaderma.com/e0v1e`                  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
+| **FastSupertrend_optim_quick3**      | `Vasko_FastSupertrend_quick3`  | `http://freq.gaiaderma.com/e0v1e_shorts`           | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
 | **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
 | **e0v1e_binance_shorts**             | `Vasko_E0V1E_Binance_Shorts`   | `http://freq.gaiaderma.com/e0v1e_binance_shorts`   | `e0v1e_binance_shorts_user`   | `e0v1e_binance_shorts_secure_password`   |
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
@@ -230,8 +230,8 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 
 # Individual health checks (direct to containers)
 curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
-curl http://127.0.0.1:8098/api/v1/ping  # E0V1E
-curl http://127.0.0.1:8099/api/v1/ping  # E0V1E_Shorts
+curl http://127.0.0.1:8098/api/v1/ping  # FastSupertrend_optim3_rsi_70
+curl http://127.0.0.1:8099/api/v1/ping  # FastSupertrend_optim_quick3
 curl http://127.0.0.1:8114/api/v1/ping  # e0v1e_binance
 curl http://127.0.0.1:8115/api/v1/ping  # e0v1e_binance_shorts
 curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
@@ -298,7 +298,7 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 Each strategy logs to separate files in `user_data/logs/`:
 
 - `nfi-x7.log`
-- `e0v1e.log`, `e0v1e_shorts.log`
+- `fastsupertrend_rsi_70.log`, `fastsupertrend_quick3.log`
 - `auto_ei_t4c0s.log`
 - `fibonacciematrend.log`
 - `kamafama.log`
@@ -315,8 +315,8 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | Port | Strategy                         | Direction      | Leverage         |
 | ---- | -------------------------------- | -------------- | ---------------- |
 | 8080 | nfi-x7                           | Longs          | -                |
-| 8098 | E0V1E                            | Longs          | 3x               |
-| 8099 | E0V1E_Shorts                     | Shorts         | 3x               |
+| 8098 | FastSupertrend_optim3_rsi_70     | Longs + Shorts | Strategy-defined |
+| 8099 | FastSupertrend_optim_quick3      | Longs + Shorts | Strategy-defined |
 | 8114 | e0v1e_binance                    | Longs          | Strategy-defined |
 | 8115 | e0v1e_binance_shorts             | Shorts         | Strategy-defined |
 | 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
@@ -346,8 +346,8 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 Each strategy uses its own SQLite database:
 
 - `nfi-x7-tradesv3.sqlite`
-- `e0v1e-tradesv3.sqlite`
-- `e0v1e_shorts-tradesv3.sqlite`
+- `fastsupertrend_rsi_70-tradesv3.sqlite`
+- `fastsupertrend_quick3-tradesv3.sqlite`
 - `e0v1e_binance-tradesv3.sqlite`
 - `e0v1e_binance_shorts-tradesv3.sqlite`
 - `binhv27-tradesv3.sqlite`
