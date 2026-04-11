@@ -23,6 +23,8 @@ x-common-settings:
     - path: ./env-files/nfi.env
       required: false # default true
 
+services:
+
   freqtrade:
     <<: *common-settings
     container_name: ${FREQTRADE__BOT_NAME:-Example_Test_Account}_${FREQTRADE__EXCHANGE__NAME:-binance}_${FREQTRADE__TRADING_MODE:-futures}-${FREQTRADE__STRATEGY:-NostalgiaForInfinityX7}
