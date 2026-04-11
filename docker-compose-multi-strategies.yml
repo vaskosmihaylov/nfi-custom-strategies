@@ -45,7 +45,7 @@ services:
   # FastSupertrend_optim3_rsi_70 in the /e0v1e slot
   freqtrade-e0v1e:
     <<: *common-settings
-    container_name: freqtrade-e0v1e
+    container_name: freqtrade-fastsupertrend_rsi_70
     ports:
       - "127.0.0.1:8098:8080"
     env_file:
@@ -62,7 +62,7 @@ services:
   # FastSupertrend_optim_quick3 in the /e0v1e_shorts slot
   freqtrade-e0v1e_shorts:
     <<: *common-settings
-    container_name: freqtrade-e0v1e_shorts
+    container_name: freqtrade-fastsupertrend_quick3
     ports:
       - "127.0.0.1:8099:8080"
     env_file:
