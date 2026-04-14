@@ -1,0 +1,6 @@
+{
+  "freqai": {
+    "identifier": "fibbo-lightgbm-backtest",
+    "backtest_period_days": 10
+  }
+}

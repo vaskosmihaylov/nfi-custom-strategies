@@ -1,0 +1,29 @@
+ARG sourceimage=freqtradeorg/freqtrade
+ARG sourcetag=stable_freqai
+
+# Stage 1: Build dependencies for the FreqAI image.
+FROM ${sourceimage}:${sourcetag} AS builder
+
+USER root
+RUN pip install --upgrade pip
+
+COPY --chown=1000:1000 tests/requirements.txt /freqtrade/
+
+USER ftuser
+RUN --mount=type=cache,target=/home/ftuser/.cache/pip \
+    pip install --user --no-build-isolation --no-cache-dir -r /freqtrade/requirements.txt
+
+USER root
+RUN chown -R 1000:1000 /home/ftuser/.local
+
+# Stage 2: Final runtime image.
+FROM ${sourceimage}:${sourcetag}
+
+USER root
+
+COPY --from=builder /home/ftuser/.local /home/ftuser/.local
+COPY --chown=1000:1000 tests/requirements.txt /freqtrade/
+
+USER ftuser
+
+ENV PATH=/home/ftuser/.local/bin:$PATH

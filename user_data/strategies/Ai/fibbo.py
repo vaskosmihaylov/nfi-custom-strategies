@@ -5,7 +5,7 @@
 import numpy as np  # noqa
 import pandas as pd  # noqa
 from pandas import DataFrame
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from freqtrade.strategy import (
     BooleanParameter,
@@ -23,9 +23,11 @@ from freqtrade.exceptions import OperationalException
 # --------------------------------
 # Add your lib to import here
 import os
+import sys
 import json
 import random
 import logging
+from copy import deepcopy
 from itertools import product, chain
 from datetime import datetime
 from functools import reduce
@@ -34,7 +36,16 @@ import talib.abstract as ta
 import pandas_ta as pd_ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 from itertools import permutations
-from utils.indodax_patch import *
+
+STRATEGY_DIR = Path(__file__).resolve().parent
+if str(STRATEGY_DIR) not in sys.path:
+    sys.path.append(str(STRATEGY_DIR))
+
+from indodax_patch import (
+    patch_indodax_cancel_order,
+    patch_indodax_create_order,
+    patch_indodax_fetch_order,
+)
 
 
 # Define indicator sets (could also come from the JSON if needed)
@@ -60,18 +71,331 @@ def find_span(obj):
                 return result
     return None
 
-# Load JSON and extract 'span'
-param_file = Path(__file__).parent/'hyperopt_params.json'
-logger.info(f"Load params file: {param_file}")
-try:
-    with open(param_file) as file:
-        span = find_span(json.load(file))
-except FileNotFoundError:
-    logger.warning(f"Params file not found: {param_file}")
-except json.JSONDecodeError:
-    logger.error(f"Invalid JSON in params file: {param_file}")
-except Exception as e:
-    logger.error(f"Error loading params: {str(e)}")
+DEFAULT_SPAN = {
+    "buy": {
+        "buy_bb_period": {
+            "type": "IntParameter",
+            "low": 10,
+            "high": 40,
+            "default": 20,
+            "optimize": False,
+        },
+        "buy_fast_dema": {
+            "type": "CategoricalParameter",
+            "choices": [5, 8, 13, 21, 34],
+            "default": 13,
+            "optimize": False,
+        },
+        "buy_fib_level": {
+            "type": "CategoricalParameter",
+            "choices": [0.236, 0.382, 0.618, 0.786],
+            "default": 0.382,
+            "optimize": False,
+        },
+        "buy_freqai": {
+            "type": "DecimalParameter",
+            "low": 0.50,
+            "high": 0.95,
+            "default": 0.60,
+            "decimals": 2,
+            "optimize": False,
+        },
+        "buy_long_indicator": {
+            "type": "CategoricalParameter",
+            "choices": ["BB, RSI"],
+            "default": "BB, RSI",
+            "optimize": False,
+        },
+        "buy_rsi": {
+            "type": "IntParameter",
+            "low": 10,
+            "high": 50,
+            "default": 30,
+            "optimize": False,
+        },
+        "buy_rsi_period": {
+            "type": "IntParameter",
+            "low": 7,
+            "high": 28,
+            "default": 14,
+            "optimize": False,
+        },
+        "buy_short_indicator": {
+            "type": "CategoricalParameter",
+            "choices": ["NONE"],
+            "default": "NONE",
+            "optimize": False,
+        },
+        "buy_slow_ema": {
+            "type": "CategoricalParameter",
+            "choices": [50, 100, 200],
+            "default": 200,
+            "optimize": False,
+        },
+        "buy_smoothD": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 3,
+            "optimize": False,
+        },
+        "buy_smoothK": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 3,
+            "optimize": False,
+        },
+        "buy_stoch_osc": {
+            "type": "IntParameter",
+            "low": 5,
+            "high": 50,
+            "default": 20,
+            "optimize": False,
+        },
+        "buy_swing_period": {
+            "type": "IntParameter",
+            "low": 5,
+            "high": 50,
+            "default": 20,
+            "optimize": False,
+        },
+        "shared_stoch_period": {
+            "type": "IntParameter",
+            "low": 7,
+            "high": 28,
+            "default": 14,
+            "optimize": False,
+        },
+        "shared_ttm_window": {
+            "type": "IntParameter",
+            "low": 10,
+            "high": 60,
+            "default": 20,
+            "optimize": False,
+        },
+        "shared_vwap_window": {
+            "type": "IntParameter",
+            "low": 10,
+            "high": 60,
+            "default": 20,
+            "optimize": False,
+        },
+    },
+    "sell": {
+        "sell_fast_dema": {
+            "type": "CategoricalParameter",
+            "choices": [5, 8, 13, 21, 34],
+            "default": 13,
+            "optimize": False,
+        },
+        "sell_fib_level": {
+            "type": "CategoricalParameter",
+            "choices": [0.236, 0.382, 0.618, 0.786],
+            "default": 0.618,
+            "optimize": False,
+        },
+        "sell_freqai": {
+            "type": "DecimalParameter",
+            "low": 0.05,
+            "high": 0.50,
+            "default": 0.40,
+            "decimals": 2,
+            "optimize": False,
+        },
+        "sell_long_indicator": {
+            "type": "CategoricalParameter",
+            "choices": ["DEMA, RSI"],
+            "default": "DEMA, RSI",
+            "optimize": False,
+        },
+        "sell_rsi": {
+            "type": "IntParameter",
+            "low": 50,
+            "high": 95,
+            "default": 70,
+            "optimize": False,
+        },
+        "sell_short_indicator": {
+            "type": "CategoricalParameter",
+            "choices": ["NONE"],
+            "default": "NONE",
+            "optimize": False,
+        },
+        "sell_slow_ema": {
+            "type": "CategoricalParameter",
+            "choices": [50, 100, 200],
+            "default": 200,
+            "optimize": False,
+        },
+        "sell_smoothD": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 3,
+            "optimize": False,
+        },
+        "sell_smoothK": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 3,
+            "optimize": False,
+        },
+        "sell_stoch_osc": {
+            "type": "IntParameter",
+            "low": 50,
+            "high": 95,
+            "default": 80,
+            "optimize": False,
+        },
+    },
+    "protection": {
+        "cooldown_lookback": {
+            "type": "IntParameter",
+            "low": 2,
+            "high": 48,
+            "default": 5,
+            "optimize": False,
+        },
+        "lookback_period_candles": {
+            "type": "IntParameter",
+            "low": 6,
+            "high": 72,
+            "default": 24,
+            "optimize": False,
+        },
+        "low_profit_trade_limit": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 2,
+            "optimize": False,
+        },
+        "max_drawdown_trade_limit": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 20,
+            "default": 10,
+            "optimize": False,
+        },
+        "stop_duration_candles": {
+            "type": "IntParameter",
+            "low": 2,
+            "high": 48,
+            "default": 6,
+            "optimize": False,
+        },
+        "trade_limit": {
+            "type": "IntParameter",
+            "low": 1,
+            "high": 10,
+            "default": 2,
+            "optimize": False,
+        },
+        "use_low_profit": {
+            "type": "BooleanParameter",
+            "default": False,
+            "optimize": False,
+        },
+        "use_max_drawdown_protection": {
+            "type": "BooleanParameter",
+            "default": False,
+            "optimize": False,
+        },
+        "use_stop_protection": {
+            "type": "BooleanParameter",
+            "default": True,
+            "optimize": False,
+        },
+    },
+    "roi": {
+        "roi_p1": {
+            "type": "DecimalParameter",
+            "low": 0.01,
+            "high": 0.40,
+            "default": 0.298,
+            "decimals": 3,
+            "optimize": False,
+        },
+        "roi_p2": {
+            "type": "DecimalParameter",
+            "low": 0.01,
+            "high": 0.25,
+            "default": 0.144,
+            "decimals": 3,
+            "optimize": False,
+        },
+        "roi_p3": {
+            "type": "DecimalParameter",
+            "low": 0.00,
+            "high": 0.10,
+            "default": 0.055,
+            "decimals": 3,
+            "optimize": False,
+        },
+        "roi_t1": {
+            "type": "IntParameter",
+            "low": 15,
+            "high": 240,
+            "default": 115,
+            "optimize": False,
+        },
+        "roi_t2": {
+            "type": "IntParameter",
+            "low": 60,
+            "high": 480,
+            "default": 280,
+            "optimize": False,
+        },
+        "roi_t3": {
+            "type": "IntParameter",
+            "low": 120,
+            "high": 720,
+            "default": 507,
+            "optimize": False,
+        },
+    },
+}
+
+
+def merge_span_defaults(default_span: dict, override_span: dict) -> dict:
+    merged = deepcopy(default_span)
+    for section, values in override_span.items():
+        if section not in merged or not isinstance(values, dict):
+            merged[section] = values
+            continue
+        for key, config in values.items():
+            if isinstance(config, dict) and isinstance(merged[section].get(key), dict):
+                merged[section][key].update(config)
+            else:
+                merged[section][key] = config
+    return merged
+
+
+def load_span_config() -> dict:
+    param_file = STRATEGY_DIR / "hyperopt_params.json"
+    if not param_file.exists():
+        logger.info("Using built-in Fibbo parameter defaults.")
+        return deepcopy(DEFAULT_SPAN)
+
+    try:
+        with open(param_file, encoding="utf-8") as file:
+            loaded_span = find_span(json.load(file))
+        if not isinstance(loaded_span, dict):
+            logger.warning("Invalid span structure in %s, using defaults.", param_file)
+            return deepcopy(DEFAULT_SPAN)
+        logger.info("Loaded Fibbo hyperopt parameters from %s", param_file)
+        return merge_span_defaults(DEFAULT_SPAN, loaded_span)
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in params file: %s", param_file)
+    except Exception as exc:
+        logger.error("Error loading params from %s: %s", param_file, exc)
+
+    return deepcopy(DEFAULT_SPAN)
+
+
+span = load_span_config()
 
 # ✅ 2. Helper function to construct parameters
 def get_param_config(span: dict, space: str, name: str):
@@ -167,6 +491,8 @@ class Fibbo(IStrategy):
     # Optimal timeframe for the strategy.
     timeframe = "15m"
     informative_timeframe = "1h"
+    process_only_new_candles = True
+    startup_candle_count = 900
 
     # Hyperoptable parameters
     stoploss = -0.1
@@ -208,7 +534,8 @@ class Fibbo(IStrategy):
     ignore_roi_if_entry_signal = False
     position_adjustment_enable = False
     #max_entry_position_adjustment = 2
-    model_name = os.environ.get('FREQAI_MODEL', 'CatboostClassifier')
+    model_name = "LightGBMClassifier"
+    custom_pair_params: dict[str, dict[str, Any]] = {}
     
 
     # Plot config
@@ -236,6 +563,13 @@ class Fibbo(IStrategy):
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
+        self.model_name = str(
+            self.config.get("freqaimodel")
+            or os.environ.get("FREQAI_MODEL")
+            or os.environ.get("FREQTRADE__FREQAIMODEL")
+            or self.model_name
+        )
+        self.custom_pair_params = getattr(self, "custom_pair_params", {}) or {}
 
         # Override settings ONLY during hyperopt
         if self.config.get('runmode') == 'hyperopt':
@@ -254,7 +588,35 @@ class Fibbo(IStrategy):
 
         # Make rolling window configurable
         self.di_rolling_window = getattr(self, 'di_rolling_window', 200)
-        self.freqai_enabled = getattr(self, 'freqai_enabled', True)
+        self.freqai_enabled = bool(self.freqai_info.get("enabled", False))
+
+    @property
+    def freqai_info(self) -> dict:
+        if hasattr(self, "_freqai_info_cache"):
+            return self._freqai_info_cache
+
+        freqai_config = {}
+        if hasattr(self, "config") and self.config:
+            freqai_config = self.config.get("freqai", {})
+        if not freqai_config and hasattr(self, "freqai") and hasattr(self.freqai, "freqai_info"):
+            freqai_config = self.freqai.freqai_info
+        if not freqai_config:
+            freqai_config = {
+                "enabled": False,
+                "identifier": "fibbo-default",
+                "fit_live_predictions_candles": 200,
+                "feature_parameters": {
+                    "label_period_candles": 48,
+                    "include_corr_pairlist": ["BTC/USDT:USDT", "ETH/USDT:USDT"],
+                    "include_timeframes": [self.timeframe, self.informative_timeframe],
+                },
+            }
+        self._freqai_info_cache = freqai_config
+        return freqai_config
+
+    @freqai_info.setter
+    def freqai_info(self, value: dict) -> None:
+        self._freqai_info_cache = value or {}
 
     def bot_start(self, **kwargs) -> None:
         """Called once after the bot has started and dependencies are available."""

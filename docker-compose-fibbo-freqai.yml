@@ -1,0 +1,44 @@
+---
+# Dedicated Fibbo dry-run stack on the stable_freqai image.
+
+x-fibbo-freqai-settings:
+  &fibbo-freqai-settings
+  image: freqtradeorg/freqtrade:stable_freqai
+  build:
+    context: .
+    dockerfile: "./docker/Dockerfile.freqai"
+  restart: unless-stopped
+  volumes:
+    - "./user_data:/freqtrade/user_data"
+    - "./user_data/data:/freqtrade/user_data/data"
+    - "./configs:/freqtrade/configs"
+    - "./user_data/models:/freqtrade/user_data/models"
+    - "./user_data/notebooks:/freqtrade/user_data/notebooks"
+    - "./NostalgiaForInfinityX7.py:/freqtrade/NostalgiaForInfinityX7.py:ro"
+    - "./NostalgiaForInfinityX6.py:/freqtrade/NostalgiaForInfinityX6.py:ro"
+    - "./NostalgiaForInfinityX5.py:/freqtrade/NostalgiaForInfinityX5.py:ro"
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/ping"]
+    interval: 2m
+    timeout: 15s
+    retries: 3
+    start_period: 60s
+    start_interval: 10s
+  env_file:
+    - path: ./env-files/fibbo_freqai.env
+      required: true
+
+services:
+  fibbo-freqai:
+    <<: *fibbo-freqai-settings
+    container_name: freqtrade-fibbo-freqai
+    ports:
+      - "127.0.0.1:8140:8080"
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config configs/fibbo-freqai.json
+      --db-url sqlite:////freqtrade/user_data/fibbo-freqai-tradesv3.sqlite
+      --log-file user_data/logs/fibbo-freqai.log
+      --strategy-path user_data/strategies/FibboFreqAI
+      --strategy Fibbo

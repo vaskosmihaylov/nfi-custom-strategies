@@ -1,0 +1,58 @@
+{
+  "strategy": "Fibbo",
+  "add_config_files": [
+    "./trading_mode-futures.json",
+    "./blacklist-bybit-fibbo-backtest.json",
+    "./pairlist-backtest-static-bybit-futures-usdt.json"
+  ],
+  "exchange": {
+    "name": "bybit",
+    "key": "",
+    "password": "",
+    "secret": "",
+    "ccxt_config": {
+      "enableRateLimit": true,
+      "rateLimit": 60,
+      "options": {
+        "defaultType": "swap",
+        "defaultSettle": "USDT"
+      }
+    },
+    "ccxt_async_config": {
+      "enableRateLimit": true,
+      "rateLimit": 60,
+      "options": {
+        "defaultType": "swap",
+        "defaultSettle": "USDT"
+      }
+    }
+  },
+  "stake_currency": "USDT",
+  "stake_amount": "unlimited",
+  "tradable_balance_ratio": 0.99,
+  "max_open_trades": 6,
+  "dry_run": false,
+  "dry_run_wallet": 10000,
+  "dataformat_ohlcv": "feather",
+  "dataformat_trades": "feather",
+  "datadir": "user_data/data/bybit",
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": false,
+    "order_book_top": 1,
+    "price_last_balance": 0,
+    "check_depth_of_market": {
+      "enabled": false,
+      "bids_to_ask_delta": 1
+    }
+  },
+  "exit_pricing": {
+    "price_side": "other",
+    "use_order_book": false,
+    "order_book_top": 1,
+    "price_last_balance": 0
+  },
+  "internals": {
+    "process_throttle_secs": 5
+  }
+}
