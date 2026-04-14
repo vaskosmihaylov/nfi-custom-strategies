@@ -76,7 +76,7 @@ show_help() {
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
     echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, best5m,"
-    echo "  ichiv1_plus, edtma, donchian_adx_chop, completeindicatorstrategy22"
+    echo "  cluc7werk, edtma, donchian_adx_chop, combinedbinhandclucv8, combinedbinhandclucv8xh"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -107,10 +107,11 @@ show_help() {
     echo "  AlexBandSniperV10AI:    http://freq.gaiaderma.com/alexbandsniper_v10ai"
     echo "  TripleSuperTrendADXRSI: http://freq.gaiaderma.com/triplesupertrendadxrsi"
     echo "  Best5m:                http://freq.gaiaderma.com/best5m"
-    echo "  IchiV1_Plus:           http://freq.gaiaderma.com/ichiv1_plus"
+    echo "  Cluc7werk:             http://freq.gaiaderma.com/cluc7werk"
     echo "  EDTMA:                 http://freq.gaiaderma.com/edtma"
     echo "  Donchian_ADX_CHOP:     http://freq.gaiaderma.com/donchian_adx_chop"
-    echo "  CompleteIndicatorStrategy22: http://freq.gaiaderma.com/completeindicatorstrategy22"
+    echo "  CombinedBinHAndClucV8: http://freq.gaiaderma.com/combinedbinhandclucv8"
+    echo "  CombinedBinHAndClucV8XH: http://freq.gaiaderma.com/combinedbinhandclucv8xh"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -258,10 +259,11 @@ health_check() {
         "alexbandsniper_v10ai:8132"
         "triplesupertrendadxrsi:8134"
         "best5m:8135"
-        "ichiv1_plus:8136"
+        "cluc7werk:8136"
         "edtma:8137"
         "donchian_adx_chop:8138"
-        "completeindicatorstrategy22:8139"
+        "combinedbinhandclucv8:8139"
+        "combinedbinhandclucv8xh:8140"
     )
     
     local healthy=0

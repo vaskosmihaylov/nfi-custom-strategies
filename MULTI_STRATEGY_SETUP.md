@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **24 active trading strategies** running in separate Docker containers
+- **25 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -37,10 +37,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── AlexBandSniperV10AI (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── Best5m (Port 8135)
-                           ├── IchimokuCloudBreakoutStrategy (Port 8136)
+                           ├── Cluc7werk (Port 8136)
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
                            ├── Donchian_ADX_CHOPStrategy (Port 8138)
-                           └── CompleteIndicatorStrategy2 (Port 8139)
+                           ├── CombinedBinHAndClucV8 (Port 8139)
+                           └── CombinedBinHAndClucV8XH (Port 8140)
 ```
 
 ## Files
@@ -78,10 +79,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `alexbandsniper_v10ai.env` - AlexBandSniperV10AI strategy (longs + shorts dry-run validation rollout)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
-- `ichiv1_plus.env` - IchimokuCloudBreakoutStrategy strategy (Ichimoku cloud breakout futures strategy, longs + shorts)
+- `cluc7werk.env` - Cluc7werk strategy (1m Cluc futures strategy, longs + shorts)
 - `edtma.env` - EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
 - `donchian_adx_chop.env` - Donchian_ADX_CHOPStrategy strategy (1h futures Donchian breakout with ADX, CHOP, volume confirmation, and Turtle-style exits)
-- `completeindicatorstrategy22.env` - CompleteIndicatorStrategy2 strategy from `user_data/strategies/Best5m/CompleteIndicatorStrategy22.py` (longs + shorts dry-run evaluation on Bybit futures)
+- `combinedbinhandclucv8.env` - CombinedBinHAndClucV8 strategy (5m Cluc/BinHV hybrid futures strategy)
+- `combinedbinhandclucv8xh.env` - CombinedBinHAndClucV8XH strategy (5m Cluc/BinHV hybrid futures strategy, XH variant)
 
 ### Strategy-Specific Runtime Notes
 
@@ -180,10 +182,11 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **AlexBandSniperV10AI**              | `Vasko_AlexBandSniper_V10AI`   | `http://freq.gaiaderma.com/alexbandsniper_v10ai`   | `alexbandsniper_v10ai_user`   | `alexbandsniper_v10ai_secure_password`   |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
-| **IchimokuCloudBreakoutStrategy**    | `Vasko_IchiV1_Plus`            | `http://freq.gaiaderma.com/ichiv1_plus`            | `ichiv1_plus_user`            | `ichiv1_plus_secure_password`            |
+| **Cluc7werk**                        | `Vasko_Cluc7werk`              | `http://freq.gaiaderma.com/cluc7werk`              | `cluc7werk_user`              | `cluc7werk_secure_password`              |
 | **EDTMA**                            | `Vasko_EDTMA`                  | `http://freq.gaiaderma.com/edtma`                  | `edtma_user`                  | `edtma_secure_password`                  |
 | **Donchian_ADX_CHOPStrategy**        | `Vasko_Donchian_ADX_CHOP`      | `http://freq.gaiaderma.com/donchian_adx_chop`      | `donchian_adx_chop_user`      | `donchian_adx_chop_secure_password`      |
-| **CompleteIndicatorStrategy2**       | `Vasko_CompleteIndicatorStrategy22` | `http://freq.gaiaderma.com/completeindicatorstrategy22` | `completeindicatorstrategy22_user` | `completeindicatorstrategy22_secure_password` |
+| **CombinedBinHAndClucV8**            | `Vasko_CombinedBinHAndClucV8`  | `http://freq.gaiaderma.com/combinedbinhandclucv8`  | `combinedbinhandclucv8_user`  | `combinedbinhandclucv8_secure_password`  |
+| **CombinedBinHAndClucV8XH**          | `Vasko_CombinedBinHAndClucV8XH` | `http://freq.gaiaderma.com/combinedbinhandclucv8xh` | `combinedbinhandclucv8xh_user` | `combinedbinhandclucv8xh_secure_password` |
 
 ### URL Flow Example:
 
@@ -249,10 +252,11 @@ curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
 curl http://127.0.0.1:8132/api/v1/ping  # AlexBandSniperV10AI
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # Best5m
-curl http://127.0.0.1:8136/api/v1/ping  # IchimokuCloudBreakoutStrategy
+curl http://127.0.0.1:8136/api/v1/ping  # Cluc7werk
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
 curl http://127.0.0.1:8138/api/v1/ping  # Donchian_ADX_CHOPStrategy
-curl http://127.0.0.1:8139/api/v1/ping  # CompleteIndicatorStrategy2
+curl http://127.0.0.1:8139/api/v1/ping  # CombinedBinHAndClucV8
+curl http://127.0.0.1:8140/api/v1/ping  # CombinedBinHAndClucV8XH
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/fastsupertrend_rsi_70/api/v1/ping
@@ -274,10 +278,11 @@ curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
 curl http://freq.gaiaderma.com/alexbandsniper_v10ai/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/best5m/api/v1/ping
-curl http://freq.gaiaderma.com/ichiv1_plus/api/v1/ping
+curl http://freq.gaiaderma.com/cluc7werk/api/v1/ping
 curl http://freq.gaiaderma.com/edtma/api/v1/ping
 curl http://freq.gaiaderma.com/donchian_adx_chop/api/v1/ping
-curl http://freq.gaiaderma.com/completeindicatorstrategy22/api/v1/ping
+curl http://freq.gaiaderma.com/combinedbinhandclucv8/api/v1/ping
+curl http://freq.gaiaderma.com/combinedbinhandclucv8xh/api/v1/ping
 ```
 
 ### Log Management
@@ -302,6 +307,9 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `auto_ei_t4c0s.log`
 - `fibonacciematrend.log`
 - `kamafama.log`
+- `cluc7werk.log`
+- `combinedbinhandclucv8.log`
+- `combinedbinhandclucv8xh.log`
 - etc.
 
 ## Configuration Details
@@ -334,12 +342,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8132 | AlexBandSniperV10AI              | Longs + Shorts | Strategy-defined |
 | 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
 | 8135 | Best5m                           | Longs + Shorts | Strategy-defined |
-| 8136 | IchimokuCloudBreakoutStrategy    | Longs + Shorts | Strategy-defined |
+| 8136 | Cluc7werk                        | Longs + Shorts | Strategy-defined |
 | 8137 | Picasso CE/CTI/STC/EMA           | Longs + Shorts | Strategy-defined |
-| 8138 | Donchian_ADX_CHOPStrategy       | Longs + Shorts | Strategy-defined |
-| 8139 | CompleteIndicatorStrategy2       | Longs + Shorts | Strategy-defined |
+| 8138 | Donchian_ADX_CHOPStrategy        | Longs + Shorts | Strategy-defined |
+| 8139 | CombinedBinHAndClucV8            | Longs + Shorts | Strategy-defined |
+| 8140 | CombinedBinHAndClucV8XH          | Longs + Shorts | Strategy-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8140+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8141+
 
 ### Database Separation
 
@@ -365,7 +374,9 @@ Each strategy uses its own SQLite database:
 - `alexbandsniper_v10ai-tradesv3.sqlite`
 - `donchian_adx_chop-tradesv3.sqlite`
 - `best5m-tradesv3.sqlite`
-- `completeindicatorstrategy22-tradesv3.sqlite`
+- `cluc7werk-tradesv3.sqlite`
+- `combinedbinhandclucv8-tradesv3.sqlite`
+- `combinedbinhandclucv8xh-tradesv3.sqlite`
 
 ### NGINX Path Routing
 

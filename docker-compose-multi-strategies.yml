@@ -370,23 +370,22 @@ services:
       --strategy-path user_data/strategies/Best5m
       --strategy Best5m
 
-  # IchimokuCloudBreakoutStrategy (Longs + Shorts)
-  freqtrade-ichiv1_plus:
+  # Cluc7werk Strategy (Longs + Shorts, 1m)
+  freqtrade-cluc7werk:
     <<: *common-settings
-    container_name: freqtrade-ichiv1_plus
+    container_name: freqtrade-cluc7werk
     ports:
       - "127.0.0.1:8136:8080"
     env_file:
-      - path: ./env-files/ichiv1_plus.env
+      - path: ./env-files/cluc7werk.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --config user_data/strategies/ORB/ORBAlgo.json
-      --db-url sqlite:////freqtrade/user_data/ichiv1_plus-tradesv3.sqlite
-      --log-file user_data/logs/ichiv1_plus.log
-      --strategy-path user_data/strategies/ichiv1_plus
-      --strategy IchimokuCloudBreakoutStrategy
+      --db-url sqlite:////freqtrade/user_data/cluc7werk-tradesv3.sqlite
+      --log-file user_data/logs/cluc7werk.log
+      --strategy-path user_data/strategies/Cluc
+      --strategy Cluc7werk
 
   # EDTMA Strategy (Longs + Shorts dry-run validation)
   freqtrade-edtma:
@@ -422,22 +421,39 @@ services:
       --strategy-path user_data/strategies/Donchian_ADX_CHOPStrategy
       --strategy Donchian_ADX_CHOPStrategy
 
-  # CompleteIndicatorStrategy2 Strategy (Longs + Shorts)
-  freqtrade-completeindicatorstrategy22:
+  # CombinedBinHAndClucV8 Strategy (5m)
+  freqtrade-combinedbinhandclucv8:
     <<: *common-settings
-    container_name: freqtrade-completeindicatorstrategy22
+    container_name: freqtrade-combinedbinhandclucv8
     ports:
       - "127.0.0.1:8139:8080"
     env_file:
-      - path: ./env-files/completeindicatorstrategy22.env
+      - path: ./env-files/combinedbinhandclucv8.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/completeindicatorstrategy22-tradesv3.sqlite
-      --log-file user_data/logs/completeindicatorstrategy22.log
-      --strategy-path user_data/strategies/Best5m
-      --strategy CompleteIndicatorStrategy2
+      --db-url sqlite:////freqtrade/user_data/combinedbinhandclucv8-tradesv3.sqlite
+      --log-file user_data/logs/combinedbinhandclucv8.log
+      --strategy-path user_data/strategies/Cluc
+      --strategy CombinedBinHAndClucV8
+
+  # CombinedBinHAndClucV8XH Strategy (5m)
+  freqtrade-combinedbinhandclucv8xh:
+    <<: *common-settings
+    container_name: freqtrade-combinedbinhandclucv8xh
+    ports:
+      - "127.0.0.1:8140:8080"
+    env_file:
+      - path: ./env-files/combinedbinhandclucv8xh.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/combinedbinhandclucv8xh-tradesv3.sqlite
+      --log-file user_data/logs/combinedbinhandclucv8xh.log
+      --strategy-path user_data/strategies/Cluc
+      --strategy CombinedBinHAndClucV8XH
 
 networks:
   default:
