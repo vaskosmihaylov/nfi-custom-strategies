@@ -69,7 +69,7 @@ class NostalgiaForInfinityX6(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v16.8.767"
+    return "v16.8.768"
 
   stoploss = -0.99
 
@@ -3282,9 +3282,11 @@ class NostalgiaForInfinityX6(IStrategy):
     # Candle change
     df["change_pct"] = (df["close"] - df["open"]) / df["open"] * 100.0
     # Close max
+    df["close_max_6"] = df["close"].rolling(6).max()
     df["close_max_12"] = df["close"].rolling(12).max()
     df["close_max_48"] = df["close"].rolling(48).max()
     # Close min
+    df["close_min_6"] = df["close"].rolling(6).min()
     df["close_min_12"] = df["close"].rolling(12).min()
     df["close_min_48"] = df["close"].rolling(48).min()
     # Number of empty candles
@@ -19349,6 +19351,8 @@ class NostalgiaForInfinityX6(IStrategy):
           short_entry_logic.append((df["RSI_3_4h"] < 90.0) | (df["AROONU_14_1h"] > 40.0))
           # 4h up move, 1d still low, 4h uptrend
           short_entry_logic.append((df["RSI_3_4h"] < 85.0) | (df["RSI_14_1d"] > 40.0) | (df["ROC_9_4h"] < 20.0))
+          # 4h up move, 1h low
+          short_entry_logic.append((df["RSI_3_4h"] < 70.0) | (df["AROONU_14_1h"] > 25.0))
           # 4h up move, 1d low
           short_entry_logic.append((df["RSI_3_4h"] < 70.0) | (df["AROONU_14_1d"] > 20.0))
           # 4h up move, 1h low
@@ -19401,6 +19405,12 @@ class NostalgiaForInfinityX6(IStrategy):
           short_entry_logic.append((df["change_pct"] < 5.0) | (df["AROOND_14_15m"] < 50.0))
           # 5m green, 15m still not high enough
           short_entry_logic.append((df["change_pct"] < 5.0) | (df["STOCHRSIk_14_14_3_3_15m"] > 90.0))
+          # pump in the last half hour, 1h low
+          short_entry_logic.append((df["close"] < (df["close_min_6"] * 1.20)) | (df["AROONU_14_1h"] > 30.0))
+          # pump in the last half hour, 15m still low
+          short_entry_logic.append((df["close"] < (df["close_min_6"] * 1.20)) | (df["STOCHRSIk_14_14_3_3_15m"] > 40.0))
+          # pump in the last half hour, 1d uptrend
+          short_entry_logic.append((df["close"] < (df["close_min_6"] * 1.20)) | (df["ROC_9_1d"] < 20.0))
           # big pump in the last 4 hours, 15m still low
           short_entry_logic.append((df["close"] < (df["close_min_48"] * 1.50)) | (df["AROONU_14_15m"] > 50.0))
 
