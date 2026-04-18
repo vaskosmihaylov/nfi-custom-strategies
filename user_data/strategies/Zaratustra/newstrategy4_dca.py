@@ -342,6 +342,12 @@ class newstrategy4(IStrategy):
         pairs = self.dp.current_whitelist()
         informative_pairs = [(pair, '1h') for pair in pairs]
         return informative_pairs
+
+    def _get_btc_informative_pair(self, pair: str) -> str:
+        trading_mode = str(self.config.get('trading_mode', '')).lower()
+        if trading_mode == 'futures' or ':' in pair:
+            return 'BTC/USDT:USDT'
+        return 'BTC/USDT'
     
     
     
@@ -451,8 +457,18 @@ class newstrategy4(IStrategy):
         
         
         inf_tf = '5m'
-        informative = self.dp.get_pair_dataframe('BTC/USDT', timeframe=inf_tf)
-        informative_btc = informative.copy().shift(1)
+        btc_info_pair = self._get_btc_informative_pair(metadata['pair'])
+        informative = self.dp.get_pair_dataframe(btc_info_pair, timeframe=inf_tf)
+        if informative is None or informative.empty or 'close' not in informative.columns:
+            logger.warning(
+                "No BTC informative data for %s on %s. Using pair-local close fallback for %s.",
+                btc_info_pair,
+                inf_tf,
+                metadata['pair'],
+            )
+            informative_btc = dataframe[['close']].copy().shift(1)
+        else:
+            informative_btc = informative[['close']].copy().shift(1)
 
         dataframe['btc_close'] = informative_btc['close']
         dataframe['btc_ema_fast'] = ta.EMA(informative_btc, timeperiod=20)
