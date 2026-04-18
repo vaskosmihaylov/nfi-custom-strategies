@@ -76,7 +76,8 @@ show_help() {
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
     echo "  alexbandsniper_v10ai, triplesupertrendadxrsi, best5m,"
-    echo "  cluc7werk, edtma, donchian_adx_chop, combinedbinhandclucv8, combinedbinhandclucv8xh"
+    echo "  cluc7werk, edtma, donchian_adx_chop, combinedbinhandclucv8, combinedbinhandclucv8xh,"
+    echo "  newstrategy4_dca"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -112,6 +113,7 @@ show_help() {
     echo "  Donchian_ADX_CHOP:     http://freq.gaiaderma.com/donchian_adx_chop"
     echo "  CombinedBinHAndClucV8: http://freq.gaiaderma.com/combinedbinhandclucv8"
     echo "  CombinedBinHAndClucV8XH: http://freq.gaiaderma.com/combinedbinhandclucv8xh"
+    echo "  newstrategy4_dca:      http://freq.gaiaderma.com/newstrategy4_dca"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -264,6 +266,7 @@ health_check() {
         "donchian_adx_chop:8138"
         "combinedbinhandclucv8:8139"
         "combinedbinhandclucv8xh:8140"
+        "newstrategy4_dca:8141"
     )
     
     local healthy=0

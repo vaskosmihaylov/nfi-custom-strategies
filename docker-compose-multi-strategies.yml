@@ -455,6 +455,23 @@ services:
       --strategy-path user_data/strategies/Cluc
       --strategy CombinedBinHAndClucV8XH
 
+  # newstrategy4_dca Strategy (Longs)
+  freqtrade-newstrategy4_dca:
+    <<: *common-settings
+    container_name: freqtrade-newstrategy4_dca
+    ports:
+      - "127.0.0.1:8141:8080"
+    env_file:
+      - path: ./env-files/newstrategy4_dca.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/newstrategy4_dca-tradesv3.sqlite
+      --log-file user_data/logs/newstrategy4_dca.log
+      --strategy-path user_data/strategies/Zaratustra
+      --strategy newstrategy4
+
 networks:
   default:
     name: freqtrade-network

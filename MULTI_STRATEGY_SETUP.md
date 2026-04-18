@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **25 active trading strategies** running in separate Docker containers
+- **26 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -41,7 +41,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
                            ├── Donchian_ADX_CHOPStrategy (Port 8138)
                            ├── CombinedBinHAndClucV8 (Port 8139)
-                           └── CombinedBinHAndClucV8XH (Port 8140)
+                           ├── CombinedBinHAndClucV8XH (Port 8140)
+                           └── newstrategy4_dca (Port 8141)
 ```
 
 ## Files
@@ -84,6 +85,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `donchian_adx_chop.env` - Donchian_ADX_CHOPStrategy strategy (1h futures Donchian breakout with ADX, CHOP, volume confirmation, and Turtle-style exits)
 - `combinedbinhandclucv8.env` - CombinedBinHAndClucV8 strategy (5m Cluc/BinHV hybrid futures strategy)
 - `combinedbinhandclucv8xh.env` - CombinedBinHAndClucV8XH strategy (5m Cluc/BinHV hybrid futures strategy, XH variant)
+- `newstrategy4_dca.env` - newstrategy4 dry-run evaluation strategy (5m long-only Bybit futures strategy)
 
 ### Strategy-Specific Runtime Notes
 
@@ -187,6 +189,7 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Donchian_ADX_CHOPStrategy**        | `Vasko_Donchian_ADX_CHOP`      | `http://freq.gaiaderma.com/donchian_adx_chop`      | `donchian_adx_chop_user`      | `donchian_adx_chop_secure_password`      |
 | **CombinedBinHAndClucV8**            | `Vasko_CombinedBinHAndClucV8`  | `http://freq.gaiaderma.com/combinedbinhandclucv8`  | `combinedbinhandclucv8_user`  | `combinedbinhandclucv8_secure_password`  |
 | **CombinedBinHAndClucV8XH**          | `Vasko_CombinedBinHAndClucV8XH` | `http://freq.gaiaderma.com/combinedbinhandclucv8xh` | `combinedbinhandclucv8xh_user` | `combinedbinhandclucv8xh_secure_password` |
+| **newstrategy4**                     | `Vasko_newstrategy4_dca`       | `http://freq.gaiaderma.com/newstrategy4_dca`       | `newstrategy4_dca_user`       | `newstrategy4_dca_secure_password`       |
 
 ### URL Flow Example:
 
@@ -257,6 +260,7 @@ curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
 curl http://127.0.0.1:8138/api/v1/ping  # Donchian_ADX_CHOPStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CombinedBinHAndClucV8
 curl http://127.0.0.1:8140/api/v1/ping  # CombinedBinHAndClucV8XH
+curl http://127.0.0.1:8141/api/v1/ping  # newstrategy4_dca
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/fastsupertrend_rsi_70/api/v1/ping
@@ -283,6 +287,7 @@ curl http://freq.gaiaderma.com/edtma/api/v1/ping
 curl http://freq.gaiaderma.com/donchian_adx_chop/api/v1/ping
 curl http://freq.gaiaderma.com/combinedbinhandclucv8/api/v1/ping
 curl http://freq.gaiaderma.com/combinedbinhandclucv8xh/api/v1/ping
+curl http://freq.gaiaderma.com/newstrategy4_dca/api/v1/ping
 ```
 
 ### Log Management
@@ -310,6 +315,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `cluc7werk.log`
 - `combinedbinhandclucv8.log`
 - `combinedbinhandclucv8xh.log`
+- `newstrategy4_dca.log`
 - etc.
 
 ## Configuration Details
@@ -347,8 +353,9 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8138 | Donchian_ADX_CHOPStrategy        | Longs + Shorts | Strategy-defined |
 | 8139 | CombinedBinHAndClucV8            | Longs + Shorts | Strategy-defined |
 | 8140 | CombinedBinHAndClucV8XH          | Longs + Shorts | Strategy-defined |
+| 8141 | newstrategy4_dca                | Longs          | Config-defined   |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8141+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8118, 8130, 8133, 8142+
 
 ### Database Separation
 
@@ -377,6 +384,7 @@ Each strategy uses its own SQLite database:
 - `cluc7werk-tradesv3.sqlite`
 - `combinedbinhandclucv8-tradesv3.sqlite`
 - `combinedbinhandclucv8xh-tradesv3.sqlite`
+- `newstrategy4_dca-tradesv3.sqlite`
 
 ### NGINX Path Routing
 
@@ -485,7 +493,12 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 **Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`.
 
-**Last Updated**: March 18, 2026
+**Last Updated**: April 19, 2026
+
+## Recent Changes (April 19, 2026)
+
+- **Added**: `newstrategy4_dca` multistrategy dry-run slot (port `8141`, path `/newstrategy4_dca`)
+- **Validated**: `newstrategy4` top-5 Bybit futures backtest completed successfully after Freqtrade compatibility fixes in [`user_data/strategies/Zaratustra/newstrategy4_dca.py`](user_data/strategies/Zaratustra/newstrategy4_dca.py)
 
 ## Recent Changes (March 18, 2026)
 

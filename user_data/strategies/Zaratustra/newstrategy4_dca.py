@@ -345,7 +345,7 @@ class newstrategy4(IStrategy):
     
     
     
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
         filled_buys = trade.select_filled_orders('buy')
@@ -992,9 +992,7 @@ def pmax(df, period, multiplier, length, MAtype, src):
     pm = Series(pm_arr)
 
     # Mark the trend direction up/down
-    pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), 'down',  'up'), np.NaN)
+    pmx = np.where((pm_arr > 0.00), np.where((mavalue < pm_arr), 'down',  'up'), None)
 
     return pm, pmx
     
-
-
