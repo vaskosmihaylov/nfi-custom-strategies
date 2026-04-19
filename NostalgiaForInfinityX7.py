@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.2"
+    return "v17.4.3"
 
   stoploss = -0.99
 
@@ -46314,7 +46314,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_1_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_long_grind_entry
       and is_long_extra_checks_entry
       and (grind_1_sub_grind_count < grind_1_max_sub_grinds)
@@ -46436,7 +46436,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_2_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_long_grind_entry
       and is_long_extra_checks_entry
       and (grind_2_sub_grind_count < grind_2_max_sub_grinds)
@@ -46558,7 +46558,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_3_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_long_grind_entry
       and is_long_extra_checks_entry
       and (grind_3_sub_grind_count < grind_3_max_sub_grinds)
@@ -46680,7 +46680,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_4_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_long_grind_entry
       and is_long_extra_checks_entry
       and (grind_4_sub_grind_count < grind_4_max_sub_grinds)
@@ -46802,7 +46802,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_5_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_long_grind_entry
       and is_long_extra_checks_entry
       and (grind_5_sub_grind_count < grind_5_max_sub_grinds)
@@ -72585,7 +72585,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_1_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_short_grind_entry
       and is_short_extra_checks_entry
       and (grind_1_sub_grind_count < grind_1_max_sub_grinds)
@@ -72707,7 +72707,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_2_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_short_grind_entry
       and is_short_extra_checks_entry
       and (grind_2_sub_grind_count < grind_2_max_sub_grinds)
@@ -72829,7 +72829,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_3_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_short_grind_entry
       and is_short_extra_checks_entry
       and (grind_3_sub_grind_count < grind_3_max_sub_grinds)
@@ -72951,7 +72951,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_4_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_short_grind_entry
       and is_short_extra_checks_entry
       and (grind_4_sub_grind_count < grind_4_max_sub_grinds)
@@ -73073,7 +73073,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if (
       (self.system_v3_grind_5_enable)
-      and is_derisk_1_found
+      # and is_derisk_1_found
       and is_short_grind_entry
       and is_short_extra_checks_entry
       and (grind_5_sub_grind_count < grind_5_max_sub_grinds)
