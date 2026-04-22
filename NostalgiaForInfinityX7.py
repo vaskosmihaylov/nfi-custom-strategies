@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.14"
+    return "v17.4.15"
 
   stoploss = -0.99
 
@@ -20921,6 +20921,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 25.0) | (df["AROONU_14_1d"] < 80.0))
             # 1h & 4h down move, 1d overbought
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 30.0) | (df["ROC_9_1d"] < 100.0))
+            # 1h & 4h down move, 1h high
+            & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 35.0) | (df["AROONU_14_1h"] < 70.0))
             # 1h & 4h down move, 4h high
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 50.0) | (df["AROONU_14_4h"] < 100.0))
             # 1h & 4h down move, 1d downtrend
@@ -21309,6 +21311,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 25.0) | (df["AROONU_14_1d"] < 80.0))
             # 1h & 4h down move, 1d overbought
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 30.0) | (df["ROC_9_1d"] < 100.0))
+            # 1h & 4h down move, 1h high
+            & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 35.0) | (df["AROONU_14_1h"] < 70.0))
             # 1h & 4h down move, 4h high
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 50.0) | (df["AROONU_14_4h"] < 100.0))
             # 1h & 4h down move, 15m high
@@ -21807,6 +21811,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_1h"] > 15.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 80.0) | (df["ROC_9_1d"] > -30.0))
             # 1h & 4h down move, 4h still high
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 20.0) | (df["AROONU_14_4h"] < 40.0))
+            # 1h & 4h down move, 1d high
+            & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 25.0) | (df["AROONU_14_1d"] < 100.0))
             # 1h & 4h down move, 4h high
             & ((df["RSI_3_1h"] > 20.0) | (df["RSI_3_4h"] > 35.0) | (df["AROONU_14_4h"] < 80.0))
             # 1h & 4h down move, 4h overbought
@@ -22075,6 +22081,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_1h"] > 35.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 90.0) | (df["ROC_9_1d"] > -20.0))
             # 1h down move, 1h high, 1d downtrend
             & ((df["RSI_3_1h"] > 40.0) | (df["AROONU_14_1h"] < 70.0) | (df["ROC_9_1d"] > -30.0))
+            # 1h down move, 1h high, 1d downtrend
+            & ((df["RSI_3_1h"] > 40.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 70.0) | (df["ROC_9_1d"] > -30.0))
             # 1h down move, 1h & 4h high
             & ((df["RSI_3_1h"] > 45.0) | (df["AROONU_14_1h"] < 80.0) | (df["AROONU_14_4h"] < 100.0))
             # 1h down move, 4h high & overbought
@@ -24384,6 +24392,8 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append(
             (df["AROONU_14_15m"] < 100.0) | (df["AROONU_14_4h"] < 100.0) | (df["ROC_9_1h"] < 20.0)
           )
+          # 15m high, 1d low
+          short_entry_logic.append((df["AROONU_14_15m"] < 100.0) | (df["STOCHRSIk_14_14_3_3_1d"] > 20.0))
           # 15m high & uptrend
           short_entry_logic.append((df["AROONU_14_15m"] < 100.0) | (df["ROC_9_15m"] < 30.0))
           # 15m high, 1h & 4h uptrend
@@ -47284,7 +47294,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
         and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
         and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
-        and (last_candle["close"] < (last_candle["EMA_16"] * 0.988))
+        and (last_candle["close"] < (last_candle["EMA_16"] * 0.985))
       )
       or (
         (last_candle["RSI_14"] < 36.0)
@@ -47452,13 +47462,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_15m"] > 10.0)
         and (last_candle["RSI_3_1h"] > 10.0)
         and (last_candle["RSI_3_4h"] > 10.0)
-        and (last_candle["RSI_3_1d"] > 10.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 20.0)
-        and (last_candle["close"] < (last_candle["SMA_30"] * 0.978))
+        and (last_candle["close"] < (last_candle["SMA_30"] * 0.945))
         and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.999))
       )
       or (
-        (last_candle["RSI_14"] < 36.0)
+        (last_candle["RSI_14"] < 30.0)
         and (last_candle["RSI_3"] > 5.0)
         and (last_candle["RSI_3_15m"] > 10.0)
         and (last_candle["RSI_3_1h"] > 10.0)
@@ -47470,22 +47479,22 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.75))
         and (last_candle["close"] < (last_candle["low_min_12_4h"] * 1.25))
         and (last_candle["EMA_26"] > last_candle["EMA_12"])
-        and ((last_candle["EMA_26"] - last_candle["EMA_12"]) > (last_candle["open"] * 0.018))
+        and ((last_candle["EMA_26"] - last_candle["EMA_12"]) > (last_candle["open"] * 0.020))
         and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_candle["open"] / 100.0))
       )
       or (
         (last_candle["RSI_3"] > 5.0)
+        and (last_candle["RSI_3_1h"] > 5.0)
+        and (last_candle["RSI_3_4h"] > 5.0)
         and (previous_candle["SMA_9"] < previous_candle["SMA_21"])
         and (last_candle["SMA_9"] > last_candle["SMA_21"])
-        and (last_candle["close"] < (last_candle["EMA_100"] * 0.984))
-        and (last_candle["RSI_3_1h"] > 20.0)
-        and (last_candle["RSI_3_4h"] > 20.0)
+        and (last_candle["close"] < (last_candle["EMA_200"] * 0.980))
       )
       or (
         (slice_profit < -0.12)
         and (last_candle["RSI_3"] > 5.0)
-        and (last_candle["RSI_3_15m"] > 10.0)
-        and (last_candle["RSI_14"] < 40.0)
+        and (last_candle["RSI_3_15m"] > 15.0)
+        and (last_candle["RSI_14"] < 30.0)
         and (last_candle["AROONU_14"] < 25.0)
         and (last_candle["AROONU_14_15m"] < 30.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 20.0)
@@ -47494,11 +47503,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_14_4h"] < 50.0)
       )
       or (
-        (last_candle["RSI_14"] < 36.0)
+        (last_candle["RSI_14"] < 30.0)
         and (last_candle["RSI_3"] > 5.0)
-        and (last_candle["RSI_3_1h"] > 10.0)
-        and (last_candle["RSI_3_4h"] > 10.0)
-        and (last_candle["close"] < (last_candle["EMA_12"] * 0.999))
+        and (last_candle["RSI_3_15m"] > 10.0)
+        and (last_candle["RSI_3_1h"] > 20.0)
+        and (last_candle["RSI_3_4h"] > 20.0)
+        and (last_candle["close"] < (last_candle["EMA_12"] * 0.985))
         and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.996))
       )
     ):
@@ -73391,7 +73401,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["close"] < (last_candle["low_min_6_1h"] * 1.18))
         and (last_candle["close"] < (last_candle["low_min_12_1h"] * 1.25))
         and (last_candle["close"] > (last_candle["high_max_24_4h"] * 0.85))
-        and (last_candle["close"] > (last_candle["EMA_16"] * 1.012))
+        and (last_candle["close"] > (last_candle["EMA_16"] * 1.015))
       )
       or (
         (last_candle["RSI_14"] > 64.0)
@@ -73559,13 +73569,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_15m"] < 90.0)
         and (last_candle["RSI_3_1h"] < 90.0)
         and (last_candle["RSI_3_4h"] < 90.0)
-        and (last_candle["RSI_3_1d"] < 90.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] > 80.0)
-        and (last_candle["close"] > (last_candle["SMA_30"] * 1.022))
+        and (last_candle["close"] > (last_candle["SMA_30"] * 1.055))
         and (last_candle["close"] > (last_candle["BBU_20_2.0"] * 1.0))
       )
       or (
-        (last_candle["RSI_14"] > 64.0)
+        (last_candle["RSI_14"] > 70.0)
         and (last_candle["RSI_3"] < 95.0)
         and (last_candle["RSI_3_15m"] < 90.0)
         and (last_candle["RSI_3_1h"] < 90.0)
@@ -73577,22 +73586,22 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["close"] < (last_candle["low_min_12_1h"] * 1.33))
         and (last_candle["close"] > (last_candle["high_max_12_4h"] * 0.75))
         and (last_candle["EMA_12"] > last_candle["EMA_26"])
-        and ((last_candle["EMA_12"] - last_candle["EMA_26"]) > (last_candle["open"] * 0.018))
+        and ((last_candle["EMA_12"] - last_candle["EMA_26"]) > (last_candle["open"] * 0.020))
         and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_candle["open"] / 100.0))
       )
       or (
         (last_candle["RSI_3"] < 95.0)
+        and (last_candle["RSI_3_1h"] < 95.0)
+        and (last_candle["RSI_3_4h"] < 95.0)
         and (previous_candle["SMA_9"] > previous_candle["SMA_21"])
         and (last_candle["SMA_9"] < last_candle["SMA_21"])
-        and (last_candle["close"] > (last_candle["EMA_100"] * 1.016))
-        and (last_candle["RSI_3_1h"] < 80.0)
-        and (last_candle["RSI_3_4h"] < 80.0)
+        and (last_candle["close"] > (last_candle["EMA_200"] * 1.020))
       )
       or (
         (slice_profit > 0.12)
         and (last_candle["RSI_3"] < 95.0)
-        and (last_candle["RSI_3_15m"] < 90.0)
-        and (last_candle["RSI_14"] > 60.0)
+        and (last_candle["RSI_3_15m"] < 85.0)
+        and (last_candle["RSI_14"] > 70.0)
         and (last_candle["AROOND_14"] < 25.0)
         and (last_candle["AROOND_14_15m"] < 30.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] > 80.0)
@@ -73601,11 +73610,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_14_4h"] > 50.0)
       )
       or (
-        (last_candle["RSI_14"] > 64.0)
+        (last_candle["RSI_14"] > 70.0)
         and (last_candle["RSI_3"] < 95.0)
-        and (last_candle["RSI_3_1h"] < 90.0)
-        and (last_candle["RSI_3_4h"] < 90.0)
-        and (last_candle["close"] > (last_candle["EMA_12"] * 1.001))
+        and (last_candle["RSI_3_15m"] < 90.0)
+        and (last_candle["RSI_3_1h"] < 80.0)
+        and (last_candle["RSI_3_4h"] < 80.0)
+        and (last_candle["close"] > (last_candle["EMA_12"] * 1.025))
         and (last_candle["close"] > (last_candle["BBL_20_2.0"] * 1.004))
       )
     ):
