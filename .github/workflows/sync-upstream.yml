@@ -8,6 +8,10 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
+concurrency:
+  group: sync-upstream-main
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -77,7 +81,27 @@ jobs:
           SYNC_UPSTREAM_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
         run: |
           git remote set-url origin "https://x-access-token:${SYNC_UPSTREAM_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push origin main
+          git fetch origin main
+
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "origin/main changed while the workflow was running. Merging latest fork changes before push..."
+            git merge --no-edit origin/main || {
+              echo "❌ Could not merge the latest origin/main into the sync branch"
+              echo "Manual intervention required!"
+              exit 1
+            }
+          fi
+
+          git push origin HEAD:main || {
+            echo "Push was rejected after the initial refresh. Fetching origin/main and retrying once..."
+            git fetch origin main
+            git merge --no-edit origin/main || {
+              echo "❌ Could not merge the latest origin/main during push retry"
+              echo "Manual intervention required!"
+              exit 1
+            }
+            git push origin HEAD:main
+          }
 
       - name: Summary
         run: |
