@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for proper merge
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Configure Git
         run: |
@@ -61,8 +61,22 @@ jobs:
             }
           }
 
-      - name: Push to fork
+      - name: Validate push token
+        env:
+          SYNC_UPSTREAM_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
         run: |
+          if [ -z "$SYNC_UPSTREAM_TOKEN" ]; then
+            echo "SYNC_UPSTREAM_TOKEN is not configured."
+            echo "Create a fine-grained PAT with Contents: Read and write and Workflows: Read and write,"
+            echo "or a classic PAT with repo and workflow scopes, then store it as the SYNC_UPSTREAM_TOKEN repository secret."
+            exit 1
+          fi
+
+      - name: Push to fork
+        env:
+          SYNC_UPSTREAM_TOKEN: ${{ secrets.SYNC_UPSTREAM_TOKEN }}
+        run: |
+          git remote set-url origin "https://x-access-token:${SYNC_UPSTREAM_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin main
 
       - name: Summary
