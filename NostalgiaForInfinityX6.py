@@ -69,7 +69,7 @@ class NostalgiaForInfinityX6(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v16.8.788"
+    return "v16.8.789"
 
   stoploss = -0.99
 
@@ -11484,8 +11484,8 @@ class NostalgiaForInfinityX6(IStrategy):
     short_entry_conditions = []
 
     df.loc[:, "enter_tag"] = ""
-    df.loc[:, "enter_long"] = ""
-    df.loc[:, "enter_short"] = ""
+    df.loc[:, "enter_long"] = 0
+    df.loc[:, "enter_short"] = 0
 
     is_backtest = self.dp.runmode.value in ["backtest", "hyperopt", "plot", "webserver"]
     # the number of free slots
@@ -19097,10 +19097,10 @@ class NostalgiaForInfinityX6(IStrategy):
         item_long_entry = reduce(lambda x, y: x & y, long_entry_logic)
         df.loc[item_long_entry, "enter_tag"] += f"{long_entry_condition_index} "
         long_entry_conditions.append(item_long_entry)
-        df.loc[:, "enter_long"] = item_long_entry
+        df.loc[:, "enter_long"] = item_long_entry.astype(int)
 
     if long_entry_conditions:
-      df.loc[:, "enter_long"] = reduce(lambda x, y: x | y, long_entry_conditions)
+      df.loc[:, "enter_long"] = reduce(lambda x, y: x | y, long_entry_conditions).astype(int)
 
     ###############################################################################################
 
@@ -21029,10 +21029,10 @@ class NostalgiaForInfinityX6(IStrategy):
         item_short_entry = reduce(lambda x, y: x & y, short_entry_logic)
         df.loc[item_short_entry, "enter_tag"] += f"{short_entry_condition_index} "
         short_entry_conditions.append(item_short_entry)
-        df.loc[:, "enter_short"] = item_short_entry
+        df.loc[:, "enter_short"] = item_short_entry.astype(int)
 
     if short_entry_conditions:
-      df.loc[:, "enter_short"] = reduce(lambda x, y: x | y, short_entry_conditions)
+      df.loc[:, "enter_short"] = reduce(lambda x, y: x | y, short_entry_conditions).astype(int)
 
     return df
 
