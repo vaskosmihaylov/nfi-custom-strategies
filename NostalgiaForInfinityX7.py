@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.29"
+    return "v17.4.31"
 
   stoploss = -0.99
 
@@ -47434,7 +47434,9 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_1h"] > 30.0)
         and (last_candle["AROONU_14_4h"] < 70.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 50.0)
-        and (last_candle["close"] > (last_candle["close_min_12"] * 1.05))
+        and (last_candle["close"] < (last_candle["high_max_24_4h"] * 0.90))
+        and (last_candle["close"] < (last_candle["close_max_48"] * 0.90))
+        and (last_candle["close"] > (last_candle["close_min_12"] * 1.08))
       )
       or (
         (last_candle["RSI_3"] > 5.0)
@@ -47470,11 +47472,11 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       or (
         (last_candle["RSI_3"] > 5.0)
-        and (last_candle["RSI_3_1h"] > 20.0)
-        and (last_candle["RSI_3_4h"] > 20.0)
+        and (last_candle["RSI_3_1h"] > 10.0)
+        and (last_candle["RSI_3_4h"] > 10.0)
         and (previous_candle["SMA_9"] < previous_candle["SMA_21"])
         and (last_candle["SMA_9"] > last_candle["SMA_21"])
-        and (last_candle["close"] < (last_candle["EMA_100"] * 0.985))
+        and (last_candle["close"] < (last_candle["EMA_100"] * 0.975))
       )
       or (
         (slice_profit < -0.12)
