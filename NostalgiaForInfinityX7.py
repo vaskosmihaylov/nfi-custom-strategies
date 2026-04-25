@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.26"
+    return "v17.4.27"
 
   stoploss = -0.99
 
@@ -46219,12 +46219,12 @@ class NostalgiaForInfinityX7(IStrategy):
 
     is_long_extra_checks_entry = (
       current_time - timedelta(minutes=5) > filled_entries[-1].order_filled_utc
-      and ((current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc) or (slice_profit < -0.02))
-      and (
-        (current_stake_amount < (filled_entries[0].cost * 0.50))
-        or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
-        or (slice_profit < -0.06)
-      )
+      # and ((current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc) or (slice_profit < -0.02))
+      # and (
+      #   (current_stake_amount < (filled_entries[0].cost * 0.50))
+      #   or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
+      #   or (slice_profit < -0.06)
+      # )
     )
     # is_long_extra_checks_entry = True
     is_long_grind_entry = self.long_grind_entry_v3(last_candle, previous_candle, slice_profit, True)
@@ -72546,12 +72546,12 @@ class NostalgiaForInfinityX7(IStrategy):
 
     is_short_extra_checks_entry = (
       current_time - timedelta(minutes=5) > filled_entries[-1].order_filled_utc
-      and ((current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc) or (slice_profit > 0.02))
-      and (
-        (current_stake_amount < (filled_entries[0].cost * 0.50))
-        or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
-        or (slice_profit > 0.06)
-      )
+      # and ((current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc) or (slice_profit > 0.02))
+      # and (
+      #   (current_stake_amount < (filled_entries[0].cost * 0.50))
+      #   or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
+      #   or (slice_profit > 0.06)
+      # )
     )
     # is_short_extra_checks_entry = True
     is_short_grind_entry = self.short_grind_entry_v3(last_candle, previous_candle, slice_profit, True)
