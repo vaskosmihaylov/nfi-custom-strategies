@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.32"
+    return "v17.4.33"
 
   stoploss = -0.99
 
@@ -47328,16 +47328,16 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_1h"] > 15.0)
         and (last_candle["RSI_3_4h"] > 15.0)
         and (last_candle["AROONU_14"] < 25.0)
-        and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
-        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
-        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
+        and (last_candle["close"] > (last_candle["close_max_48"] * 0.80))
+        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.75))
+        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.70))
         and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
         and (last_candle["close"] < (last_candle["EMA_16"] * 0.980))
       )
       or (
         (last_candle["RSI_14"] < 36.0)
         and (last_candle["RSI_3"] > 5.0)
-        and (last_candle["RSI_3_15m"] > 15.0)
+        and (last_candle["RSI_3_15m"] > 10.0)
         and (last_candle["RSI_3_1h"] > 15.0)
         and (last_candle["RSI_3_4h"] > 15.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 30.0)
@@ -47356,7 +47356,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
         and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
         and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
-        and (last_candle["close"] < (last_candle["EMA_12"] * 0.980))
+        and (last_candle["close"] < (last_candle["EMA_12"] * 0.985))
       )
       or (
         (last_candle["RSI_14"] < 36.0)
