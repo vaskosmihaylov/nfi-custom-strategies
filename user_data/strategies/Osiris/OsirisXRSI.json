@@ -1,0 +1,47 @@
+{
+  "strategy_name": "OsirisXRSI",
+  "params": {
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 3
+    },
+    "buy": {
+      "cooldown_min": 32,
+      "ema50_band_pct": 3.3,
+      "min_body_ratio": 0.12,
+      "min_lower_wick": 0.03,
+      "retest_tolerance_pct": 0.07,
+      "retest_wait_bars": 11,
+      "rsi_1m_long_max": 65,
+      "rsi_1m_short_min": 37,
+      "rsi_4h_bear": 35,
+      "rsi_4h_bull": 60,
+      "rsi_5m_overbought": 65,
+      "rsi_5m_oversold": 33
+    },
+    "sell": {
+      "be_lock_pct": 0.1,
+      "be_trigger_pct": 1.3,
+      "guard_minutes": 164,
+      "loss_streak_limit": 5,
+      "max_hold_candles": 83,
+      "tp_pct": 4.0
+    },
+    "roi": {
+      "0": 0.215,
+      "26": 0.092,
+      "62": 0.039,
+      "110": 0
+    },
+    "stoploss": {
+      "stoploss": -0.321
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-03-24 02:08:33.465966+00:00"
+}

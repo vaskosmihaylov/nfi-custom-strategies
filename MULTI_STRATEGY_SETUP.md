@@ -38,9 +38,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── Best5m (Port 8135)
                            ├── DevDsl2Approx (Port 8136)
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
+                           ├── OsirisNeelyStrategy (Port 8138)
                            ├── CombinedBinHAndClucV8 (Port 8139)
                            ├── CombinedBinHAndClucV8XH (Port 8140)
-                           └── newstrategy4_dca (Port 8141)
+                           ├── newstrategy4_dca (Port 8141)
+                           └── OsirisXRSI (Port 8142)
 ```
 
 ## Files
@@ -79,9 +81,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
 - `devdsl2approx.env` - DevDsl2Approx strategy (5m Bybit futures dry-run strategy, longs + shorts)
 - `edtma.env` - EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
+- `osirisneely.env` - OsirisNeelyStrategy (5m Bybit futures dry-run strategy, max_open_trades=2)
 - `combinedbinhandclucv8.env` - CombinedBinHAndClucV8 strategy (5m Cluc/BinHV hybrid futures strategy)
 - `combinedbinhandclucv8xh.env` - CombinedBinHAndClucV8XH strategy (5m Cluc/BinHV hybrid futures strategy, XH variant)
 - `newstrategy4_dca.env` - newstrategy4 dry-run evaluation strategy (5m long-only Bybit futures strategy)
+- `osirisxrsi.env` - OsirisXRSI (5m Bybit futures dry-run strategy, max_open_trades=2)
 
 ## Quick Start
 
@@ -175,9 +179,11 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
 | **DevDsl2Approx**                    | `Vasko_DevDsl2Approx`          | `http://freq.gaiaderma.com/devdsl2approx`          | `devdsl2approx_user`          | `devdsl2approx_secure_password`          |
 | **EDTMA**                            | `Vasko_EDTMA`                  | `http://freq.gaiaderma.com/edtma`                  | `edtma_user`                  | `edtma_secure_password`                  |
+| **OsirisNeelyStrategy**              | `Vasko_OsirisNeelyStrategy`    | `http://freq.gaiaderma.com/osirisneely`            | `osirisneely_user`            | `osirisneely_secure_password`            |
 | **CombinedBinHAndClucV8**            | `Vasko_CombinedBinHAndClucV8`  | `http://freq.gaiaderma.com/combinedbinhandclucv8`  | `combinedbinhandclucv8_user`  | `combinedbinhandclucv8_secure_password`  |
 | **CombinedBinHAndClucV8XH**          | `Vasko_CombinedBinHAndClucV8XH` | `http://freq.gaiaderma.com/combinedbinhandclucv8xh` | `combinedbinhandclucv8xh_user` | `combinedbinhandclucv8xh_secure_password` |
 | **newstrategy4**                     | `Vasko_newstrategy4_dca`       | `http://freq.gaiaderma.com/newstrategy4_dca`       | `newstrategy4_dca_user`       | `newstrategy4_dca_secure_password`       |
+| **OsirisXRSI**                       | `Vasko_OsirisXRSI`             | `http://freq.gaiaderma.com/osirisxrsi`             | `osirisxrsi_user`             | `osirisxrsi_secure_password`             |
 
 ### URL Flow Example:
 
@@ -244,9 +250,11 @@ curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # Best5m
 curl http://127.0.0.1:8136/api/v1/ping  # DevDsl2Approx
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
+curl http://127.0.0.1:8138/api/v1/ping  # OsirisNeelyStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CombinedBinHAndClucV8
 curl http://127.0.0.1:8140/api/v1/ping  # CombinedBinHAndClucV8XH
 curl http://127.0.0.1:8141/api/v1/ping  # newstrategy4_dca
+curl http://127.0.0.1:8142/api/v1/ping  # OsirisXRSI
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/fastsupertrend_rsi_70/api/v1/ping
@@ -332,11 +340,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8135 | Best5m                           | Longs + Shorts | Strategy-defined |
 | 8136 | DevDsl2Approx                    | Longs + Shorts | Config-defined   |
 | 8137 | Picasso CE/CTI/STC/EMA           | Longs + Shorts | Strategy-defined |
+| 8138 | OsirisNeelyStrategy              | Longs + Shorts | Config-defined   |
 | 8139 | CombinedBinHAndClucV8            | Longs + Shorts | Strategy-defined |
 | 8140 | CombinedBinHAndClucV8XH          | Longs + Shorts | Strategy-defined |
 | 8141 | newstrategy4_dca                | Longs          | Config-defined   |
+| 8142 | OsirisXRSI                       | Longs + Shorts | Config-defined   |
 
-**Freed ports** (available for future strategies): 8091, 8097, 8104, 8112, 8118, 8130, 8133, 8138, 8142+
+**Freed ports** (available for future strategies): 8091, 8097, 8104, 8112, 8118, 8130, 8133, 8143+
 
 ### Database Separation
 
