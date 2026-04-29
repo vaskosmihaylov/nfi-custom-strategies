@@ -36,9 +36,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── AlexBattleTankKillerV4 (Port 8132)
                            ├── TripleSuperTrendADXRSI (Port 8134)
                            ├── Best5m (Port 8135)
-                           ├── Cluc7werk (Port 8136)
+                           ├── DevDsl2Approx (Port 8136)
                            ├── Picasso CE/CTI/STC/EMA (Port 8137)
-                           ├── Donchian_ADX_CHOPStrategy (Port 8138)
                            ├── CombinedBinHAndClucV8 (Port 8139)
                            ├── CombinedBinHAndClucV8XH (Port 8140)
                            └── newstrategy4_dca (Port 8141)
@@ -50,7 +49,7 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 - `docker-compose-multi-strategies.yml` - Multi-strategy Docker Compose file
 - `deploy-multi-strategies.sh` - Deployment and management script
-- `docker/Dockerfile.custom` - Shared custom Freqtrade image used by the full multi-strategy stack, including Donchian_ADX_CHOPStrategy
+- `docker/Dockerfile.custom` - Shared custom Freqtrade image used by the full multi-strategy stack
 
 ### NGINX Configuration
 
@@ -78,18 +77,11 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `alexbattletankkiller_v4.env` - AlexBattleTankKillerV4 strategy (patched dry-run validation rollout)
 - `triplesupertrendadxrsi.env` - TripleSuperTrendADXRSI strategy (longs + shorts, triple Supertrend with ADX/RSI confirmation)
 - `best5m.env` - Best5m strategy (5m SMA/RSI futures strategy, longs + shorts)
-- `cluc7werk.env` - Cluc7werk strategy (1m Cluc futures strategy, longs + shorts)
+- `devdsl2approx.env` - DevDsl2Approx strategy (5m Bybit futures dry-run strategy, longs + shorts)
 - `edtma.env` - EDTMA strategy (longs + shorts dry-run evaluation on Bybit futures, max_open_trades=3)
-- `donchian_adx_chop.env` - Donchian_ADX_CHOPStrategy strategy (1h futures Donchian breakout with ADX, CHOP, volume confirmation, and Turtle-style exits)
 - `combinedbinhandclucv8.env` - CombinedBinHAndClucV8 strategy (5m Cluc/BinHV hybrid futures strategy)
 - `combinedbinhandclucv8xh.env` - CombinedBinHAndClucV8XH strategy (5m Cluc/BinHV hybrid futures strategy, XH variant)
 - `newstrategy4_dca.env` - newstrategy4 dry-run evaluation strategy (5m long-only Bybit futures strategy)
-
-### Strategy-Specific Runtime Notes
-
-- `Donchian_ADX_CHOPStrategy` now runs directly inside `docker-compose-multi-strategies.yml` on port `8138`.
-- Start only `Donchian_ADX_CHOPStrategy` with `./deploy-multi-strategies.sh start donchian_adx_chop`.
-- The canonical FreqUI path is `/donchian_adx_chop`.
 
 ## Quick Start
 
@@ -181,9 +173,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **AlexBattleTankKillerV4**           | `Vasko_AlexBattleTankKillerV4` | `http://freq.gaiaderma.com/alexbattletankkiller_v4` | `alexbattletankkiller_v4_user` | `alexbattletankkiller_v4_secure_password` |
 | **TripleSuperTrendADXRSI**           | `Vasko_TripleSuperTrendADXRSI` | `http://freq.gaiaderma.com/triplesupertrendadxrsi` | `triplesupertrendadxrsi_user` | `triplesupertrendadxrsi_secure_password` |
 | **Best5m**                           | `Vasko_Best5m`                 | `http://freq.gaiaderma.com/best5m`                 | `best5m_user`                 | `best5m_secure_password`                 |
-| **Cluc7werk**                        | `Vasko_Cluc7werk`              | `http://freq.gaiaderma.com/cluc7werk`              | `cluc7werk_user`              | `cluc7werk_secure_password`              |
+| **DevDsl2Approx**                    | `Vasko_DevDsl2Approx`          | `http://freq.gaiaderma.com/devdsl2approx`          | `devdsl2approx_user`          | `devdsl2approx_secure_password`          |
 | **EDTMA**                            | `Vasko_EDTMA`                  | `http://freq.gaiaderma.com/edtma`                  | `edtma_user`                  | `edtma_secure_password`                  |
-| **Donchian_ADX_CHOPStrategy**        | `Vasko_Donchian_ADX_CHOP`      | `http://freq.gaiaderma.com/donchian_adx_chop`      | `donchian_adx_chop_user`      | `donchian_adx_chop_secure_password`      |
 | **CombinedBinHAndClucV8**            | `Vasko_CombinedBinHAndClucV8`  | `http://freq.gaiaderma.com/combinedbinhandclucv8`  | `combinedbinhandclucv8_user`  | `combinedbinhandclucv8_secure_password`  |
 | **CombinedBinHAndClucV8XH**          | `Vasko_CombinedBinHAndClucV8XH` | `http://freq.gaiaderma.com/combinedbinhandclucv8xh` | `combinedbinhandclucv8xh_user` | `combinedbinhandclucv8xh_secure_password` |
 | **newstrategy4**                     | `Vasko_newstrategy4_dca`       | `http://freq.gaiaderma.com/newstrategy4_dca`       | `newstrategy4_dca_user`       | `newstrategy4_dca_secure_password`       |
@@ -251,9 +242,8 @@ curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
 curl http://127.0.0.1:8132/api/v1/ping  # AlexBattleTankKillerV4
 curl http://127.0.0.1:8134/api/v1/ping  # TripleSuperTrendADXRSI
 curl http://127.0.0.1:8135/api/v1/ping  # Best5m
-curl http://127.0.0.1:8136/api/v1/ping  # Cluc7werk
+curl http://127.0.0.1:8136/api/v1/ping  # DevDsl2Approx
 curl http://127.0.0.1:8137/api/v1/ping  # Picasso CE/CTI/STC/EMA
-curl http://127.0.0.1:8138/api/v1/ping  # Donchian_ADX_CHOPStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CombinedBinHAndClucV8
 curl http://127.0.0.1:8140/api/v1/ping  # CombinedBinHAndClucV8XH
 curl http://127.0.0.1:8141/api/v1/ping  # newstrategy4_dca
@@ -277,9 +267,8 @@ curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
 curl http://freq.gaiaderma.com/alexbattletankkiller_v4/api/v1/ping
 curl http://freq.gaiaderma.com/triplesupertrendadxrsi/api/v1/ping
 curl http://freq.gaiaderma.com/best5m/api/v1/ping
-curl http://freq.gaiaderma.com/cluc7werk/api/v1/ping
+curl http://freq.gaiaderma.com/devdsl2approx/api/v1/ping
 curl http://freq.gaiaderma.com/edtma/api/v1/ping
-curl http://freq.gaiaderma.com/donchian_adx_chop/api/v1/ping
 curl http://freq.gaiaderma.com/combinedbinhandclucv8/api/v1/ping
 curl http://freq.gaiaderma.com/combinedbinhandclucv8xh/api/v1/ping
 curl http://freq.gaiaderma.com/newstrategy4_dca/api/v1/ping
@@ -306,7 +295,7 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `fastsupertrend_rsi_70.log`, `fastsupertrend_quick3.log`
 - `auto_ei_t4c0s.log`
 - `fibonacciematrend.log`
-- `cluc7werk.log`
+- `devdsl2approx.log`
 - `combinedbinhandclucv8.log`
 - `combinedbinhandclucv8xh.log`
 - `newstrategy4_dca.log`
@@ -341,14 +330,13 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8132 | AlexBattleTankKillerV4           | Longs + Shorts | Strategy-defined |
 | 8134 | TripleSuperTrendADXRSI           | Longs + Shorts | Strategy-defined |
 | 8135 | Best5m                           | Longs + Shorts | Strategy-defined |
-| 8136 | Cluc7werk                        | Longs + Shorts | Strategy-defined |
+| 8136 | DevDsl2Approx                    | Longs + Shorts | Config-defined   |
 | 8137 | Picasso CE/CTI/STC/EMA           | Longs + Shorts | Strategy-defined |
-| 8138 | Donchian_ADX_CHOPStrategy        | Longs + Shorts | Strategy-defined |
 | 8139 | CombinedBinHAndClucV8            | Longs + Shorts | Strategy-defined |
 | 8140 | CombinedBinHAndClucV8XH          | Longs + Shorts | Strategy-defined |
 | 8141 | newstrategy4_dca                | Longs          | Config-defined   |
 
-**Freed ports** (available for future strategies): 8091, 8097, 8104, 8112, 8118, 8130, 8133, 8142+
+**Freed ports** (available for future strategies): 8091, 8097, 8104, 8112, 8118, 8130, 8133, 8138, 8142+
 
 ### Database Separation
 
@@ -371,9 +359,8 @@ Each strategy uses its own SQLite database:
 - `fenix-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
 - `alexbattletankkiller_v4-tradesv3.sqlite`
-- `donchian_adx_chop-tradesv3.sqlite`
 - `best5m-tradesv3.sqlite`
-- `cluc7werk-tradesv3.sqlite`
+- `devdsl2approx-tradesv3.sqlite`
 - `combinedbinhandclucv8-tradesv3.sqlite`
 - `combinedbinhandclucv8xh-tradesv3.sqlite`
 - `newstrategy4_dca-tradesv3.sqlite`

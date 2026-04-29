@@ -588,7 +588,12 @@ class DevDsl2Approx(IStrategy):
         if stop_profit >= current_profit:
             return -0.99
 
-        return stoploss_from_open(stop_profit, current_profit)
+        return stoploss_from_open(
+            stop_profit,
+            current_profit,
+            is_short=trade.is_short,
+            leverage=trade.leverage,
+        )
 
     def custom_exit(
         self,

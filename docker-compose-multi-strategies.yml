@@ -353,22 +353,22 @@ services:
       --strategy-path user_data/strategies/Best5m
       --strategy Best5m
 
-  # Cluc7werk Strategy (Longs + Shorts, 1m)
-  freqtrade-cluc7werk:
+  # DevDsl2Approx Strategy (Longs + Shorts dry-run validation)
+  freqtrade-devdsl2approx:
     <<: *common-settings
-    container_name: freqtrade-cluc7werk
+    container_name: freqtrade-devdsl2approx
     ports:
       - "127.0.0.1:8136:8080"
     env_file:
-      - path: ./env-files/cluc7werk.env
+      - path: ./env-files/devdsl2approx.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/cluc7werk-tradesv3.sqlite
-      --log-file user_data/logs/cluc7werk.log
-      --strategy-path user_data/strategies/Cluc
-      --strategy Cluc7werk
+      --db-url sqlite:////freqtrade/user_data/devdsl2approx-tradesv3.sqlite
+      --log-file user_data/logs/devdsl2approx.log
+      --strategy-path user_data/strategies/DevDsl2Approx
+      --strategy DevDsl2Approx
 
   # EDTMA Strategy (Longs + Shorts dry-run validation)
   freqtrade-edtma:
@@ -386,23 +386,6 @@ services:
       --log-file user_data/logs/edtma.log
       --strategy-path user_data/strategies/Picasso
       --strategy EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March
-
-  # Donchian_ADX_CHOPStrategy (Longs + Shorts 1h Donchian breakout)
-  freqtrade-donchian_adx_chop:
-    <<: *common-settings
-    container_name: freqtrade-donchian_adx_chop
-    ports:
-      - "127.0.0.1:8138:8080"
-    env_file:
-      - path: ./env-files/donchian_adx_chop.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/donchian_adx_chop-tradesv3.sqlite
-      --log-file user_data/logs/donchian_adx_chop.log
-      --strategy-path user_data/strategies/Donchian_ADX_CHOPStrategy
-      --strategy Donchian_ADX_CHOPStrategy
 
   # CombinedBinHAndClucV8 Strategy (5m)
   freqtrade-combinedbinhandclucv8:

@@ -83,7 +83,7 @@ update_all_env_files() {
         "env-files/lmao.env"
         "env-files/gkd_transformv55_ml.env"
         "env-files/alexbattletankkiller_v4.env"
-        "env-files/cluc7werk.env"
+        "env-files/devdsl2approx.env"
         "env-files/combinedbinhandclucv8.env"
         "env-files/combinedbinhandclucv8xh.env"
     )
