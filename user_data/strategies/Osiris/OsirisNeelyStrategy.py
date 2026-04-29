@@ -180,6 +180,7 @@ class OsirisNeelyStrategy(IStrategy):
                 dataframe['macro_bull'] = True
                 return dataframe
 
+            inf_df = inf_df.copy()
             ep = int(self.macro_ema_period.value)
             if HAS_TALIB:
                 inf_df['ema_macro'] = ta.EMA(inf_df, timeperiod=ep)
@@ -187,14 +188,14 @@ class OsirisNeelyStrategy(IStrategy):
                 inf_df['ema_macro'] = inf_df['close'].ewm(span=ep).mean()
 
             inf_df['macro_bull'] = inf_df['close'] > inf_df['ema_macro']
-            inf_df = inf_df[['date', 'macro_bull']].copy()
-            inf_df.rename(columns={'date': 'date_1h'}, inplace=True)
 
             # Merge por tempo (forward fill)
-            dataframe = merge_informative_pair(
-                dataframe, inf_df, self.timeframe, '1h',
-                ffill=True, append_timeframe=False,
+            merged = merge_informative_pair(
+                dataframe, inf_df[['date', 'macro_bull']], self.timeframe, '1h',
+                ffill=True,
             )
+            macro_bull = merged['macro_bull_1h']
+            dataframe['macro_bull'] = macro_bull.where(macro_bull.notna(), True).astype(bool)
         except Exception as e:
             logger.warning(f"NeelyStrategy: falha no informative 1h: {e}")
             dataframe['macro_bull'] = True
@@ -301,8 +302,15 @@ class OsirisNeelyStrategy(IStrategy):
             if dataframe is None or len(dataframe) == 0:
                 return -1  # Usa stoploss padrão
 
+            trade_open_date = pd.Timestamp(trade.open_date)
+            if trade_open_date.tzinfo is None:
+                trade_open_date = trade_open_date.tz_localize('UTC')
+            else:
+                trade_open_date = trade_open_date.tz_convert('UTC')
+
             # Pega o stop calculado no momento da entrada (Trade.open_date)
-            entry_candle = dataframe[dataframe['date'] <= trade.open_date]
+            candle_dates = pd.to_datetime(dataframe['date'], utc=True)
+            entry_candle = dataframe[candle_dates <= trade_open_date]
             if len(entry_candle) == 0:
                 return -1
 
