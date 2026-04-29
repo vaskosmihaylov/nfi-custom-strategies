@@ -106,10 +106,12 @@ class OsirisXRSI(IStrategy):
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist() if self.dp else []
-        # 15m for trend structure filter
-        # NOTE: 1m is NOT declared here — it's loaded on-demand via dp.get_pair_dataframe
-        # to avoid Freqtrade reducing the backtest window when 1m data is absent.
-        return [(p, "15m") for p in pairs]
+        informative = [(p, "15m") for p in pairs]
+        # In live/dry-run, explicitly subscribe to 1m so the dataprovder keeps a cache
+        # and the optional micro-timing filter does not spam "No data found" warnings.
+        if self.dp and self.dp.runmode.value in ("live", "dry_run"):
+            informative.extend((p, "1m") for p in pairs)
+        return informative
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe["rsi"] = ta.RSI(dataframe, timeperiod=14)
