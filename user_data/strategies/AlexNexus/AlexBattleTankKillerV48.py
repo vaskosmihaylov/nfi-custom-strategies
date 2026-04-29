@@ -2941,12 +2941,12 @@ class AlexBattleTankKillerV4(IStrategy):
                 (~volatility_high | (df["rsi"] > 80))  # New: allow in high vol only if very overbought
             )
             
+            # Keep short exposure focused on exhaustion / rejection setups.
+            # The broader breakdown-style shorts clustered into stoplosses in
+            # bullish tape during forward and 60d validation.
             any_short_signal = (
-                short_signal_bearish_breakdown |
                 short_signal_resistance_reject |
-                short_signal_50_breakdown |
                 short_signal_range_short |
-                short_signal_trend_continuation |
                 short_signal_extreme_overbought
             )
         else:
@@ -3090,7 +3090,7 @@ class AlexBattleTankKillerV4(IStrategy):
         if 'market_breadth' in df.columns:
             breadth = df['market_breadth'].fillna(0.5)
             breadth_long_ok = breadth > 0.25
-            breadth_short_ok = breadth < 0.75
+            breadth_short_ok = breadth < 0.60
             any_long_signal = any_long_signal & breadth_long_ok
             any_short_signal = any_short_signal & breadth_short_ok
             logger.info(f"{pair} 📊 Market breadth: {breadth.iloc[-1]:.1%}")
@@ -3107,7 +3107,7 @@ class AlexBattleTankKillerV4(IStrategy):
         if 'market_score' in df.columns:
             score = df['market_score'].fillna(0.5)
             score_long_ok = score > 0.20
-            score_short_ok = score < 0.80
+            score_short_ok = score < 0.65
             any_long_signal = any_long_signal & score_long_ok
             any_short_signal = any_short_signal & score_short_ok
             logger.info(f"{pair} 📈 Market score: {score.iloc[-1]:.1%}")

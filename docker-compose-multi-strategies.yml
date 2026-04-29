@@ -161,23 +161,6 @@ services:
       --strategy-path user_data/strategies/Fibbo
       --strategy FibonacciEMATrendStrategy
 
-  # KamaFama Strategy (Longs)
-  freqtrade-kamafama:
-    <<: *common-settings
-    container_name: freqtrade-kamafama
-    ports:
-      - "127.0.0.1:8091:8080"
-    env_file:
-      - path: ./env-files/kamafama.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/kamafama-tradesv3.sqlite
-      --log-file user_data/logs/kamafama.log
-      --strategy-path user_data/strategies/KamaFama
-      --strategy KamaFama_2_20250115_OptMar2026
-
   # ZaratustraDCA2_06 Strategy (Longs + Shorts)
   freqtrade-zaratustra:
     <<: *common-settings
@@ -319,22 +302,22 @@ services:
       --strategy-path user_data/strategies/MtfScalper
       --strategy MtfScalper
 
-  # AlexBandSniperV10AI Strategy (Dry-run validation)
-  freqtrade-alexbandsniper_v10ai:
+  # AlexBattleTankKillerV4 Strategy (Patched dry-run validation)
+  freqtrade-alexbattletankkiller_v4:
     <<: *common-settings
-    container_name: freqtrade-alexbandsniper_v10ai
+    container_name: freqtrade-alexbattletankkiller_v4
     ports:
       - "127.0.0.1:8132:8080"
     env_file:
-      - path: ./env-files/alexbandsniper_v10ai.env
+      - path: ./env-files/alexbattletankkiller_v4.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/alexbandsniper_v10ai-tradesv3.sqlite
-      --log-file user_data/logs/alexbandsniper_v10ai.log
+      --db-url sqlite:////freqtrade/user_data/alexbattletankkiller_v4-tradesv3.sqlite
+      --log-file user_data/logs/alexbattletankkiller_v4.log
       --strategy-path user_data/strategies/AlexNexus
-      --strategy AlexBandSniperV10AI
+      --strategy AlexBattleTankKillerV4
 
   # TripleSuperTrendADXRSI Strategy (Longs + Shorts)
   freqtrade-triplesupertrendadxrsi:
