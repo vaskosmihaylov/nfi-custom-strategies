@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.33"
+    return "v17.4.38"
 
   stoploss = -0.99
 
@@ -642,6 +642,8 @@ class NostalgiaForInfinityX7(IStrategy):
 
   # Rebuy mode v3
   system_v3_rebuy_mode_stake_multiplier = 0.25
+  system_v3_rebuy_mode_derisk_spot = -0.48
+  system_v3_rebuy_mode_derisk_futures = -1.40
   system_v3_rebuy_mode_stakes_spot = [1.0, 1.0, 1.0, 1.0]
   system_v3_rebuy_mode_stakes_futures = [1.0, 1.0, 1.0, 1.0]
   system_v3_rebuy_mode_thresholds_spot = [-0.08, -0.12, -0.16, -0.20]
@@ -12621,6 +12623,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 15.0) | (df["AROONU_14_4h"] < 60.0) | (df["ROC_9_4h"] > -20.0))
             # 15m down move, 4h & 1d high
             & ((df["RSI_3_15m"] > 15.0) | (df["AROONU_14_4h"] < 75.0) | (df["AROONU_14_1d"] < 100.0))
+            # 15m down move, 4h high & overbought
+            & ((df["RSI_3_15m"] > 15.0) | (df["AROONU_14_4h"] < 80.0) | (df["ROC_9_4h"] < 10.0))
             # 15m down move, 15m still high, 1d overbought
             & ((df["RSI_3_15m"] > 15.0) | (df["STOCHRSIk_14_14_3_3_15m"] < 50.0) | (df["ROC_9_1d"] < 100.0))
             # 15m down move, 1h high & overbought
@@ -19853,7 +19857,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # 15m down move, 4h high, 1d overbought
           long_entry_logic.append((df["RSI_3_15m"] > 25.0) | (df["AROONU_14_4h"] < 80.0) | (df["ROC_9_1d"] < 50.0))
           # 15m & 1h down move, 1h high
-          long_entry_logic.append((df["RSI_3_15m"] > 30.0) | (df["RSI_3_1h"] > 45.0) | (df["AROONU_14_1h"] < 70.0))
+          long_entry_logic.append((df["RSI_3_15m"] > 30.0) | (df["RSI_3_1h"] > 45.0) | (df["AROONU_14_1h"] < 60.0))
           # 15m down move, 15m high, 4h still high
           long_entry_logic.append(
             (df["RSI_3_15m"] > 30.0) | (df["AROONU_14_15m"] < 70.0) | (df["AROONU_14_4h"] < 50.0)
@@ -21382,6 +21386,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_4h"] > 5.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 90.0))
             # 4h & 1d down move, 1h still high
             & ((df["RSI_3_4h"] > 10.0) | (df["RSI_3_1d"] > 10.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 50.0))
+            # 4h & 1d down move, 1d still high
+            & ((df["RSI_3_4h"] > 10.0) | (df["RSI_3_1d"] > 15.0) | (df["AROONU_14_1d"] < 50.0))
             # 4h & 1d down move, 1h high
             & ((df["RSI_3_4h"] > 10.0) | (df["RSI_3_1d"] > 15.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 70.0))
             # 4h down move, 15m still high, 1h still high
@@ -21760,6 +21766,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 5.0) | (df["RSI_3_1h"] > 30.0) | (df["ROC_9_1d"] < 30.0))
             # 15m & 4h down move, 4h downtrend
             & ((df["RSI_3_15m"] > 5.0) | (df["RSI_3_4h"] > 5.0) | (df["ROC_9_4h"] > -20.0))
+            # 15m & 4h down move, 4h still high
+            & ((df["RSI_3_15m"] > 5.0) | (df["RSI_3_4h"] > 30.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 40.0))
             # 15m down move, 1d high & overbought
             & ((df["RSI_3_15m"] > 5.0) | (df["AROONU_14_1d"] < 100.0) | (df["ROC_9_1d"] < 40.0))
             # 15m & 4h down move, 4h still not low enough
@@ -21792,6 +21800,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 15.0) | (df["RSI_3_1h"] > 30.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 80.0))
             # 15m down move, 4h high & overbought
             & ((df["RSI_3_15m"] > 20.0) | (df["AROONU_14_4h"] < 100.0) | (df["ROC_9_4h"] < 30.0))
+            # 15m down move, 4h high & overbought
+            & ((df["RSI_3_15m"] > 25.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 80.0) | (df["ROC_9_4h"] < 20.0))
             # 15m down move, 4h high, 1d downtrend
             & ((df["RSI_3_15m"] > 25.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 90.0) | (df["ROC_9_1d"] > -30.0))
             # 15m down move, 1h & 4h overbought
@@ -21900,6 +21910,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_4h"] > 3.0) | (df["STOCHRSIk_14_14_3_3_15m"] < 60.0))
             # 4h down move, 15m still high, 4h still not low enough
             & ((df["RSI_3_4h"] > 5.0) | (df["STOCHRSIk_14_14_3_3_15m"] < 50.0) | (df["AROONU_14_4h"] < 30.0))
+            # 4h & 1d down move, 1d still high
+            & ((df["RSI_3_4h"] > 10.0) | (df["RSI_3_1d"] > 15.0) | (df["AROONU_14_1d"] < 50.0))
             # 4h & 1d down move, 15m still high
             & ((df["RSI_3_4h"] > 10.0) | (df["RSI_3_1d"] > 15.0) | (df["STOCHRSIk_14_14_3_3_15m"] < 40.0))
             # 4h down move, 4h still not low enough, 1d downtrend
@@ -22905,6 +22917,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_15m"] > 15.0) | (df["AROONU_14_1h"] < 90.0) | (df["ROC_9_4h"] < 20.0))
             # 15m down move, 4h & 1d downtrend
             & ((df["RSI_3_15m"] > 15.0) | (df["ROC_9_4h"] > -20.0) | (df["ROC_9_1d"] > -20.0))
+            # 16m & 1h down move, 1h still high
+            & ((df["RSI_3_15m"] > 20.0) | (df["RSI_3_1h"] > 25.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 40.0))
             # 15m & 1h down move, 1h downtrend, 1h downtrend, 15m still high, 1h high
             & (
               (df["RSI_3_15m"] > 20.0)
@@ -26113,14 +26127,17 @@ class NostalgiaForInfinityX7(IStrategy):
     # Stoplosses
     if not sell:
       if is_system_v3_2:
-        if profit_stake < -(
-          filled_entries[0].cost
-          * (
-            self.system_v3_2_stop_threshold_futures_rebuy
-            if self.is_futures_mode
-            else self.system_v3_2_stop_threshold_spot_rebuy
+        if self.system_v3_2_stops_enable and (
+          profit_stake
+          < -(
+            filled_entries[0].cost
+            * (
+              self.system_v3_2_stop_threshold_futures_rebuy
+              if self.is_futures_mode
+              else self.system_v3_2_stop_threshold_spot_rebuy
+            )
+            / trade.leverage
           )
-          / trade.leverage
         ):
           sell, signal_name = True, f"exit_{self.long_rebuy_mode_name}_stoploss_doom"
       elif is_system_v3_1:
@@ -46212,7 +46229,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     # Rebuy mode, the first entry is lower than normal slot stake
     if is_rebuy_mode:
-      slice_amount /= self.rebuy_mode_stake_multiplier
+      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
     # not reached the max allowed stake for all grinds
     is_not_trade_max_stake_v3 = current_stake_amount < (slice_amount * self.system_v3_max_stake)
     is_not_trade_max_stake_v3_1 = current_stake_amount < (slice_amount * self.system_v3_1_max_stake)
@@ -47324,14 +47341,14 @@ class NostalgiaForInfinityX7(IStrategy):
       or (
         (last_candle["RSI_14"] < 46.0)
         and (last_candle["RSI_3"] > 10.0)
-        and (last_candle["RSI_3_15m"] > 15.0)
+        and (last_candle["RSI_3_15m"] > 10.0)
         and (last_candle["RSI_3_1h"] > 15.0)
         and (last_candle["RSI_3_4h"] > 15.0)
         and (last_candle["AROONU_14"] < 25.0)
-        and (last_candle["close"] > (last_candle["close_max_48"] * 0.80))
-        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.75))
-        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.70))
-        and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
+        and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
+        # and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.75))
+        # and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.70))
+        and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.60))
         and (last_candle["close"] < (last_candle["EMA_16"] * 0.980))
       )
       or (
@@ -47354,9 +47371,9 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_4h"] > 15.0)
         and (last_candle["AROONU_14_15m"] < 25.0)
         and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
-        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
-        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
-        and (last_candle["close"] < (last_candle["EMA_12"] * 0.985))
+        # and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
+        # and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
+        and (last_candle["close"] < (last_candle["EMA_12"] * 0.980))
       )
       or (
         (last_candle["RSI_14"] < 36.0)
@@ -47367,8 +47384,8 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_1d"] > 10.0)
         and (last_candle["AROONU_14"] < 25.0)
         and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
-        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
-        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
+        # and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
+        # and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
         and (last_candle["close"] < (last_candle["EMA_26"] * 0.975))
         and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.999))
       )
@@ -47379,7 +47396,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_1h"] > 10.0)
         and (last_candle["RSI_3_4h"] > 10.0)
         and (last_candle["AROONU_14"] < 25.0)
-        and (last_candle["close"] < (last_candle["low_min_12_4h"] * 1.25))
+        and (last_candle["close"] < (last_candle["low_min_12_4h"] * 1.30))
         and (last_candle["close"] < (last_candle["EMA_9"] * 0.975))
         and (last_candle["close"] < (last_candle["EMA_20"] * 0.970))
       )
@@ -47388,8 +47405,8 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3"] > 10.0)
         and (last_candle["RSI_3"] < 40.0)
         and (last_candle["RSI_3_15m"] > 15.0)
-        and (last_candle["ROC_2_1h"] > -5.0)
-        and (last_candle["ROC_2_4h"] > -5.0)
+        and (last_candle["ROC_2_1h"] > -10.0)
+        and (last_candle["ROC_2_4h"] > -10.0)
         and (last_candle["ROC_9_1h"] > -10.0)
         and (last_candle["ROC_9_4h"] > -10.0)
         and (last_candle["AROONU_14"] < 25.0)
@@ -47409,7 +47426,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["WILLR_14"] < -50.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 20.0)
         and (last_candle["WILLR_84_1h"] < -70.0)
-        and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.30))
+        and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.50))
         and (last_candle["BBB_20_2.0_1h"] > 12.0)
         and (last_candle["close_max_48"] >= (last_candle["close"] * 1.10))
       )
@@ -47419,6 +47436,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_15m"] > 5.0)
         and (last_candle["RSI_3_1h"] > 10.0)
         and (last_candle["RSI_3_4h"] > 10.0)
+        and (last_candle["close"] < (last_candle["low_min_24_1h"] * 1.30))
         and (last_candle["EMA_26"] > last_candle["EMA_12"])
         and ((last_candle["EMA_26"] - last_candle["EMA_12"]) > (last_candle["open"] * 0.030))
         and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_candle["open"] / 100.0))
@@ -47429,8 +47447,8 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_1h"] > 30.0)
         and (last_candle["AROONU_14_4h"] < 70.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 50.0)
-        and (last_candle["close"] < (last_candle["high_max_24_4h"] * 0.90))
         and (last_candle["close"] < (last_candle["close_max_48"] * 0.90))
+        # and (last_candle["close"] < (last_candle["high_max_24_4h"] * 0.90))
         and (last_candle["close"] > (last_candle["close_min_12"] * 1.08))
       )
       or (
@@ -47446,7 +47464,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_4h"] > 10.0)
         and (last_candle["RSI_3_1d"] > 10.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 20.0)
-        and (last_candle["close"] < (last_candle["SMA_30"] * 0.970))
+        and (last_candle["close"] < (last_candle["SMA_30"] * 0.965))
         and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.999))
       )
       or (
@@ -47457,8 +47475,8 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_4h"] > 10.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 30.0)
         and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
-        and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.80))
-        and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.75))
+        # and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.80))
+        # and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.75))
         and (last_candle["close"] < (last_candle["low_min_12_4h"] * 1.60))
         and (last_candle["EMA_26"] > last_candle["EMA_12"])
         and ((last_candle["EMA_26"] - last_candle["EMA_12"]) > (last_candle["open"] * 0.020))
@@ -47487,11 +47505,9 @@ class NostalgiaForInfinityX7(IStrategy):
       or (
         (last_candle["RSI_14"] < 36.0)
         and (last_candle["RSI_3"] > 5.0)
-        and (last_candle["RSI_3_15m"] > 10.0)
-        and (last_candle["RSI_3_1h"] > 10.0)
-        and (last_candle["RSI_3_4h"] > 10.0)
-        and (last_candle["ROC_9_15m"] > -10.0)
-        and (last_candle["ROC_9_1h"] > -10.0)
+        and (last_candle["RSI_3_15m"] > 15.0)
+        and (last_candle["RSI_3_1h"] > 15.0)
+        and (last_candle["RSI_3_4h"] > 15.0)
         and (last_candle["close"] < (last_candle["EMA_12"] * 0.970))
         and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.999))
       )
@@ -51432,6 +51448,22 @@ class NostalgiaForInfinityX7(IStrategy):
     if hasattr(filled_orders[0], "ft_order_tag"):
       has_order_tags = True
 
+    # The first exit is de-risk (providing the trade is still open)
+    if (count_of_exits > 0) and (filled_exits[0].ft_order_tag in ["derisk_level_3"]):
+      return self.long_grind_adjust_trade_position_v3(
+        trade,
+        enter_tags,
+        current_time,
+        current_rate,
+        current_profit,
+        min_stake,
+        max_stake,
+        current_entry_rate,
+        current_exit_rate,
+        current_entry_profit,
+        current_exit_profit,
+      )
+
     exit_rate = current_rate
     if self.dp.runmode.value in ("live", "dry_run"):
       ticker = self.dp.ticker(trade.pair)
@@ -51497,6 +51529,9 @@ class NostalgiaForInfinityX7(IStrategy):
           and (last_candle["RSI_3_15m"] > 10.0)
           and (last_candle["AROONU_14"] < 30.0)
           and (last_candle["AROONU_14_15m"] < 30.0)
+          # and (last_candle["ROC_9"] > -5.0)
+          # and (last_candle["ROC_9_15m"] > -5.0)
+          # and (last_candle["close"] > (last_candle["close_max_12"] * 0.99))
           and (last_candle["close"] < (last_candle["EMA_26"] * 0.988))
         )
       ):
@@ -51524,6 +51559,34 @@ class NostalgiaForInfinityX7(IStrategy):
           return buy_amount, "r"
         else:
           return buy_amount
+
+    if self.derisk_enable and (
+      profit_stake
+      < (
+        slice_amount
+        * (self.system_v3_rebuy_mode_derisk_futures if self.is_futures_mode else self.system_v3_rebuy_mode_derisk_spot)
+      )
+      / trade.leverage
+    ):
+      sell_amount = trade.amount * exit_rate / trade.leverage - (min_stake * 1.55)
+      ft_sell_amount = sell_amount * trade.leverage * (trade.stake_amount / trade.amount) / exit_rate
+      if sell_amount > min_stake and ft_sell_amount > min_stake:
+        grind_profit = 0.0
+        self.dp.send_msg(
+          f"❌​​ ​**Rebuy De-risk:** `Level 3`\n"
+          f"🪙​ **Pair:** `{trade.pair}`\n"
+          f"〽️​ **Rate:** `{exit_rate}`\n"
+          f"💰 **Stake amount:** `{sell_amount}`\n"
+          f"💵​ **Profit (stake):** `{profit_stake}`\n"
+          f"💸 **Profit (percent):** `{(profit_ratio * 100.0):.2f}%`"
+        )
+        log.info(
+          f"Rebuy De-risk Level 3 [{current_time}] [{trade.pair}] | Rate: {exit_rate} | Stake amount: {sell_amount} | Profit (stake): {profit_stake} | Profit: {(profit_ratio * 100.0):.2f}%"
+        )
+        if has_order_tags:
+          return -ft_sell_amount, "derisk_level_3"
+        else:
+          return -ft_sell_amount
 
     return None
 
@@ -72473,7 +72536,7 @@ class NostalgiaForInfinityX7(IStrategy):
 
     # Rebuy mode, the first entry is lower than normal slot stake
     if is_rebuy_mode:
-      slice_amount /= self.rebuy_mode_stake_multiplier
+      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
     # not reached the max allowed stake for all grinds
     is_not_trade_max_stake_v3 = current_stake_amount < (slice_amount * self.system_v3_max_stake)
     is_not_trade_max_stake_v3_1 = current_stake_amount < (slice_amount * self.system_v3_1_max_stake)
