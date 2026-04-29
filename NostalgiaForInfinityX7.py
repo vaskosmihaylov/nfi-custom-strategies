@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.41"
+    return "v17.4.42"
 
   stoploss = -0.99
 
@@ -1764,6 +1764,8 @@ class NostalgiaForInfinityX7(IStrategy):
     self, pair: str, trade: "Trade", current_time: "datetime", current_rate: float, current_profit: float, **kwargs
   ):
     df, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+    if len(df) < 6:
+      return None
     last_candle = df.iloc[-1].squeeze()
     previous_candle_1 = df.iloc[-2].squeeze()
     previous_candle_2 = df.iloc[-3].squeeze()
