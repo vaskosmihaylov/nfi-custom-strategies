@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **26 active trading strategies** running in separate Docker containers
+- **28 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -25,6 +25,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── BinHV27_combined (Port 8092)
                            ├── Auto_EI_t4c0s (Port 8100)
                            ├── FibonacciEMATrendStrategy (Port 8103)
+                           ├── GnF_V2 (Port 8091)
+                           ├── ZaratustraV31 (Port 8118)
                            ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
                            ├── BollingerBounce_Shorts (Port 8125)
@@ -68,6 +70,8 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `binhv27.env` - BinHV27 combined strategy
 - `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `fibonacciematrend.env` - FibonacciEMATrendStrategy (1h/4h EMA trend strategy, longs + shorts, no FreqAI)
+- `gnf_v2.env` - GnF_V2 strategy (1h longs + shorts)
+- `zaratustrav31.env` - ZaratustraV31 strategy (1h longs + shorts)
 - `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
 - `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
 - `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
@@ -166,6 +170,8 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
 | **Auto_EI_t4c0s**                    | `Vasko_Auto_EI_t4c0s`          | `http://freq.gaiaderma.com/auto_ei_t4c0s`          | `auto_ei_t4c0s_user`          | `auto_ei_t4c0s_secure_password`          |
 | **FibonacciEMATrendStrategy**        | `Vasko_FibonacciEMATrend`      | `http://freq.gaiaderma.com/fibonacciematrend`      | `fibonacciematrend_user`      | `fibonacciematrend_secure_password`      |
+| **GnF_V2**                           | `Vasko_GnF_V2`                 | `http://freq.gaiaderma.com/gnf_v2`                 | `gnf_v2_user`                 | `gnf_v2_secure_password`                 |
+| **ZaratustraV31**                    | `Vasko_ZaratustraV31`          | `http://freq.gaiaderma.com/zaratustrav31`          | `zaratustrav31_user`          | `zaratustrav31_secure_password`          |
 | **ZaratustraDCA2_06**                | `Vasko_ZaratustraDCA2_06`      | `http://freq.gaiaderma.com/zaratustra`             | `zaratustra_user`             | `zaratustra_secure_password`             |
 | **BollingerBounce**                  | `Vasko_BollingerBounce`        | `http://freq.gaiaderma.com/bollingerbounce`        | `bollingerbounce_user`        | `bollingerbounce_secure_password`        |
 | **BollingerBounce_Shorts**           | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
@@ -237,6 +243,8 @@ curl http://127.0.0.1:8115/api/v1/ping  # e0v1e_binance_shorts
 curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
 curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # FibonacciEMATrendStrategy
+curl http://127.0.0.1:8091/api/v1/ping  # GnF_V2
+curl http://127.0.0.1:8118/api/v1/ping  # ZaratustraV31
 curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
 curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
 curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
@@ -264,6 +272,8 @@ curl http://freq.gaiaderma.com/e0v1e_binance_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/binhv27/api/v1/ping
 curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/fibonacciematrend/api/v1/ping
+curl http://freq.gaiaderma.com/gnf_v2/api/v1/ping
+curl http://freq.gaiaderma.com/zaratustrav31/api/v1/ping
 curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
@@ -303,6 +313,8 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `fastsupertrend_rsi_70.log`, `fastsupertrend_quick3.log`
 - `auto_ei_t4c0s.log`
 - `fibonacciematrend.log`
+- `gnf_v2.log`
+- `zaratustrav31.log`
 - `devdsl2approx.log`
 - `combinedbinhandclucv8.log`
 - `combinedbinhandclucv8xh.log`
@@ -327,6 +339,8 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
 | 8100 | Auto_EI_t4c0s                    | Longs          | -                |
 | 8103 | FibonacciEMATrendStrategy        | Longs + Shorts | Strategy-defined |
+| 8091 | GnF_V2                           | Longs + Shorts | Strategy-defined |
+| 8118 | ZaratustraV31                    | Longs + Shorts | Strategy-defined |
 | 8119 | ZaratustraDCA2_06                | Longs + Shorts | Config-defined   |
 | 8124 | BollingerBounce                  | Longs          | 3x               |
 | 8125 | BollingerBounce_Shorts           | Shorts         | 3x               |
@@ -346,7 +360,7 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8141 | newstrategy4_dca                | Longs          | Config-defined   |
 | 8142 | OsirisXRSI                       | Longs + Shorts | Config-defined   |
 
-**Freed ports** (available for future strategies): 8091, 8097, 8104, 8112, 8118, 8130, 8133, 8143+
+**Freed ports** (available for future strategies): 8097, 8104, 8112, 8130, 8133, 8143+
 
 ### Database Separation
 
@@ -360,6 +374,8 @@ Each strategy uses its own SQLite database:
 - `binhv27-tradesv3.sqlite`
 - `auto_ei_t4c0s-tradesv3.sqlite`
 - `fibonacciematrend-tradesv3.sqlite`
+- `gnf_v2-tradesv3.sqlite`
+- `zaratustrav31-tradesv3.sqlite`
 - `zaratustra-tradesv3.sqlite`
 - `bollingerbounce-tradesv3.sqlite`
 - `bollingerbounce_shorts-tradesv3.sqlite`
@@ -493,6 +509,11 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 
 - **Replaced**: AlexBandSniperV10AI with a patched AlexBattleTankKillerV4 in the port 8132 dry-run slot
 - **Updated**: Port 8132 reverse-proxy path to `/alexbattletankkiller_v4`
+
+## Recent Changes (May 1, 2026)
+
+- **Added**: `GnF_V2` multistrategy dry-run slot (port `8091`, path `/gnf_v2`)
+- **Added**: `ZaratustraV31` multistrategy dry-run slot (port `8118`, path `/zaratustrav31`)
 
 ## Recent Changes (March 18, 2026)
 

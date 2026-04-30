@@ -161,6 +161,40 @@ services:
       --strategy-path user_data/strategies/Fibbo
       --strategy FibonacciEMATrendStrategy
 
+  # GnF_V2 Strategy (Longs + Shorts)
+  freqtrade-gnf_v2:
+    <<: *common-settings
+    container_name: freqtrade-gnf_v2
+    ports:
+      - "127.0.0.1:8091:8080"
+    env_file:
+      - path: ./env-files/gnf_v2.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/gnf_v2-tradesv3.sqlite
+      --log-file user_data/logs/gnf_v2.log
+      --strategy-path user_data/strategies/remiotore
+      --strategy GnF_V2
+
+  # ZaratustraV31 Strategy (Longs + Shorts)
+  freqtrade-zaratustrav31:
+    <<: *common-settings
+    container_name: freqtrade-zaratustrav31
+    ports:
+      - "127.0.0.1:8118:8080"
+    env_file:
+      - path: ./env-files/zaratustrav31.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/zaratustrav31-tradesv3.sqlite
+      --log-file user_data/logs/zaratustrav31.log
+      --strategy-path user_data/strategies/remiotore
+      --strategy ZaratustraV31
+
   # ZaratustraDCA2_06 Strategy (Longs + Shorts)
   freqtrade-zaratustra:
     <<: *common-settings
