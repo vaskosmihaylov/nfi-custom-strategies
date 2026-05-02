@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.44"
+    return "v17.4.45"
 
   stoploss = -0.99
 
@@ -601,8 +601,8 @@ class NostalgiaForInfinityX7(IStrategy):
   system_v3_grind_4_thresholds_spot = [-0.06, -0.07, -0.08, -0.09, -0.10]
   system_v3_grind_4_stakes_futures = [0.05, 0.06, 0.07, 0.08, 0.09]
   system_v3_grind_4_thresholds_futures = [-0.06, -0.07, -0.08, -0.09, -0.10]
-  system_v3_grind_4_profit_threshold_spot = 0.08
-  system_v3_grind_4_profit_threshold_futures = 0.08
+  system_v3_grind_4_profit_threshold_spot = 0.05
+  system_v3_grind_4_profit_threshold_futures = 0.05
   system_v3_grind_4_use_derisk = True
   system_v3_grind_4_derisk_spot = -0.12
   system_v3_grind_4_derisk_futures = -0.12
@@ -612,8 +612,8 @@ class NostalgiaForInfinityX7(IStrategy):
   system_v3_grind_5_thresholds_spot = [-0.06, -0.07, -0.08, -0.09, -0.10]
   system_v3_grind_5_stakes_futures = [0.05, 0.06, 0.07, 0.08, 0.09]
   system_v3_grind_5_thresholds_futures = [-0.06, -0.07, -0.08, -0.09, -0.10]
-  system_v3_grind_5_profit_threshold_spot = 0.10
-  system_v3_grind_5_profit_threshold_futures = 0.10
+  system_v3_grind_5_profit_threshold_spot = 0.06
+  system_v3_grind_5_profit_threshold_futures = 0.06
   system_v3_grind_5_use_derisk = True
   system_v3_grind_5_derisk_spot = -0.12
   system_v3_grind_5_derisk_futures = -0.12
