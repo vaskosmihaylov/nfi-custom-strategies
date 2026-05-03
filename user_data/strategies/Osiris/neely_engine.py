@@ -66,8 +66,10 @@ class Pivot:
     bar_idx: int
     direction: str   # 'H' (high) ou 'L' (low)
     price: float
+    confirmed_at: int = 0
     label: StructLabel = StructLabel.UNKNOWN
     label_confidence: float = 0.0
+    label_confirmed_at: Optional[int] = None
     retrace_from_prev: float = 0.0   # % de retracement da onda anterior
 
 
@@ -180,6 +182,8 @@ class NeelyEngine:
         df['neely_stop']     = 0.0
         df['neely_tl_02']    = np.nan
         df['neely_tl_24']    = np.nan
+        df['neely_tl_02_slope'] = np.nan
+        df['neely_tl_24_slope'] = np.nan
         df['neely_w2_type']  = 'unknown'
         df['neely_stage1']   = False
         df['neely_terminal'] = False
@@ -206,7 +210,7 @@ class NeelyEngine:
 
         # Para cada barra, analisa os pivôs disponíveis
         for bar_idx in range(50, n):
-            avail = [p for p in pivots if p.bar_idx <= bar_idx - 2]
+            avail = [p for p in pivots if p.confirmed_at <= bar_idx]
             if len(avail) < 4:
                 continue
 
@@ -261,11 +265,16 @@ class NeelyEngine:
                 df.at[ix, 'neely_score']    = round(best_pattern.score, 2)
                 df.at[ix, 'neely_power']    = best_pattern.power_rating
                 df.at[ix, 'neely_target']   = (
-                    best_pattern.target_w3_161 or best_pattern.target_w5_161
+                    best_pattern.target_w3_261
+                    or best_pattern.target_w3_161
+                    or best_pattern.target_w5_161
+                    or best_pattern.target_w5_eq
                 )
                 df.at[ix, 'neely_stop']     = best_pattern.stop_price
                 df.at[ix, 'neely_tl_02']    = best_pattern.tl_0_2_at_bar
                 df.at[ix, 'neely_tl_24']    = best_pattern.tl_2_4_at_bar
+                df.at[ix, 'neely_tl_02_slope'] = best_pattern.tl_0_2_slope
+                df.at[ix, 'neely_tl_24_slope'] = best_pattern.tl_2_4_slope
                 df.at[ix, 'neely_w2_type']  = best_pattern.w2_type.value
                 df.at[ix, 'neely_stage1']   = best_pattern.stage1_confirmed
                 df.at[ix, 'neely_terminal'] = best_pattern.is_terminal_suspect
@@ -299,8 +308,8 @@ class NeelyEngine:
 
     def _detect_pivots(self, df: pd.DataFrame) -> list[Pivot]:
         """
-        Detecta pivôs usando rolling max/min com lookback 'pivot_period'.
-        Cada pivô confirmado com 2 barras de lag (sem lookahead real-time).
+        Detecta pivôs usando rolling max/min com confirmação causal.
+        Um pivô só existe após a janela futura completa do pivot_period.
         """
         p = self.pivot_period
         highs = df['high']
@@ -309,17 +318,30 @@ class NeelyEngine:
 
         pivots: list[Pivot] = []
 
-        for i in range(p, n - 2):
+        for i in range(p, n - p):
             # Pivô de alta: high[i] é máximo das últimas 2p+1 barras
-            lo = max(0, i - p)
-            hi_win = highs.iloc[lo:i + p + 1]
-            lo_win = lows.iloc[lo:i + p + 1]
+            hi_win = highs.iloc[i - p:i + p + 1]
+            lo_win = lows.iloc[i - p:i + p + 1]
 
             if len(hi_win) > 0 and float(highs.iloc[i]) == float(hi_win.max()):
-                pivots.append(Pivot(bar_idx=i, direction='H', price=float(highs.iloc[i])))
+                pivots.append(
+                    Pivot(
+                        bar_idx=i,
+                        direction='H',
+                        price=float(highs.iloc[i]),
+                        confirmed_at=i + p,
+                    )
+                )
 
             if len(lo_win) > 0 and float(lows.iloc[i]) == float(lo_win.min()):
-                pivots.append(Pivot(bar_idx=i, direction='L', price=float(lows.iloc[i])))
+                pivots.append(
+                    Pivot(
+                        bar_idx=i,
+                        direction='L',
+                        price=float(lows.iloc[i]),
+                        confirmed_at=i + p,
+                    )
+                )
 
         # Ordena por bar_idx
         pivots.sort(key=lambda p: p.bar_idx)
@@ -336,19 +358,7 @@ class NeelyEngine:
             else:
                 cleaned.append(pv)
 
-        # Forçar alternância H→L→H→L (Neely: pivôs devem alternar)
-        alternating: list[Pivot] = []
-        for pv in cleaned:
-            if alternating and alternating[-1].direction == pv.direction:
-                # Mesmo tipo consecutivo — sobrescreve com mais extremo
-                if pv.direction == 'H' and pv.price >= alternating[-1].price:
-                    alternating[-1] = pv
-                elif pv.direction == 'L' and pv.price <= alternating[-1].price:
-                    alternating[-1] = pv
-            else:
-                alternating.append(pv)
-
-        return alternating
+        return cleaned
 
     # ───────────────────────────────────────────────────────────────────
     # STRUCTURE LABELS (Pre-Constructive Rules of Logic)
@@ -408,8 +418,15 @@ class NeelyEngine:
                 pivots[i + 1].label_confidence = 0.90
 
             pivots[i + 1].retrace_from_prev = retrace_ratio
+            pivots[i + 1].label_confirmed_at = pivots[i + 2].confirmed_at
 
         return pivots
+
+    def _resolved_label(self, pivot: Pivot, bar_idx: int) -> tuple[StructLabel, float]:
+        label_ready = pivot.label_confirmed_at is not None and pivot.label_confirmed_at <= bar_idx
+        if not label_ready:
+            return StructLabel.UNKNOWN, 0.0
+        return pivot.label, pivot.label_confidence
 
     # ───────────────────────────────────────────────────────────────────
     # SETUP A — WAVE 3 ONSET
@@ -481,9 +498,10 @@ class NeelyEngine:
         score = 0.0
 
         # W1 label :5 (Structure Label assignment)
-        if w1h.label == StructLabel.IMPULSE:
-            score += 1.5 * w1h.label_confidence
-        elif w1h.label == StructLabel.UNKNOWN:
+        w1_label, w1_confidence = self._resolved_label(w1h, bar_idx)
+        if w1_label == StructLabel.IMPULSE:
+            score += 1.5 * w1_confidence
+        elif w1_label == StructLabel.UNKNOWN:
             score += 0.5
 
         # W2 fib zone — 38.2%-61.8% é clássico; 23.6%-38.2% indica Running (mais poderoso)
@@ -507,6 +525,10 @@ class NeelyEngine:
         # Confirma que retrace de W2 < 61.8% → W2 foi rasa = Running Correction
         # Isso é a Neely 0-2 trendline implícita
         tl_02_at_bar = self._trendline_value(w0.bar_idx, w0_p, w2l.bar_idx, w2_p, bar_idx)
+        tl_02_slope = (
+            (w2_p - w0_p) / (w2l.bar_idx - w0.bar_idx)
+            if w2l.bar_idx != w0.bar_idx else 0.0
+        )
         if cur_price > tl_02_at_bar:
             score += 1.0  # Preço acima da 0-2 line = W2 confirmada
 
@@ -544,7 +566,7 @@ class NeelyEngine:
 
         # ── Terminal suspeito? ─────────────────────────────────────────
         # Se W1 retraced menos que 38.2% e preço sobe devagar = pode ser Terminal
-        is_terminal = (w1h.label == StructLabel.CORRECTIVE)
+        is_terminal = (w1_label == StructLabel.CORRECTIVE)
 
         if score < 3.0:
             return None
@@ -558,6 +580,7 @@ class NeelyEngine:
             w0_price=w0_p,
             w1_price=w1_p,
             w2_price=w2_p,
+            tl_0_2_slope=tl_02_slope,
             tl_0_2_at_bar=tl_02_at_bar,
             tl_2_4_at_bar=tl_24,
             target_w3_161=target_161,
@@ -662,6 +685,10 @@ class NeelyEngine:
 
         # 2-4 Trendline: preço atual acima da linha (W5 ainda não quebrou)
         tl_24_at_bar = self._trendline_value(w2l.bar_idx, w2_p, w4l.bar_idx, w4_p, bar_idx)
+        tl_24_slope = (
+            (w4_p - w2_p) / (w4l.bar_idx - w2l.bar_idx)
+            if w4l.bar_idx != w2l.bar_idx else 0.0
+        )
         if not np.isnan(tl_24_at_bar) and cur_price >= tl_24_at_bar:
             score += 1.5
 
@@ -687,6 +714,10 @@ class NeelyEngine:
 
         # 0-2 trendline (para referência)
         tl_02_at_bar = self._trendline_value(w0.bar_idx, w0_p, w2l.bar_idx, w2_p, bar_idx)
+        tl_02_slope = (
+            (w2_p - w0_p) / (w2l.bar_idx - w0.bar_idx)
+            if w2l.bar_idx != w0.bar_idx else 0.0
+        )
 
         if score < 4.0:
             return None
@@ -702,7 +733,9 @@ class NeelyEngine:
             w2_price=w2_p,
             w3_price=w3_p,
             w4_price=w4_p,
+            tl_0_2_slope=tl_02_slope,
             tl_0_2_at_bar=tl_02_at_bar,
+            tl_2_4_slope=tl_24_slope,
             tl_2_4_at_bar=tl_24_at_bar,
             target_w5_eq=target_eq,
             target_w5_161=target_161,
@@ -775,7 +808,12 @@ class NeelyEngine:
             score += 2.0
 
         # Todas as ondas :3 (Terminal = ondas corretivas)
-        terminal_labels = [w1h.label, w2l.label, w3h.label, w4l.label]
+        terminal_labels = [
+            self._resolved_label(w1h, bar_idx)[0],
+            self._resolved_label(w2l, bar_idx)[0],
+            self._resolved_label(w3h, bar_idx)[0],
+            self._resolved_label(w4l, bar_idx)[0],
+        ]
         corr_count = sum(1 for lb in terminal_labels if lb == StructLabel.CORRECTIVE)
         score += corr_count * 0.5  # até +2.0
 

@@ -84,10 +84,10 @@ update_all_env_files() {
         "env-files/gkd_transformv55_ml.env"
         "env-files/alexbattletankkiller_v4.env"
         "env-files/devdsl2approx.env"
-        "env-files/osirisneely.env"
         "env-files/combinedbinhandclucv8.env"
         "env-files/combinedbinhandclucv8xh.env"
         "env-files/osirisxrsi.env"
+        "env-files/advancedfuturesswingstrategy.env"
     )
     
     for env_file in "${env_files[@]}"; do

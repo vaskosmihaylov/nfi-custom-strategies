@@ -421,23 +421,6 @@ services:
       --strategy-path user_data/strategies/Picasso
       --strategy EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March
 
-  # OsirisNeelyStrategy (5m dry-run validation)
-  freqtrade-osirisneely:
-    <<: *common-settings
-    container_name: freqtrade-osirisneely
-    ports:
-      - "127.0.0.1:8138:8080"
-    env_file:
-      - path: ./env-files/osirisneely.env
-        required: true
-    command: >
-      trade
-      --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/osirisneely-tradesv3.sqlite
-      --log-file user_data/logs/osirisneely.log
-      --strategy-path user_data/strategies/Osiris
-      --strategy OsirisNeelyStrategy
-
   # CombinedBinHAndClucV8 Strategy (5m)
   freqtrade-combinedbinhandclucv8:
     <<: *common-settings
@@ -505,6 +488,23 @@ services:
       --log-file user_data/logs/osirisxrsi.log
       --strategy-path user_data/strategies/Osiris
       --strategy OsirisXRSI
+
+  # AdvancedFuturesSwingStrategy (15m swing futures)
+  freqtrade-advancedfuturesswingstrategy:
+    <<: *common-settings
+    container_name: freqtrade-advancedfuturesswingstrategy
+    ports:
+      - "127.0.0.1:8143:8080"
+    env_file:
+      - path: ./env-files/advancedfuturesswingstrategy.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --db-url sqlite:////freqtrade/user_data/advancedfuturesswingstrategy-tradesv3.sqlite
+      --log-file user_data/logs/advancedfuturesswingstrategy.log
+      --strategy-path user_data/strategies/AdvancedFuturesSwingStrategy
+      --strategy AdvancedFuturesSwingStrategy
 
 networks:
   default:

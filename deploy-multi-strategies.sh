@@ -75,8 +75,9 @@ show_help() {
     echo "  ultrasmart_nostop_v2, fenix,"
     echo "  mtfscalper,"
     echo "  alexbattletankkiller_v4, triplesupertrendadxrsi, best5m,"
-    echo "  devdsl2approx, edtma, osirisneely, combinedbinhandclucv8,"
-    echo "  combinedbinhandclucv8xh, newstrategy4_dca, osirisxrsi"
+    echo "  devdsl2approx, edtma, combinedbinhandclucv8,"
+    echo "  combinedbinhandclucv8xh, newstrategy4_dca, osirisxrsi,"
+    echo "  advancedfuturesswingstrategy"
     echo ""
     echo "Examples:"
     echo "  \$0 start                    # Start all strategies"
@@ -110,11 +111,11 @@ show_help() {
     echo "  Best5m:                http://freq.gaiaderma.com/best5m"
     echo "  DevDsl2Approx:         http://freq.gaiaderma.com/devdsl2approx"
     echo "  EDTMA:                 http://freq.gaiaderma.com/edtma"
-    echo "  OsirisNeelyStrategy:   http://freq.gaiaderma.com/osirisneely"
     echo "  CombinedBinHAndClucV8: http://freq.gaiaderma.com/combinedbinhandclucv8"
     echo "  CombinedBinHAndClucV8XH: http://freq.gaiaderma.com/combinedbinhandclucv8xh"
     echo "  newstrategy4_dca:      http://freq.gaiaderma.com/newstrategy4_dca"
     echo "  OsirisXRSI:            http://freq.gaiaderma.com/osirisxrsi"
+    echo "  AdvancedFuturesSwingStrategy: http://freq.gaiaderma.com/advancedfuturesswingstrategy"
     echo "  (Note: Do NOT include /api/v1/ in URLs - FreqUI adds this automatically)"
 }
 
@@ -265,11 +266,11 @@ health_check() {
         "best5m:8135"
         "devdsl2approx:8136"
         "edtma:8137"
-        "osirisneely:8138"
         "combinedbinhandclucv8:8139"
         "combinedbinhandclucv8xh:8140"
         "newstrategy4_dca:8141"
         "osirisxrsi:8142"
+        "advancedfuturesswingstrategy:8143"
     )
     
     local healthy=0
