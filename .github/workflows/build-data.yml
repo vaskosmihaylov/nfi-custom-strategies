@@ -18,7 +18,7 @@ jobs:
             TRADING_MODE: futures
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Fetch data for backtests
         env:
           EXCHANGE: ${{ matrix.EXCHANGE }}
@@ -31,7 +31,7 @@ jobs:
           .github/workflows/scripts/download-necessary-exchange-market-data-for-backtests.sh
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

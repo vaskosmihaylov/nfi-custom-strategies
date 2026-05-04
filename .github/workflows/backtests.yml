@@ -42,7 +42,7 @@ jobs:
           - 20240201-20240301
           - 20240101-20240201
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Pull docker image
         run: |
           docker pull ghcr.io/iterativv/ci-strategy-backtesting:latest
@@ -80,7 +80,7 @@ jobs:
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-kucoin-spot-${{ matrix.TIMERANGE }}.txt
       - name: Upload results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kucoin-spot-testrun-artifacts-${{ matrix.TIMERANGE }}
           path: artifacts/
@@ -119,7 +119,7 @@ jobs:
           - 20240201-20240301
           - 20240101-20240201
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Inject Proxy Config
         env:
           PROXY: ${{ secrets.FREQTRADE_PROXY }}
@@ -165,7 +165,7 @@ jobs:
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-binance-spot-${{ matrix.TIMERANGE }}.txt
       - name: Upload results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: binance-spot-testrun-artifacts-${{ matrix.TIMERANGE }}
           path: artifacts/
@@ -204,7 +204,7 @@ jobs:
           - 20240201-20240301
           - 20240101-20240201
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Inject Proxy Config
         env:
           PROXY: ${{ secrets.FREQTRADE_PROXY2 }}
@@ -250,7 +250,7 @@ jobs:
       - name: Show Backtest Output
         run: cat artifacts/backtest-output-binance-futures-${{ matrix.TIMERANGE }}.txt
       - name: Upload results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: binance-futures-testrun-artifacts-${{ matrix.TIMERANGE }}
           path: artifacts/
@@ -285,14 +285,14 @@ jobs:
       contents: write
       actions: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('tests/ci-requirements.txt') }}
@@ -341,19 +341,19 @@ jobs:
             --artifact=binance-futures-testrun-artifacts downloaded-results
 
       - name: Download Current Binance Futures CI Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: binance-futures-testrun-artifacts
           path: downloaded-results/current
 
       - name: Download Current Binance Spot CI Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: binance-spot-testrun-artifacts
           path: downloaded-results/current
 
       - name: Download Current Kucoin CI Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: kucoin-spot-testrun-artifacts
           path: downloaded-results/current
