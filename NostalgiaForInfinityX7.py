@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.45"
+    return "v17.4.46"
 
   stoploss = -0.99
 
@@ -47532,6 +47532,16 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_14"] < 30.0)
         and (last_candle["STOCHRSIk_14_14_3_3"] < 30.0)
         and (last_candle["close"] < (last_candle["EMA_20"] * 0.985))
+      )
+      or (
+        (slice_profit < -0.02)
+        and (last_candle["RSI_3"] > 5.0)
+        and (last_candle["RSI_3_15m"] > 15.0)
+        and (last_candle["RSI_3_1h"] > 20.0)
+        and (last_candle["RSI_3_4h"] > 20.0)
+        and (last_candle["RSI_14"] < 40.0)
+        and (last_candle["close"] < (last_candle["EMA_26"] * 0.980))
+        and (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.999))
       )
     ):
       return True
