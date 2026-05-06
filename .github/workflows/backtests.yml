@@ -271,11 +271,17 @@ jobs:
           - EXCHANGE: kucoin
             TRADING_MODE: futures
     steps:
-      - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+      - name: Download and merge artifacts
+        uses: actions/download-artifact@v8
+        with:
+            pattern: ${{ matrix.EXCHANGE }}-${{ matrix.TRADING_MODE }}-testrun-artifacts-*
+            path: merged-artifacts
+            merge-multiple: true
+      - name: Upload merged artifact
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.EXCHANGE }}-${{ matrix.TRADING_MODE }}-testrun-artifacts
-          pattern: ${{ matrix.EXCHANGE }}-${{ matrix.TRADING_MODE }}-testrun-artifacts-*
+          path: merged-artifacts
 
   Comment-CI-Results:
     if: always()
@@ -290,14 +296,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-
-      - name: Cache pip
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('tests/ci-requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: 'pip'
+          cache-dependency-path: 'tests/ci-requirements.txt'
 
       - name: Install Dependencies
         run: |
