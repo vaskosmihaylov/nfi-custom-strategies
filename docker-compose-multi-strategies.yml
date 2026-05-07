@@ -178,22 +178,23 @@ services:
       --strategy-path user_data/strategies/remiotore
       --strategy GnF_V2
 
-  # ZaratustraV31 Strategy (Longs + Shorts)
-  freqtrade-zaratustrav31:
+  # SimpleRSI Strategy (Longs)
+  freqtrade-simplersi:
     <<: *common-settings
-    container_name: freqtrade-zaratustrav31
+    container_name: freqtrade-simplersi
     ports:
       - "127.0.0.1:8118:8080"
     env_file:
-      - path: ./env-files/zaratustrav31.env
+      - path: ./env-files/simplersi.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/zaratustrav31-tradesv3.sqlite
-      --log-file user_data/logs/zaratustrav31.log
-      --strategy-path user_data/strategies/remiotore
-      --strategy ZaratustraV31
+      --config user_data/strategies/SimpleRSI/SimpleRSI.json
+      --db-url sqlite:////freqtrade/user_data/simplersi-tradesv3.sqlite
+      --log-file user_data/logs/simplersi.log
+      --strategy-path user_data/strategies/SimpleRSI
+      --strategy SimpleRSI
 
   # ZaratustraDCA2_06 Strategy (Longs + Shorts)
   freqtrade-zaratustra:
@@ -318,6 +319,24 @@ services:
       --strategy-path user_data/strategies/Fenix
       --strategy FenixTopProfit
 
+  # SimpleRSI_Shorts Strategy (Shorts)
+  freqtrade-simplersi_shorts:
+    <<: *common-settings
+    container_name: freqtrade-simplersi_shorts
+    ports:
+      - "127.0.0.1:8130:8080"
+    env_file:
+      - path: ./env-files/simplersi_shorts.env
+        required: true
+    command: >
+      trade
+      --config user_data/strategies/config.json
+      --config user_data/strategies/SimpleRSI/SimpleRSI_Shorts.json
+      --db-url sqlite:////freqtrade/user_data/simplersi_shorts-tradesv3.sqlite
+      --log-file user_data/logs/simplersi_shorts.log
+      --strategy-path user_data/strategies/SimpleRSI
+      --strategy SimpleRSI_Shorts
+
   # MtfScalper Strategy
   freqtrade-mtfscalper:
     <<: *common-settings
@@ -404,22 +423,22 @@ services:
       --strategy-path user_data/strategies/DevDsl2Approx
       --strategy DevDsl2Approx
 
-  # EDTMA Strategy (Longs + Shorts dry-run validation)
-  freqtrade-edtma:
+  # MomentumCCITrendStrategy (Longs + Shorts)
+  freqtrade-momentumccitrendstrategy:
     <<: *common-settings
-    container_name: freqtrade-edtma
+    container_name: freqtrade-momentumccitrendstrategy
     ports:
       - "127.0.0.1:8137:8080"
     env_file:
-      - path: ./env-files/edtma.env
+      - path: ./env-files/momentumccitrendstrategy.env
         required: true
     command: >
       trade
       --config user_data/strategies/config.json
-      --db-url sqlite:////freqtrade/user_data/edtma-tradesv3.sqlite
-      --log-file user_data/logs/edtma.log
-      --strategy-path user_data/strategies/Picasso
-      --strategy EDTMA_Long_Short_prot_CE_1h_3Lev_3mt_March
+      --db-url sqlite:////freqtrade/user_data/momentumccitrendstrategy-tradesv3.sqlite
+      --log-file user_data/logs/momentumccitrendstrategy.log
+      --strategy-path user_data/strategies/MomentumCCITrendStrategy
+      --strategy MomentumCCITrendStrategy
 
   # CombinedBinHAndClucV8 Strategy (5m)
   freqtrade-combinedbinhandclucv8:
