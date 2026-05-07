@@ -137,7 +137,9 @@ class MomentumCCITrendStrategy(IStrategy):
         )
         
         # 计算CCI穿越零轴的信号
+        dataframe['cci_long_cross_above_zero'] = qtpylib.crossed_above(dataframe['cci_long'], 0)
         dataframe['cci_long_cross_below_zero'] = qtpylib.crossed_below(dataframe['cci_long'], 0)
+        dataframe['cci_short_cross_above_zero'] = qtpylib.crossed_above(dataframe['cci_short'], 0)
         dataframe['cci_short_cross_below_zero'] = qtpylib.crossed_below(dataframe['cci_short'], 0)
         
         # 初始化状态追踪列
