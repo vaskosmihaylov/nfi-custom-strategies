@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.57"
+    return "v17.4.58"
 
   stoploss = -0.99
 
@@ -22254,6 +22254,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((df["RSI_3_4h"] > 35.0) | (df["STOCHRSIk_14_14_3_3_4h"] < 40.0) | (df["ROC_9_1d"] > -30.0))
             # 4h down move, 4h high, 1d overbought
             & ((df["RSI_3_4h"] > 40.0) | (df["AROONU_14_4h"] < 60.0) | (df["ROC_9_1d"] < 40.0))
+            # 4h & 1d down move, 1h high
+            & ((df["RSI_3_4h"] > 45.0) | (df["RSI_3_1d"] > 45.0) | (df["STOCHRSIk_14_14_3_3_1h"] < 70.0))
             # 4h down move, 1d high & overbought
             & ((df["RSI_3_4h"] > 55.0) | (df["STOCHRSIk_14_14_3_3_1d"] < 90.0) | (df["ROC_9_1d"] < 80.0))
             # 1d down move, 1d high, 1d downtrend
@@ -47417,11 +47419,11 @@ class NostalgiaForInfinityX7(IStrategy):
     if (last_candle["protections_long_global"] == True) and (
       (last_candle["enter_long"] == True)
       or (
-        (last_candle["RSI_14"] < 46.0)
-        and (last_candle["RSI_3"] > 10.0)
+        (last_candle["RSI_3"] > 10.0)
         and (last_candle["RSI_3_15m"] > 10.0)
         and (last_candle["RSI_3_1h"] > 15.0)
         and (last_candle["RSI_3_4h"] > 15.0)
+        and (last_candle["RSI_14"] < 46.0)
         and (last_candle["AROONU_14"] < 25.0)
         and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
         and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.60))
@@ -47508,6 +47510,8 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["RSI_3_15m"] > 5.0)
         and (last_candle["RSI_3_1h"] > 10.0)
         and (last_candle["RSI_3_4h"] > 10.0)
+        and (last_candle["ROC_9_1h"] > -10.0)
+        and (last_candle["ROC_9_4h"] > -25.0)
         and (last_candle["close"] < (last_candle["low_min_24_1h"] * 1.30))
         and (last_candle["EMA_26"] > last_candle["EMA_12"])
         and ((last_candle["EMA_26"] - last_candle["EMA_12"]) > (last_candle["open"] * 0.030))
