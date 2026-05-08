@@ -29,6 +29,13 @@ echo "Checking for NFI updates..."
 
 CHANGES_DETECTED=false
 
+# Per-exchange state directory: each updater independently tracks what it has seen
+# and what the bot has loaded. This avoids the race condition where multiple
+# updaters sharing the same mount see a file already updated by another instance
+# and skip their own restart.
+STATE_DIR="$BASE_DIR/.updater_state_${EXCHANGE}"
+mkdir -p "$STATE_DIR"
+
 # --- Downloads a file from GitHub and replaces the local copy if it changed ---
 check_and_update() {
     local remote_suffix=$1
@@ -45,21 +52,43 @@ check_and_update() {
         return
     fi
 
-    if [ -f "$local_path" ]; then
-        LOCAL_HASH=$(md5sum "$local_path" | awk '{print $1}')
-        REMOTE_HASH=$(md5sum "$tmp_file"   | awk '{print $1}')
+    STATE_FILE="$STATE_DIR/${filename}.hash"
+    BOT_STATE_FILE="$STATE_DIR/.bot_${filename}.hash"
 
-        if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+    REMOTE_HASH=$(md5sum "$tmp_file" | awk '{print $1}')
+
+    if [ -f "$STATE_FILE" ]; then
+        LAST_REMOTE_HASH=$(cat "$STATE_FILE")
+
+        if [ "$LAST_REMOTE_HASH" != "$REMOTE_HASH" ]; then
+            # Remote changed → download to disk, mark for restart
             echo -e "${GREEN}[UPDATED]${NC}"
-            # cp instead of mv — avoids cross-filesystem issues with Docker volumes on Windows
             cp "$tmp_file" "$local_path"
+            echo "$REMOTE_HASH" > "$STATE_FILE"
             CHANGES_DETECTED=true
         else
-            echo -e "${YELLOW}[OK] Up to date${NC}"
+            # Remote unchanged — but is the bot actually running this code?
+            LOCAL_HASH=$(md5sum "$local_path" 2>/dev/null | awk '{print $1}')
+            if [ -f "$BOT_STATE_FILE" ]; then
+                BOT_HASH=$(cat "$BOT_STATE_FILE")
+                if [ "$BOT_HASH" != "$LOCAL_HASH" ]; then
+                    # File on disk changed without bot restart (or bot missed a previous update)
+                    echo -e "${YELLOW}[STALE] Bot running old code, will restart${NC}"
+                    CHANGES_DETECTED=true
+                else
+                    echo -e "${YELLOW}[OK] Up to date${NC}"
+                fi
+            else
+                # No bot-state recorded — can't verify what the bot is running
+                echo -e "${YELLOW}[SYNC] First run with bot-state tracking, will restart${NC}"
+                CHANGES_DETECTED=true
+            fi
         fi
     else
-        echo -e "${GREEN}[NEW FILE]${NC}"
+        # First run — no state at all. Always restart to establish a known baseline.
+        echo -e "${YELLOW}[INIT] First run, establishing baseline${NC}"
         cp "$tmp_file" "$local_path"
+        echo "$REMOTE_HASH" > "$STATE_FILE"
         CHANGES_DETECTED=true
     fi
 
@@ -78,12 +107,19 @@ if [ "$CHANGES_DETECTED" = true ]; then
     rm -rf "$TEMP_DIR"
 
     # Restart via Docker Compose using the mounted socket.
-    # COMPOSE_PROJECT_NAME must match the name Docker Compose assigned to your stack
-    # (defaults to the lowercase folder name — check with: docker compose ls)
     COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-nostalgiaforinfinity}" \
         docker compose -f /data/docker-compose.yml restart freqtrade
 
     echo "Bot restarted successfully."
+
+    # Record what the bot just loaded, so future checks can detect if the bot
+    # is running stale code (e.g. file changed externally, or missed a restart).
+    for f in "$STRATEGY_FILE" "$CONFIGS_DIR/blacklist-${EXCHANGE}.json" "$CONFIGS_DIR/${PAIRLIST_FILE}"; do
+        fname=$(basename "$f")
+        if [ -f "$f" ]; then
+            md5sum "$f" | awk '{print $1}' > "$STATE_DIR/.bot_${fname}.hash"
+        fi
+    done
 else
     echo -e "${GREEN}No updates found. System is up to date.${NC}"
     rm -rf "$TEMP_DIR"
