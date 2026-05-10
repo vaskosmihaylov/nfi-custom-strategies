@@ -26,6 +26,10 @@
 # 4. Add a line like: 0 * * * * /path/to/your/script/check_branch_and_update.sh
 #    (runs every hour)
 #
+# To check for updates without copying files, updating commit.txt, restarting
+# services, or sending Telegram messages:
+#   ./check_branch_and_update.sh --check-only
+#
 ###############################################################################
 
 # Do NOT exit on errors during config - only during runtime
@@ -64,6 +68,7 @@ TEMP_DIR="$SCRIPT_DIR/.nfi_temp"
 UPDATED_FILES_ARRAY=()
 OLD_COMMIT=""
 NEW_COMMIT=""
+CHECK_ONLY=false
 
 # Enable strict mode for runtime (after config)
 RUNTIME_MODE=false
@@ -93,6 +98,43 @@ check_dependency() {
         log "Dependency '$1' is not installed. Please install it first."
         exit 1
     fi
+}
+
+# ============================================================================
+# CLI Argument Functions
+# ============================================================================
+
+show_usage() {
+    cat <<EOF
+Usage: $(basename "$0") [--check-only] [--help]
+
+Options:
+  --check-only, -c  Check whether monitored files have updates without applying them.
+                    This does not copy files, update commit.txt, restart services,
+                    or send Telegram notifications.
+  --help, -h        Show this help message.
+EOF
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --check-only|-c)
+                CHECK_ONLY=true
+                ;;
+            --help|-h)
+                show_usage
+                exit 0
+                ;;
+            *)
+                show_usage
+                echo ""
+                echo "Unknown argument: $1"
+                exit 1
+                ;;
+        esac
+        shift
+    done
 }
 
 # ============================================================================
@@ -791,8 +833,13 @@ cleanup_temp_files() {
 # ============================================================================
 
 main() {
+    parse_args "$@"
+
     log "========================================================================"
     log "NostalgiaForInfinity Git-based Update Script - Starting"
+    if [[ "$CHECK_ONLY" == "true" ]]; then
+        log "Mode: check-only (no files copied, no commit reference update, no restarts)"
+    fi
     log "========================================================================"
 
     # Check dependencies - only git and curl needed
@@ -803,6 +850,9 @@ main() {
 
     # Initialize config
     if [ ! -f "$CONFIG_FILE" ]; then
+        if [[ "$CHECK_ONLY" == "true" ]]; then
+            log_error "Config file not found. Run without --check-only first to create $CONFIG_FILE."
+        fi
         create_config
         log "Configuration created. Please run the script again."
         exit 0
@@ -823,8 +873,12 @@ main() {
     # Initialize commit file if not found
     local is_first_run="no"
     if [ ! -f "$LOCAL_COMMIT_FILE" ]; then
-        log "Commit file not found. Creating a new one - FIRST RUN."
-        echo "0" > "$LOCAL_COMMIT_FILE"
+        if [[ "$CHECK_ONLY" == "true" ]]; then
+            log "Commit file not found. Check-only mode will treat this as FIRST RUN without creating it."
+        else
+            log "Commit file not found. Creating a new one - FIRST RUN."
+            echo "0" > "$LOCAL_COMMIT_FILE"
+        fi
         is_first_run="yes"
     fi
 
@@ -832,7 +886,11 @@ main() {
     init_or_update_git_repo
 
     # Get commits
-    local_commit=$(cat "$LOCAL_COMMIT_FILE")
+    if [ -f "$LOCAL_COMMIT_FILE" ]; then
+        local_commit=$(cat "$LOCAL_COMMIT_FILE")
+    else
+        local_commit="0"
+    fi
     remote_commit=$(get_remote_commit)
     OLD_COMMIT="$local_commit"
     NEW_COMMIT="$remote_commit"
@@ -864,7 +922,24 @@ main() {
 
     if ! has_monitored_files_changed "$all_monitored_files"; then
         log "No monitored files found in changes."
-        echo "$remote_commit" > "$LOCAL_COMMIT_FILE"
+        if [[ "$CHECK_ONLY" == "true" ]]; then
+            log "Check-only mode: commit reference unchanged."
+        else
+            echo "$remote_commit" > "$LOCAL_COMMIT_FILE"
+        fi
+        cleanup_temp_files
+        exit 0
+    fi
+
+    if [[ "$CHECK_ONLY" == "true" ]]; then
+        log "Monitored files have updates available."
+        log "Check-only mode: no files copied, no services restarted, no notifications sent."
+        log "Check-only mode: commit reference unchanged."
+
+        if [[ "$is_first_run" != "yes" ]]; then
+            log "Compare: https://github.com/$GITHUB_USER/$GITHUB_REPO/compare/${OLD_COMMIT:0:8}...${NEW_COMMIT:0:8}"
+        fi
+
         cleanup_temp_files
         exit 0
     fi
@@ -959,6 +1034,6 @@ main() {
 # Script Entry Point
 # ============================================================================
 
-main
+main "$@"
 
 exit 0
