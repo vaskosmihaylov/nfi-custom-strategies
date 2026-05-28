@@ -46,16 +46,31 @@ jobs:
 
             # If there are conflicts, prefer upstream version for NFI files
             # but keep our custom directories
-            git status --porcelain | grep '^UU' || exit 0
+            mapfile -t conflicted_files < <(git diff --name-only --diff-filter=U)
+
+            if [ ${#conflicted_files[@]} -eq 0 ]; then
+              echo "❌ Merge failed, but Git did not report any unmerged files"
+              git status --short
+              exit 1
+            fi
 
             # For any conflicts in root-level .py files, take upstream version
-            for file in $(git diff --name-only --diff-filter=U); do
+            for file in "${conflicted_files[@]}"; do
               if [[ "$file" == NostalgiaForInfinity*.py ]]; then
                 echo "Auto-resolving $file - taking upstream version"
                 git checkout --theirs "$file"
                 git add "$file"
               fi
             done
+
+            mapfile -t unresolved_files < <(git diff --name-only --diff-filter=U)
+
+            if [ ${#unresolved_files[@]} -ne 0 ]; then
+              echo "❌ Merge conflicts could not be auto-resolved"
+              printf '%s\n' "${unresolved_files[@]}"
+              echo "Manual intervention required!"
+              exit 1
+            fi
 
             # Try to complete merge
             git commit --no-edit || {
