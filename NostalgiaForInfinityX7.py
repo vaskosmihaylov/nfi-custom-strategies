@@ -1063,9 +1063,7 @@ class NostalgiaForInfinityX7(IStrategy):
     enter_tags,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     is_derisk = False
     if previous_sell_reason in [
       f"exit_{mode_name}_stoploss_doom",
@@ -1074,9 +1072,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ]:
       filled_entries = trade.select_filled_orders(trade.entry_side)
       filled_exits = trade.select_filled_orders(trade.exit_side)
-      has_order_tags = False
-      if hasattr(filled_entries[0], "ft_order_tag"):
-        has_order_tags = True
+      has_order_tags = hasattr(filled_entries[0], "ft_order_tag")
       for order in filled_exits:
         order_tag = ""
         if has_order_tags:
@@ -1154,7 +1150,7 @@ class NostalgiaForInfinityX7(IStrategy):
         )
       ):
         return True, previous_sell_reason
-    elif previous_sell_reason in [f"exit_{mode_name}_stoploss_u_e"]:
+    elif previous_sell_reason == f"exit_{mode_name}_stoploss_u_e":
       if profit_init_ratio > 0.0:
         # profit is over the threshold, don't exit
         self._remove_profit_target(pair)
@@ -1164,7 +1160,7 @@ class NostalgiaForInfinityX7(IStrategy):
         return False, None
       elif profit_ratio < (previous_profit - (0.04 / trade.leverage)):
         return True, previous_sell_reason
-    elif previous_sell_reason in [f"exit_profit_{mode_name}_max"]:
+    elif previous_sell_reason == f"exit_profit_{mode_name}_max":
       if profit_init_ratio < -0.08:
         # profit is under the threshold, cancel it
         self._remove_profit_target(pair)
@@ -2637,9 +2633,7 @@ class NostalgiaForInfinityX7(IStrategy):
     is_long_btc_mode = all(c in self.long_btc_mode_tags for c in enter_tags)
     is_short_grind_mode = all(c in self.short_grind_mode_tags for c in enter_tags)
     is_v2_date = is_backtest or trade.open_date_utc.replace(tzinfo=None) >= datetime(2025, 2, 13)
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
     # Rebuy mode
     if not trade.is_short and (
@@ -12095,36 +12089,14 @@ class NostalgiaForInfinityX7(IStrategy):
     if entry_tag == "force_entry":
       return True
 
-    # Mode configurations (dynamic structure)
-    mode_configs = {
-      "grind": {
-        "tags": self.long_grind_mode_tags,
-        "coins": self.grind_mode_coins,
-        "max_slots": self.grind_mode_max_slots,
-        "log_message": "grind mode",
-      },
-      "top_coins": {
-        "tags": self.long_top_coins_mode_tags,
-        "coins": self.top_coins_mode_coins,
-        "log_message": "top coins mode",
-      },
-      "scalp": {
-        "tags": self.long_scalp_mode_tags,
-        "min_free_slots": self.min_free_slots_scalp_mode,
-        "log_message": "scalp mode",
-      },
-    }
-
     # Mode Validation
     entry_tags = entry_tag.split()
-    for mode, config in mode_configs.items():
-      if all(c in config["tags"] for c in entry_tags):
-        if mode == "grind":
-          return self._handle_grind_mode(pair, config, current_time)
-        elif mode == "top_coins":
-          return self._handle_top_coins_mode(pair, config, current_time)
-        elif mode == "scalp":
-          return self._handle_scalp_mode(pair, config, current_time)
+    if all(c in self.long_grind_mode_tags for c in entry_tags):
+      return self._handle_grind_mode(pair, current_time)
+    if all(c in self.long_top_coins_mode_tags for c in entry_tags):
+      return self._handle_top_coins_mode(pair, current_time)
+    if all(c in self.long_scalp_mode_tags for c in entry_tags):
+      return self._handle_scalp_mode(pair, current_time)
 
     # Long/Short Slot Validation (only in futures mode)
     if self.is_futures_mode:
@@ -12157,30 +12129,32 @@ class NostalgiaForInfinityX7(IStrategy):
 
     return True
 
-  def _handle_grind_mode(self, pair: str, config: dict, current_time: datetime) -> bool:
-    is_pair_grind_mode = pair.partition("/")[0] in config["coins"]
+  def _handle_grind_mode(self, pair: str, current_time: datetime) -> bool:
+    is_pair_grind_mode = pair.partition("/")[0] in self.grind_mode_coins
     if not is_pair_grind_mode:
       log.info(f"[{current_time}] Cancelling entry for {pair} due to not being in grind mode coins list.")
       return False
 
     open_trades = Trade.get_trades_proxy(is_open=True)
-    num_open_grind_mode = sum(1 for t in open_trades if all(c in config["tags"] for c in t.enter_tag.split()))
-    if num_open_grind_mode >= config["max_slots"]:
+    num_open_grind_mode = sum(
+      1 for t in open_trades if all(c in self.long_grind_mode_tags for c in t.enter_tag.split())
+    )
+    if num_open_grind_mode >= self.grind_mode_max_slots:
       log.info(f"[{current_time}] Cancelling entry for {pair} due to grind mode slots limit reached.")
       return False
 
     return True
 
-  def _handle_top_coins_mode(self, pair: str, config: dict, current_time: datetime) -> bool:
-    is_pair_top_coins_mode = pair.partition("/")[0] in config["coins"]
+  def _handle_top_coins_mode(self, pair: str, current_time: datetime) -> bool:
+    is_pair_top_coins_mode = pair.partition("/")[0] in self.top_coins_mode_coins
     if not is_pair_top_coins_mode:
       log.info(f"[{current_time}] Cancelling entry for {pair} due to not being in top coins list.")
       return False
     return True
 
-  def _handle_scalp_mode(self, pair: str, config: dict, current_time: datetime) -> bool:
+  def _handle_scalp_mode(self, pair: str, current_time: datetime) -> bool:
     current_free_slots = self.config["max_open_trades"] - Trade.get_open_trade_count()
-    if current_free_slots < config["min_free_slots"]:
+    if current_free_slots < self.min_free_slots_scalp_mode:
       log.info(f"[{current_time}] Cancelling entry for {pair} due to insufficient free slots.")
       return False
     return True
@@ -12283,6 +12257,15 @@ class NostalgiaForInfinityX7(IStrategy):
   def is_system_v3_2(self, trade: Trade) -> bool:
     """Check if the current system is v3_2"""
     return trade.get_custom_data(key="system_version") == self.system_v3_2_name
+
+  def get_system_version_flags(self, trade: Trade) -> tuple[bool, bool, bool]:
+    """Check the current system version flags with one custom-data lookup."""
+    system_version = trade.get_custom_data(key="system_version")
+    return (
+      system_version == self.system_v3_name,
+      system_version == self.system_v3_1_name,
+      system_version == self.system_v3_2_name,
+    )
 
   def has_valid_entry_conditions(
     self, trade: Trade, exit_rate: float, last_candle, previous_candle, filled_orders=None
@@ -26144,7 +26127,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.long_normal_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.long_normal_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.005):
           mark_pair, mark_signal = self.mark_profit_target(
             self.long_normal_mode_name,
@@ -26161,7 +26144,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.long_normal_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.long_normal_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -26864,7 +26847,9 @@ class NostalgiaForInfinityX7(IStrategy):
       leverage = trade.leverage
       entry_cost = filled_entries[0].cost
 
-      if self.is_system_v3_2(trade):
+      is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
+
+      if is_system_v3_2:
         threshold = (
           self.system_v3_2_stop_threshold_futures_rebuy
           if self.is_futures_mode
@@ -26874,7 +26859,7 @@ class NostalgiaForInfinityX7(IStrategy):
         if self.system_v3_2_stops_enable and profit_stake < -(entry_cost * threshold / leverage):
           sell, signal_name = True, stoploss_doom
 
-      elif self.is_system_v3_1(trade):
+      elif is_system_v3_1:
         threshold = (
           self.system_v3_1_stop_threshold_futures_rebuy
           if self.is_futures_mode
@@ -26884,7 +26869,7 @@ class NostalgiaForInfinityX7(IStrategy):
         if profit_stake < -(entry_cost * threshold / leverage):
           sell, signal_name = True, stoploss_doom
 
-      elif self.is_system_v3(trade):
+      elif is_system_v3:
         threshold = (
           self.system_v3_stop_threshold_futures_rebuy
           if self.is_futures_mode
@@ -27327,9 +27312,7 @@ class NostalgiaForInfinityX7(IStrategy):
     enter_tags,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
     mode = self.long_rapid_mode_name
     cache = self.target_profit_cache
@@ -27925,9 +27908,7 @@ class NostalgiaForInfinityX7(IStrategy):
   ) -> tuple:
     mode = self.long_scalp_mode_name
 
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
     sell = False
     signal_name = None
@@ -43866,9 +43847,7 @@ class NostalgiaForInfinityX7(IStrategy):
     buy_tag,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     if not self.stops_enable:
       return False, None
     if is_system_v3_2:
@@ -44045,9 +44024,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (self.long_rebuy_mode_tags + self.long_grind_mode_tags) for c in enter_tags)
     )
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     fee_open_rate = trade.fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade.fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -44364,12 +44341,12 @@ class NostalgiaForInfinityX7(IStrategy):
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
-        elif order_tag in ["derisk_level_2"]:
+        elif order_tag == "derisk_level_2":
           if not is_derisk_2_found:
             is_derisk_2_found = True
             is_derisk_2 = True
             derisk_2_order = order
-        elif order_tag in ["derisk_level_3"]:
+        elif order_tag == "derisk_level_3":
           if not is_derisk_3_found:
             is_derisk_3_found = True
             is_derisk_3 = True
@@ -44398,7 +44375,7 @@ class NostalgiaForInfinityX7(IStrategy):
         elif not grind_5_is_exit_found and order_tag in ["grind_5_exit", "grind_5_derisk"]:
           grind_5_is_exit_found = True
           grind_5_exit_order = order
-        elif order_tag in ["derisk_global"]:
+        elif order_tag == "derisk_global":
           if not buyback_1_is_exit_found:
             buyback_1_is_exit_found = True
             buyback_1_exit_order = order
@@ -46441,13 +46418,9 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (self.long_rebuy_mode_tags + self.long_grind_mode_tags) for c in enter_tags)
     )
 
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     fee_open_rate = trade.fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade.fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -46748,22 +46721,22 @@ class NostalgiaForInfinityX7(IStrategy):
         if has_order_tags:
           if order.ft_order_tag is not None:
             order_tag = order.ft_order_tag.partition(" ")[0]
-        if order_tag in ["derisk_level_1"]:
+        if order_tag == "derisk_level_1":
           if not is_derisk_1_found:
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
-        elif order_tag in ["derisk_level_2"]:
+        elif order_tag == "derisk_level_2":
           if not is_derisk_2_found:
             is_derisk_2_found = True
             is_derisk_2 = True
             derisk_2_order = order
-        elif order_tag in ["derisk_level_3"]:
+        elif order_tag == "derisk_level_3":
           if not is_derisk_3_found:
             is_derisk_3_found = True
             is_derisk_3 = True
             derisk_3_order = order
-        elif order_tag in ["derisk_level_4"]:
+        elif order_tag == "derisk_level_4":
           if not is_derisk_4_found:
             is_derisk_4_found = True
             is_derisk_4 = True
@@ -46789,7 +46762,7 @@ class NostalgiaForInfinityX7(IStrategy):
         elif not rebuy_is_exit_found and order_tag in ["rebuy_exit", "rebuy_derisk"]:
           rebuy_is_exit_found = True
           rebuy_exit_order = order
-        elif order_tag in ["derisk_global"]:
+        elif order_tag == "derisk_global":
           if not grind_1_is_exit_found:
             grind_1_is_exit_found = True
             grind_1_exit_order = order
@@ -48356,9 +48329,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     if self.dp.runmode.value in ("live", "dry_run"):
       ticker = self.dp.ticker(trade.pair)
@@ -48839,13 +48810,13 @@ class NostalgiaForInfinityX7(IStrategy):
           grind_3_is_sell_found = True
         elif order_tag in ["gd2", "dd2"]:
           grind_2_is_sell_found = True
-        elif order_tag in ["d1"]:
+        elif order_tag == "d1":
           if not is_derisk_1_found:
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
         elif order_tag in ["p", "r", "d", "dd0", "partial_exit", "force_exit", ""]:
-          if order_tag in ["d"]:
+          if order_tag == "d":
             is_derisk_found = True
             is_derisk = True
           grind_1_is_sell_found = True
@@ -50906,7 +50877,7 @@ class NostalgiaForInfinityX7(IStrategy):
           grind_6_is_sell_found = True
         elif order_tag in ["d", "d1", "dd0", "ddl1", "ddl2", "dd1", "dd2", "dd3", "dd4", "dd5", "dd6"]:
           is_derisk = True
-          if order_tag in ["d1"]:
+          if order_tag == "d1":
             is_derisk_1 = True
           grind_1_is_sell_found = True
           grind_2_is_sell_found = True
@@ -52017,9 +51988,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     # The first exit is de-risk (providing the trade is still open)
     if (count_of_exits > 0) and (filled_exits[0].ft_order_tag == "derisk_level_3"):
@@ -52204,9 +52173,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     # The first exit is de-risk (providing the trade is still open)
     if (count_of_exits > 0) and (filled_exits[0].ft_order_tag == "derisk_level_3"):
@@ -52538,7 +52505,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_normal_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_normal_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.005):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_normal_mode_name,
@@ -52555,7 +52522,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_normal_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_normal_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -52797,7 +52764,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_pump_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_pump_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.005):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_pump_mode_name,
@@ -52814,7 +52781,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_pump_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_pump_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -53079,7 +53046,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_quick_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_quick_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.001):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_quick_mode_name,
@@ -53096,7 +53063,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_quick_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_quick_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -53212,9 +53179,7 @@ class NostalgiaForInfinityX7(IStrategy):
     enter_tags,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     sell = False
 
     # Original sell signals
@@ -53364,7 +53329,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_rebuy_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_rebuy_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.001):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_rebuy_mode_name,
@@ -53381,7 +53346,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_rebuy_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_rebuy_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -53594,7 +53559,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_high_profit_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_high_profit_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.001):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_high_profit_mode_name,
@@ -53611,7 +53576,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_high_profit_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_high_profit_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -53719,9 +53684,7 @@ class NostalgiaForInfinityX7(IStrategy):
     enter_tags,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     sell = False
     signal_name = None
 
@@ -53917,7 +53880,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_rapid_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_rapid_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.001):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_rapid_mode_name,
@@ -53934,7 +53897,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_rapid_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_rapid_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -54205,7 +54168,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_top_coins_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_top_coins_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.005):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_top_coins_mode_name,
@@ -54222,7 +54185,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_top_coins_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_top_coins_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -54337,9 +54300,7 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     sell = False
 
     # Original sell signals
@@ -54491,7 +54452,7 @@ class NostalgiaForInfinityX7(IStrategy):
       )
       if sell_max and signal_name_max is not None:
         return True, f"{signal_name_max}_m"
-      if previous_sell_reason in [f"exit_{self.short_scalp_mode_name}_stoploss_u_e"]:
+      if previous_sell_reason == f"exit_{self.short_scalp_mode_name}_stoploss_u_e":
         if profit_ratio > (previous_profit + 0.005):
           mark_pair, mark_signal = self.mark_profit_target(
             self.short_scalp_mode_name,
@@ -54508,7 +54469,7 @@ class NostalgiaForInfinityX7(IStrategy):
           if mark_pair:
             self._set_profit_target(pair, mark_signal, current_rate, profit_ratio, current_time)
       elif (profit_init_ratio > (previous_profit + 0.001)) and (
-        previous_sell_reason not in [f"exit_{self.short_scalp_mode_name}_stoploss_doom"]
+        previous_sell_reason != f"exit_{self.short_scalp_mode_name}_stoploss_doom"
       ):
         # Update the target, raise it.
         mark_pair, mark_signal = self.mark_profit_target(
@@ -70319,9 +70280,7 @@ class NostalgiaForInfinityX7(IStrategy):
     buy_tag,
   ) -> tuple:
     is_backtest = self.is_backtest_mode()
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
     if not self.stops_enable:
       return False, None
     if is_system_v3_2:
@@ -70499,9 +70458,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (self.short_rebuy_mode_tags + self.short_grind_mode_tags) for c in enter_tags)
     )
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     fee_open_rate = trade.fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade.fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -70818,12 +70775,12 @@ class NostalgiaForInfinityX7(IStrategy):
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
-        elif order_tag in ["derisk_level_2"]:
+        elif order_tag == "derisk_level_2":
           if not is_derisk_2_found:
             is_derisk_2_found = True
             is_derisk_2 = True
             derisk_2_order = order
-        elif order_tag in ["derisk_level_3"]:
+        elif order_tag == "derisk_level_3":
           if not is_derisk_3_found:
             is_derisk_3_found = True
             is_derisk_3 = True
@@ -70852,7 +70809,7 @@ class NostalgiaForInfinityX7(IStrategy):
         elif not grind_5_is_exit_found and order_tag in ["grind_5_exit", "grind_5_derisk"]:
           grind_5_is_exit_found = True
           grind_5_exit_order = order
-        elif order_tag in ["derisk_global"]:
+        elif order_tag == "derisk_global":
           if not buyback_1_is_exit_found:
             buyback_1_is_exit_found = True
             buyback_1_exit_order = order
@@ -72877,13 +72834,9 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (self.short_rebuy_mode_tags + self.short_grind_mode_tags) for c in enter_tags)
     )
 
-    is_system_v3 = self.is_system_v3(trade)
-    is_system_v3_1 = self.is_system_v3_1(trade)
-    is_system_v3_2 = self.is_system_v3_2(trade)
+    is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     fee_open_rate = trade.fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade.fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -73159,17 +73112,17 @@ class NostalgiaForInfinityX7(IStrategy):
         if has_order_tags:
           if order.ft_order_tag is not None:
             order_tag = order.ft_order_tag.partition(" ")[0]
-        if order_tag in ["derisk_level_1"]:
+        if order_tag == "derisk_level_1":
           if not is_derisk_1_found:
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
-        elif order_tag in ["derisk_level_2"]:
+        elif order_tag == "derisk_level_2":
           if not is_derisk_2_found:
             is_derisk_2_found = True
             is_derisk_2 = True
             derisk_2_order = order
-        elif order_tag in ["derisk_level_3"]:
+        elif order_tag == "derisk_level_3":
           if not is_derisk_3_found:
             is_derisk_3_found = True
             is_derisk_3 = True
@@ -73192,7 +73145,7 @@ class NostalgiaForInfinityX7(IStrategy):
         elif not rebuy_is_exit_found and order_tag in ["rebuy_exit", "rebuy_derisk"]:
           rebuy_is_exit_found = True
           rebuy_exit_order = order
-        elif order_tag in ["derisk_global"]:
+        elif order_tag == "derisk_global":
           if not grind_1_is_exit_found:
             grind_1_is_exit_found = True
             grind_1_exit_order = order
@@ -74470,9 +74423,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     if self.dp.runmode.value in ("live", "dry_run"):
       ticker = self.dp.ticker(trade.pair)
@@ -74953,13 +74904,13 @@ class NostalgiaForInfinityX7(IStrategy):
           grind_3_is_sell_found = True
         elif order_tag in ["gd2", "dd2"]:
           grind_2_is_sell_found = True
-        elif order_tag in ["d1"]:
+        elif order_tag == "d1":
           if not is_derisk_1_found:
             is_derisk_1_found = True
             is_derisk_1 = True
             derisk_1_order = order
         elif order_tag in ["p", "r", "d", "dd0", "partial_exit", "force_exit", ""]:
-          if order_tag in ["d"]:
+          if order_tag == "d":
             is_derisk_found = True
             is_derisk = True
           grind_1_is_sell_found = True
@@ -76958,7 +76909,7 @@ class NostalgiaForInfinityX7(IStrategy):
           grind_6_is_sell_found = True
         elif order_tag in ["d", "d1", "dd0", "ddl1", "ddl2", "dd1", "dd2", "dd3", "dd4", "dd5", "dd6"]:
           is_derisk = True
-          if order_tag in ["d1"]:
+          if order_tag == "d1":
             is_derisk_1 = True
           grind_1_is_sell_found = True
           grind_2_is_sell_found = True
@@ -78069,9 +78020,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     # The first exit is de-risk (providing the trade is still open)
     if (count_of_exits > 0) and (filled_exits[0].ft_order_tag == "derisk_level_3"):
@@ -78246,9 +78195,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if count_of_entries == 0:
       return None
 
-    has_order_tags = False
-    if hasattr(filled_orders[0], "ft_order_tag"):
-      has_order_tags = True
+    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
 
     if self.dp.runmode.value in ("live", "dry_run"):
       ticker = self.dp.ticker(trade.pair)
