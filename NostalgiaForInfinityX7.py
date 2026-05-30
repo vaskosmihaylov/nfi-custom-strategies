@@ -69,7 +69,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.123"
+    return "v17.4.124"
 
   stoploss = -0.99
 
@@ -786,7 +786,7 @@ class NostalgiaForInfinityX7(IStrategy):
   profit_max_thresholds = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05, 0.05]
 
   # Max allowed buy "slippage", how high to buy on the candle
-  max_slippage = 0.01
+  max_slippage = 0.02
 
   # BTC/ETH stakes
   btc_stakes = ["BTC", "ETH"]
@@ -43907,7 +43907,7 @@ class NostalgiaForInfinityX7(IStrategy):
           )
         )
         and (
-          self.has_valid_entry_conditions(trade, current_rate, last_candle, previous_candle_1, filled_orders) == False
+          self.has_valid_entry_conditions(trade, current_rate, last_candle, previous_candle_1, filled_entries) == False
         )
         # temporary
         and (is_backtest or trade.open_date_utc.replace(tzinfo=None) >= datetime(2024, 9, 13))
@@ -70340,7 +70340,7 @@ class NostalgiaForInfinityX7(IStrategy):
           )
         )
         and (
-          self.has_valid_entry_conditions(trade, current_rate, last_candle, previous_candle_1, filled_orders) == False
+          self.has_valid_entry_conditions(trade, current_rate, last_candle, previous_candle_1, filled_entries) == False
         )
         # temporary
         and (is_backtest or trade.open_date_utc.replace(tzinfo=None) >= datetime(2024, 9, 13))
