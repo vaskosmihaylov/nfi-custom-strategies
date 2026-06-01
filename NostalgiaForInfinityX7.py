@@ -1797,9 +1797,11 @@ class NostalgiaForInfinityX7(IStrategy):
     return filled_orders, filled_entries, filled_exits
 
   def trade_order_state(self, trade: "Trade") -> tuple:
-    last_order = trade.orders[-1] if trade.orders else None
+    orders = trade.orders
+
+    last_order = orders[-1] if orders else None
     return (
-      len(trade.orders),
+      len(orders),
       getattr(last_order, "id", None),
       getattr(last_order, "status", None),
       getattr(last_order, "filled", None),
@@ -1943,6 +1945,9 @@ class NostalgiaForInfinityX7(IStrategy):
   def custom_exit(
     self, pair: str, trade: "Trade", current_time: "datetime", current_rate: float, current_profit: float, **kwargs
   ):
+    trade_is_short = trade.is_short
+    long_rapid_mode_tags = self.long_rapid_mode_tags
+
     calc_total_profit = self.calc_total_profit
     cache_backtest_profit_snapshot = self.cache_backtest_profit_snapshot
     filled_order_snapshot = self.filled_order_snapshot
@@ -2125,8 +2130,8 @@ class NostalgiaForInfinityX7(IStrategy):
         return f"{signal_name} ( {enter_tag})"
 
     # Long rapid mode
-    if all(c in self.long_rapid_mode_tags for c in enter_tags) or (
-      any(c in self.long_rapid_mode_tags for c in enter_tags)
+    if all(c in long_rapid_mode_tags for c in enter_tags) or (
+      any(c in long_rapid_mode_tags for c in enter_tags)
       and all(c in self.long_rapid_rebuy_grind_scalp_mode_tags for c in enter_tags)
     ):
       sell, signal_name = self.long_exit_rapid(
@@ -2451,7 +2456,7 @@ class NostalgiaForInfinityX7(IStrategy):
         return f"{signal_name} ( {enter_tag})"
 
     # Trades not opened by X7
-    if not trade.is_short and (not any(c in self.long_known_mode_tags for c in enter_tags)):
+    if not trade_is_short and (not any(c in self.long_known_mode_tags for c in enter_tags)):
       # use normal mode for such trades
       sell, signal_name = long_exit_normal(
         pair,
@@ -2479,7 +2484,7 @@ class NostalgiaForInfinityX7(IStrategy):
         return f"{signal_name} ( {enter_tag})"
 
     # Trades not opened by X7
-    if trade.is_short and (not any(c in self.short_exit_known_mode_tags for c in enter_tags)):
+    if trade_is_short and (not any(c in self.short_exit_known_mode_tags for c in enter_tags)):
       # use normal mode for such trades
       sell, signal_name = short_exit_normal(
         pair,
@@ -2523,6 +2528,19 @@ class NostalgiaForInfinityX7(IStrategy):
     side: str,
     **kwargs,
   ) -> float:
+    long_rebuy_mode_tags = self.long_rebuy_mode_tags
+    long_rebuy_grind_mode_tags = self.long_rebuy_grind_mode_tags
+    system_v3_rebuy_mode_stake_multiplier = self.system_v3_rebuy_mode_stake_multiplier
+    system_v3_name = self.system_v3_name
+    system_v3_2_name = self.system_v3_2_name
+    system_v3_2_stake_multiplier = self.system_v3_2_stake_multiplier
+    system_v3_1_name = self.system_v3_1_name
+    system_v3_1_stake_multiplier = self.system_v3_1_stake_multiplier
+    long_rapid_mode_tags = self.long_rapid_mode_tags
+    short_rebuy_mode_tags = self.short_rebuy_mode_tags
+    short_rebuy_grind_mode_tags = self.short_rebuy_grind_mode_tags
+    short_rapid_mode_tags = self.short_rapid_mode_tags
+
     enter_tags = entry_tag.split()
     is_futures_mode = self.is_futures_mode
     system_name_use = self.system_name_use
@@ -2539,16 +2557,15 @@ class NostalgiaForInfinityX7(IStrategy):
 
     if side == "long":
       # Rebuy mode
-      if all(c in self.long_rebuy_mode_tags for c in enter_tags) or (
-        any(c in self.long_rebuy_mode_tags for c in enter_tags)
-        and all(c in self.long_rebuy_grind_mode_tags for c in enter_tags)
+      if all(c in long_rebuy_mode_tags for c in enter_tags) or (
+        any(c in long_rebuy_mode_tags for c in enter_tags) and all(c in long_rebuy_grind_mode_tags for c in enter_tags)
       ):
-        return scaled_stake(self.system_v3_rebuy_mode_stake_multiplier)
+        return scaled_stake(system_v3_rebuy_mode_stake_multiplier)
       # Rapid mode
-      if (system_name_use == self.system_v3_name) and (
-        all(c in self.long_rapid_mode_tags for c in enter_tags)
+      if (system_name_use == system_v3_name) and (
+        all(c in long_rapid_mode_tags for c in enter_tags)
         or (
-          any(c in self.long_rapid_mode_tags for c in enter_tags)
+          any(c in long_rapid_mode_tags for c in enter_tags)
           and all(c in self.long_rapid_rebuy_grind_mode_tags for c in enter_tags)
         )
       ):
@@ -2569,10 +2586,10 @@ class NostalgiaForInfinityX7(IStrategy):
         )
         return proposed_stake * stake_multiplier
       else:
-        if system_name_use == self.system_v3_2_name:
-          return scaled_stake(self.system_v3_2_stake_multiplier)
-        elif system_name_use == self.system_v3_1_name:
-          return scaled_stake(self.system_v3_1_stake_multiplier)
+        if system_name_use == system_v3_2_name:
+          return scaled_stake(system_v3_2_stake_multiplier)
+        elif system_name_use == system_v3_1_name:
+          return scaled_stake(system_v3_1_stake_multiplier)
         else:
           stake_multiplier = (
             regular_mode_stake_multiplier_futures[0] if is_futures_mode else regular_mode_stake_multiplier_spot[0]
@@ -2580,11 +2597,11 @@ class NostalgiaForInfinityX7(IStrategy):
           return scaled_stake(stake_multiplier)
     else:
       # Rebuy mode
-      if all(c in self.short_rebuy_mode_tags for c in enter_tags) or (
-        any(c in self.short_rebuy_mode_tags for c in enter_tags)
-        and all(c in self.short_rebuy_grind_mode_tags for c in enter_tags)
+      if all(c in short_rebuy_mode_tags for c in enter_tags) or (
+        any(c in short_rebuy_mode_tags for c in enter_tags)
+        and all(c in short_rebuy_grind_mode_tags for c in enter_tags)
       ):
-        return scaled_stake(self.system_v3_rebuy_mode_stake_multiplier)
+        return scaled_stake(system_v3_rebuy_mode_stake_multiplier)
       # Grind mode
       elif all(c in self.short_grind_mode_tags for c in enter_tags):
         for item in grind_mode_stake_multiplier_futures if is_futures_mode else grind_mode_stake_multiplier_spot:
@@ -2592,10 +2609,10 @@ class NostalgiaForInfinityX7(IStrategy):
           if stake > min_stake:
             return stake
       # Rapid mode
-      if (system_name_use == self.system_v3_name) and (
-        all(c in self.short_rapid_mode_tags for c in enter_tags)
+      if (system_name_use == system_v3_name) and (
+        all(c in short_rapid_mode_tags for c in enter_tags)
         or (
-          any(c in self.short_rapid_mode_tags for c in enter_tags)
+          any(c in short_rapid_mode_tags for c in enter_tags)
           and all(c in self.short_rapid_rebuy_grind_mode_tags for c in enter_tags)
         )
       ):
@@ -2604,10 +2621,10 @@ class NostalgiaForInfinityX7(IStrategy):
         )
         return scaled_stake(stake_multiplier)
       else:
-        if system_name_use == self.system_v3_2_name:
-          return scaled_stake(self.system_v3_2_stake_multiplier)
-        elif system_name_use == self.system_v3_1_name:
-          return scaled_stake(self.system_v3_1_stake_multiplier)
+        if system_name_use == system_v3_2_name:
+          return scaled_stake(system_v3_2_stake_multiplier)
+        elif system_name_use == system_v3_1_name:
+          return scaled_stake(system_v3_1_stake_multiplier)
         else:
           stake_multiplier = (
             regular_mode_stake_multiplier_futures[0] if is_futures_mode else regular_mode_stake_multiplier_spot[0]
@@ -2651,6 +2668,11 @@ class NostalgiaForInfinityX7(IStrategy):
     current_exit_profit: float,
     **kwargs,
   ):
+    long_adjust_mode_tags = self.long_adjust_mode_tags
+    long_known_mode_tags = self.long_known_mode_tags
+    short_adjust_mode_tags = self.short_adjust_mode_tags
+    short_known_mode_tags = self.short_known_mode_tags
+
     trade_is_short = trade.is_short
     long_grind_mode_tags = self.long_grind_mode_tags
     long_btc_mode_tags = self.long_btc_mode_tags
@@ -2751,8 +2773,8 @@ class NostalgiaForInfinityX7(IStrategy):
     # Grinding
     elif not trade_is_short:
       if not is_long_grind_mode and not is_long_btc_mode and (is_system_v3 or is_system_v3_1 or is_system_v3_2):
-        if any(c in self.long_adjust_mode_tags for c in enter_tags) or not any(
-          c in self.long_known_mode_tags for c in enter_tags
+        if any(c in long_adjust_mode_tags for c in enter_tags) or not any(
+          c in long_known_mode_tags for c in enter_tags
         ):
           return self.long_grind_adjust_trade_position_v3(
             trade,
@@ -2781,8 +2803,8 @@ class NostalgiaForInfinityX7(IStrategy):
           current_entry_profit,
           current_exit_profit,
         )
-      elif any(c in self.long_adjust_mode_tags for c in enter_tags) or not any(
-        c in self.long_known_mode_tags for c in enter_tags
+      elif any(c in long_adjust_mode_tags for c in enter_tags) or not any(
+        c in long_known_mode_tags for c in enter_tags
       ):
         return self.long_grind_adjust_trade_position_v2(
           trade,
@@ -2800,8 +2822,8 @@ class NostalgiaForInfinityX7(IStrategy):
 
     elif trade_is_short:
       if not is_short_grind_mode and (is_system_v3 or is_system_v3_1 or is_system_v3_2):
-        if any(c in self.short_adjust_mode_tags for c in enter_tags) or not any(
-          c in self.short_known_mode_tags for c in enter_tags
+        if any(c in short_adjust_mode_tags for c in enter_tags) or not any(
+          c in short_known_mode_tags for c in enter_tags
         ):
           return self.short_grind_adjust_trade_position_v3(
             trade,
@@ -2831,8 +2853,8 @@ class NostalgiaForInfinityX7(IStrategy):
           current_exit_profit,
         )
       else:
-        if any(c in self.short_adjust_mode_tags for c in enter_tags) or not any(
-          c in self.short_known_mode_tags for c in enter_tags
+        if any(c in short_adjust_mode_tags for c in enter_tags) or not any(
+          c in short_known_mode_tags for c in enter_tags
         ):
           return self.short_grind_adjust_trade_position_v2(
             trade,
@@ -4269,6 +4291,8 @@ class NostalgiaForInfinityX7(IStrategy):
   # ---------------------------------------------------------------------------------------------
   def populate_indicators(self, df: DataFrame, metadata: dict) -> DataFrame:
     tik = time.perf_counter()
+    prepare_informative_merge = self.prepare_informative_merge
+    base_timeframe = self.timeframe
 
     # =========================================================================
     # CONFIG
@@ -4317,13 +4341,13 @@ class NostalgiaForInfinityX7(IStrategy):
       # REMOVE UNUSED OHLCV BEFORE MERGE
       # ---------------------------------------------------------------------
 
-      btc_informative = self.prepare_informative_merge(btc_informative)
+      btc_informative = prepare_informative_merge(btc_informative)
 
       # ---------------------------------------------------------------------
       # MERGE
       # ---------------------------------------------------------------------
 
-      df = merge_informative_pair(df, btc_informative, self.timeframe, btc_tf, ffill=False)
+      df = merge_informative_pair(df, btc_informative, base_timeframe, btc_tf, ffill=False)
 
       # ---------------------------------------------------------------------
       # CLEANUP
@@ -4374,13 +4398,13 @@ class NostalgiaForInfinityX7(IStrategy):
       else:
         keep_ohlcv = set()
 
-      info_indicators = self.prepare_informative_merge(info_indicators, keep_ohlcv)
+      info_indicators = prepare_informative_merge(info_indicators, keep_ohlcv)
 
       # ---------------------------------------------------------------------
       # MERGE
       # ---------------------------------------------------------------------
 
-      df = merge_informative_pair(df, info_indicators, self.timeframe, info_tf, ffill=False)
+      df = merge_informative_pair(df, info_indicators, base_timeframe, info_tf, ffill=False)
 
       # ---------------------------------------------------------------------
       # CLEANUP
@@ -12096,6 +12120,12 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: datetime,
     **kwargs,
   ) -> bool:
+    trade_realized_profit = trade.realized_profit
+    trade_stake_amount = trade.stake_amount
+    trade_is_short = trade.is_short
+    trade_liquidation_price = trade.liquidation_price
+    trade_open_rate = trade.open_rate
+
     is_backtest = self.is_backtest_mode()
     # Allow force exits
     if exit_reason != "force_exit":
@@ -12105,18 +12135,18 @@ class NostalgiaForInfinityX7(IStrategy):
         # log.info(f"[{current_time}] Cancelling {exit_reason} exit for {pair}")
         is_liquidation = False
         if self.is_futures_mode and is_backtest:
-          if (trade.is_short and rate > trade.liquidation_price) or (
-            not trade.is_short and rate < trade.liquidation_price
+          if (trade_is_short and rate > trade_liquidation_price) or (
+            not trade_is_short and rate < trade_liquidation_price
           ):
             is_liquidation = True
         if not is_liquidation:
           return False
       if self.exit_profit_only:
         profit = 0.0
-        if trade.realized_profit != 0.0:
-          profit = ((rate - trade.open_rate) / trade.open_rate) * trade.stake_amount * (1 - trade.fee_close)
-          profit = profit + trade.realized_profit
-          profit = profit / trade.stake_amount
+        if trade_realized_profit != 0.0:
+          profit = ((rate - trade_open_rate) / trade_open_rate) * trade_stake_amount * (1 - trade.fee_close)
+          profit = profit + trade_realized_profit
+          profit = profit / trade_stake_amount
         else:
           profit = trade.calc_profit_ratio(rate)
         if profit < self.exit_profit_offset:
@@ -12240,9 +12270,11 @@ class NostalgiaForInfinityX7(IStrategy):
   # Remove Profit Target
   # ---------------------------------------------------------------------------------------------
   def _remove_profit_target(self, pair: str):
-    if self.target_profit_cache is not None:
-      self.target_profit_cache.data.pop(pair, None)
-      self.target_profit_cache.save()
+    target_profit_cache = self.target_profit_cache
+
+    if target_profit_cache is not None:
+      target_profit_cache.data.pop(pair, None)
+      target_profit_cache.save()
 
   # Get Hold Trades Config File
   # ---------------------------------------------------------------------------------------------
@@ -12417,6 +12449,11 @@ class NostalgiaForInfinityX7(IStrategy):
   # Populate Entry Trend
   # ---------------------------------------------------------------------------------------------
   def populate_entry_trend(self, df: DataFrame, metadata: dict) -> DataFrame:
+    config = self.config
+    long_entry_signal_params = self.long_entry_signal_params
+    short_entry_signal_params = self.short_entry_signal_params
+    top_coins_mode_coins = self.top_coins_mode_coins
+
     long_entry_conditions = []
     short_entry_conditions = []
 
@@ -12426,9 +12463,9 @@ class NostalgiaForInfinityX7(IStrategy):
 
     is_backtest = self.dp.runmode.value in ["backtest", "hyperopt", "plot", "webserver"]
     # the number of free slots
-    current_free_slots = self.config["max_open_trades"]
+    current_free_slots = config["max_open_trades"]
     if not is_backtest:
-      current_free_slots = self.config["max_open_trades"] - Trade.get_open_trade_count()
+      current_free_slots = config["max_open_trades"] - Trade.get_open_trade_count()
     # Grind mode
     pair_coin = metadata["pair"].partition("/")[0]
     num_open_long_grind_mode = 0
@@ -12442,10 +12479,10 @@ class NostalgiaForInfinityX7(IStrategy):
           if all(c in self.long_grind_mode_tags for c in enter_tags):
             num_open_long_grind_mode += 1
     # Top Coins mode
-    is_pair_long_top_coins_mode = pair_coin in self.top_coins_mode_coins
-    is_pair_short_top_coins_mode = pair_coin in self.top_coins_mode_coins
+    is_pair_long_top_coins_mode = pair_coin in top_coins_mode_coins
+    is_pair_short_top_coins_mode = pair_coin in top_coins_mode_coins
     # if BTC/ETH stake
-    is_btc_stake = self.config["stake_currency"] in self.btc_stakes
+    is_btc_stake = config["stake_currency"] in self.btc_stakes
     allowed_empty_candles_288 = 144 if is_btc_stake else 60
 
     ###############################################################################################
@@ -12465,9 +12502,9 @@ class NostalgiaForInfinityX7(IStrategy):
     # |________/\______/|__/  \__/\______/       |________|__/  \__/  |__/  |________|__/  |__/
     #
 
-    for enabled_long_entry_signal in self.long_entry_signal_params:
+    for enabled_long_entry_signal in long_entry_signal_params:
       long_entry_condition_index = int(enabled_long_entry_signal.rsplit("_", 2)[1])
-      if self.long_entry_signal_params[enabled_long_entry_signal]:
+      if long_entry_signal_params[enabled_long_entry_signal]:
         # Long Entry Conditions Starts Here
         # -----------------------------------------------------------------------------------------
         long_entry_logic = []
@@ -23963,9 +24000,9 @@ class NostalgiaForInfinityX7(IStrategy):
     #   \$$$$$$ \$$   \$$ \$$$$$$ \$$   \$$  \$$          \$$$$$$$$\$$   \$$   \$$   \$$$$$$$$\$$   \$$
     #
 
-    for enabled_short_entry_signal in self.short_entry_signal_params:
+    for enabled_short_entry_signal in short_entry_signal_params:
       short_entry_condition_index = int(enabled_short_entry_signal.rsplit("_", 2)[1])
-      if self.short_entry_signal_params[enabled_short_entry_signal]:
+      if short_entry_signal_params[enabled_short_entry_signal]:
         # Short Entry Conditions Starts Here
         # -----------------------------------------------------------------------------------------
         # IMPORTANT: Short Condition Descriptions are not for shorts. These are for longs but completely mirrored opposite side
@@ -26770,6 +26807,8 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -26820,7 +26859,7 @@ class NostalgiaForInfinityX7(IStrategy):
       if is_system_v3_2:
         threshold = (
           self.system_v3_2_stop_threshold_futures_rebuy
-          if self.is_futures_mode
+          if is_futures_mode
           else self.system_v3_2_stop_threshold_spot_rebuy
         )
 
@@ -26830,7 +26869,7 @@ class NostalgiaForInfinityX7(IStrategy):
       elif is_system_v3_1:
         threshold = (
           self.system_v3_1_stop_threshold_futures_rebuy
-          if self.is_futures_mode
+          if is_futures_mode
           else self.system_v3_1_stop_threshold_spot_rebuy
         )
 
@@ -26839,16 +26878,14 @@ class NostalgiaForInfinityX7(IStrategy):
 
       elif is_system_v3:
         threshold = (
-          self.system_v3_stop_threshold_futures_rebuy
-          if self.is_futures_mode
-          else self.system_v3_stop_threshold_spot_rebuy
+          self.system_v3_stop_threshold_futures_rebuy if is_futures_mode else self.system_v3_stop_threshold_spot_rebuy
         )
 
         if profit_stake < -(entry_cost * threshold / leverage):
           sell, signal_name = True, stoploss_doom
 
       else:
-        threshold = self.stop_threshold_futures_rebuy if self.is_futures_mode else self.stop_threshold_spot_rebuy
+        threshold = self.stop_threshold_futures_rebuy if is_futures_mode else self.stop_threshold_spot_rebuy
 
         if profit_stake < -(entry_cost * threshold / leverage) and (
           trade.open_date_utc.replace(tzinfo=None) >= datetime(2024, 9, 13) or self.is_backtest_mode()
@@ -27285,6 +27322,8 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -27370,28 +27409,26 @@ class NostalgiaForInfinityX7(IStrategy):
           stop_enabled = self.system_v3_2_stops_enable
           stop_threshold = (
             self.system_v3_2_stop_threshold_rapid_futures
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_2_stop_threshold_rapid_spot
           )
         elif is_system_v3_1:
           stop_enabled = self.stops_enable
           stop_threshold = (
             self.system_v3_1_stop_threshold_rapid_futures
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_1_stop_threshold_rapid_spot
           )
         elif is_system_v3:
           stop_enabled = self.stops_enable
           stop_threshold = (
             self.system_v3_stop_threshold_rapid_futures
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_stop_threshold_rapid_spot
           )
         else:
           stop_enabled = self.stops_enable
-          stop_threshold = (
-            self.stop_threshold_rapid_futures if self.is_futures_mode else self.stop_threshold_rapid_spot
-          )
+          stop_threshold = self.stop_threshold_rapid_futures if is_futures_mode else self.stop_threshold_rapid_spot
 
         if stop_enabled:
           stoploss_value = -(entry_cost * stop_threshold / leverage)
@@ -27890,6 +27927,8 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -27939,7 +27978,7 @@ class NostalgiaForInfinityX7(IStrategy):
       if is_system_v3_2:
         threshold = (
           self.system_v3_2_stop_threshold_scalp_futures
-          if self.is_futures_mode
+          if is_futures_mode
           else self.system_v3_2_stop_threshold_scalp_spot
         )
 
@@ -27948,7 +27987,7 @@ class NostalgiaForInfinityX7(IStrategy):
       elif is_system_v3_1:
         threshold = (
           self.system_v3_1_stop_threshold_scalp_futures
-          if self.is_futures_mode
+          if is_futures_mode
           else self.system_v3_1_stop_threshold_scalp_spot
         )
 
@@ -27956,15 +27995,13 @@ class NostalgiaForInfinityX7(IStrategy):
 
       elif is_system_v3:
         threshold = (
-          self.system_v3_stop_threshold_scalp_futures
-          if self.is_futures_mode
-          else self.system_v3_stop_threshold_scalp_spot
+          self.system_v3_stop_threshold_scalp_futures if is_futures_mode else self.system_v3_stop_threshold_scalp_spot
         )
 
         stoploss_hit = profit_stake < -(entry_cost * threshold / leverage)
 
       else:
-        threshold = self.stop_threshold_scalp_futures if self.is_futures_mode else self.stop_threshold_scalp_spot
+        threshold = self.stop_threshold_scalp_futures if is_futures_mode else self.stop_threshold_scalp_spot
 
         stoploss_hit = profit_stake < -(entry_cost * threshold)
 
@@ -45611,6 +45648,14 @@ class NostalgiaForInfinityX7(IStrategy):
   def long_buyback_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    last_rsi_3_1d = last_candle["RSI_3_1d"]
+    last_roc_9_1h = last_candle["ROC_9_1h"]
+    last_roc_9_4h = last_candle["ROC_9_4h"]
+    last_close_max_48 = last_candle["close_max_48"]
+    last_high_max_6_1h = last_candle["high_max_6_1h"]
+    last_high_max_12_1h = last_candle["high_max_12_1h"]
+    last_open = last_candle["open"]
+
     last_ema_12 = last_candle["EMA_12"]
     last_ema_26 = last_candle["EMA_26"]
     last_roc_9_1d = last_candle["ROC_9_1d"]
@@ -45643,9 +45688,9 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["STOCHRSIk_14_14_3_3_15m"] < 20.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_1h"] < 30.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_4h"] < 30.0)
-        and (last_close > (last_candle["close_max_48"] * 0.90))
-        and (last_close > (last_candle["high_max_6_1h"] * 0.85))
-        and (last_close > (last_candle["high_max_12_1h"] * 0.80))
+        and (last_close > (last_close_max_48 * 0.90))
+        and (last_close > (last_high_max_6_1h * 0.85))
+        and (last_close > (last_high_max_12_1h * 0.80))
         # and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
         and (last_close < (last_candle["EMA_16"] * 0.980))
       )
@@ -45662,8 +45707,8 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_candle["ROC_9_4h"] > -10.0)
         and (last_roc_9_1d > -5.0)
         and (last_ema_26 > last_ema_12)
-        and ((last_ema_26 - last_ema_12) > (last_candle["open"] * 0.020))
-        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_candle["open"] / 100.0))
+        and ((last_ema_26 - last_ema_12) > (last_open * 0.020))
+        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 < 36.0)
@@ -45671,19 +45716,19 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m > 10.0)
         and (last_rsi_3_1h > 10.0)
         and (last_rsi_3_4h > 10.0)
-        and (last_candle["RSI_3_1d"] > 10.0)
+        and (last_rsi_3_1d > 10.0)
         and (last_roc_2_1h > -5.0)
         and (last_roc_2_4h > -5.0)
         and (last_candle["ROC_2_1d"] > -5.0)
-        and (last_candle["ROC_9_1h"] > -5.0)
-        and (last_candle["ROC_9_4h"] > -5.0)
+        and (last_roc_9_1h > -5.0)
+        and (last_roc_9_4h > -5.0)
         and (last_roc_9_1d > -10.0)
         # and (last_candle["ROC_9_4h"] < 40.0)
         # and (last_candle["ROC_9_1d"] < 50.0)
         and (last_candle["AROONU_14_15m"] < 25.0)
-        and (last_close > (last_candle["close_max_48"] * 0.90))
-        and (last_close > (last_candle["high_max_6_1h"] * 0.85))
-        and (last_close > (last_candle["high_max_12_1h"] * 0.80))
+        and (last_close > (last_close_max_48 * 0.90))
+        and (last_close > (last_high_max_6_1h * 0.85))
+        and (last_close > (last_high_max_12_1h * 0.80))
         # and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
         and (last_close < (last_ema_12 * 0.980))
       )
@@ -45692,12 +45737,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m > 10.0)
         and (last_rsi_3_1h > 10.0)
         and (last_rsi_3_4h > 10.0)
-        and (last_candle["RSI_3_1d"] > 10.0)
+        and (last_rsi_3_1d > 10.0)
         and (last_roc_2_1h > -5.0)
         and (last_roc_2_4h > -5.0)
         # and (last_candle["ROC_2_1d"] > -5.0)
-        and (last_candle["ROC_9_1h"] > -5.0)
-        and (last_candle["ROC_9_4h"] > -5.0)
+        and (last_roc_9_1h > -5.0)
+        and (last_roc_9_4h > -5.0)
         and (last_roc_9_1d > -5.0)
         and (last_candle["STOCHRSIk_14_14_3_3_1h"] < 80.0)
         and (last_candle["STOCHRSIk_14_14_3_3_4h"] < 70.0)
@@ -45715,6 +45760,14 @@ class NostalgiaForInfinityX7(IStrategy):
   def long_grind_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    previous_ema_26 = previous_candle["EMA_26"]
+    previous_ema_12 = previous_candle["EMA_12"]
+    last_bbl_20_2_0 = last_candle["BBL_20_2.0"]
+    last_aroonu_14_15m = last_candle["AROONU_14_15m"]
+    last_rsi_14_1h = last_candle["RSI_14_1h"]
+    last_low_min_24_4h = last_candle["low_min_24_4h"]
+    last_low_min_12_4h = last_candle["low_min_12_4h"]
+
     last_ema_12 = last_candle["EMA_12"]
     last_ema_26 = last_candle["EMA_26"]
     last_stochrsik_14_14_3_3 = last_candle["STOCHRSIk_14_14_3_3"]
@@ -45761,7 +45814,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close > (last_close_max_48 * 0.90))
         and (last_close > (last_high_max_6_1h * 0.85))
         and (last_close > (last_high_max_12_1h * 0.80))
-        and (last_close < (last_candle["low_min_24_4h"] * 1.20))
+        and (last_close < (last_low_min_24_4h * 1.20))
         and (last_close < (last_candle["EMA_16"] * 0.968))
       )
       or (
@@ -45780,7 +45833,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_stochrsik_14_14_3_3 < 50.0)
         and (last_ema_26 > last_ema_12)
         and ((last_ema_26 - last_ema_12) > (last_open * 0.020))
-        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_open / 100.0))
+        and ((previous_ema_26 - previous_ema_12) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 < 36.0)
@@ -45797,7 +45850,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_roc_9_1d > -10.0)
         # and (last_roc_9_4h < 40.0)
         # and (last_candle["ROC_9_1d"] < 50.0)
-        and (last_candle["AROONU_14_15m"] < 25.0)
+        and (last_aroonu_14_15m < 25.0)
         and (last_close > (last_close_max_48 * 0.90))
         and (last_close > (last_high_max_6_1h * 0.85))
         and (last_close > (last_high_max_12_1h * 0.80))
@@ -45822,7 +45875,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close > (last_high_max_6_1h * 0.85))
         and (last_close > (last_high_max_12_1h * 0.80))
         and (last_close < (last_ema_26 * 0.962))
-        and (last_close < (last_candle["BBL_20_2.0"] * 0.999))
+        and (last_close < (last_bbl_20_2_0 * 0.999))
       )
       or (
         (last_rsi_14 < 35.0)
@@ -45844,7 +45897,7 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_close > (last_candle["close_max_48"] * 0.90))
         # and (last_close > (last_candle["high_max_6_1h"] * 0.85))
         # and (last_close > (last_candle["high_max_12_1h"] * 0.80))
-        and (last_close < (last_candle["low_min_12_4h"] * 1.25))
+        and (last_close < (last_low_min_12_4h * 1.25))
         and (last_close < (last_candle["EMA_9"] * 0.968))
         and (last_close < (last_candle["EMA_20"] * 0.980))
       )
@@ -45890,7 +45943,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_stochrsik_14_14_3_3 < 20.0)
         and (last_candle["WILLR_84_1h"] < -70.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_1h"] < 40.0)
-        and (last_close < (last_candle["low_min_24_4h"] * 1.30))
+        and (last_close < (last_low_min_24_4h * 1.30))
         and (last_candle["BBB_20_2.0_1h"] > 12.0)
         and (last_close_max_48 >= (last_close * 1.10))
       )
@@ -45909,7 +45962,7 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_close < (last_candle["low_min_24_4h"] * 1.50))
         and (last_ema_26 > last_ema_12)
         and ((last_ema_26 - last_ema_12) > (last_open * 0.034))
-        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_open / 100.0))
+        and ((previous_ema_26 - previous_ema_12) > (last_open / 100.0))
       )
       or (
         (last_rsi_3 > 5.0)
@@ -45923,7 +45976,7 @@ class NostalgiaForInfinityX7(IStrategy):
         (last_rsi_3 > 5.0)
         and (last_rsi_3_15m > 5.0)
         and (last_stochrsik_14_14_3_3 < 20.0)
-        and (last_rsi_14 < (last_candle["RSI_14_1h"] - 45.0))
+        and (last_rsi_14 < (last_rsi_14_1h - 45.0))
       )
       or (
         (last_rsi_3 > 10.0)
@@ -45933,7 +45986,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_1d > 10.0)
         and (last_stochrsik_14_14_3_3 < 20.0)
         and (last_close < (last_candle["SMA_30"] * 0.978))
-        and (last_close < (last_candle["BBL_20_2.0"] * 0.999))
+        and (last_close < (last_bbl_20_2_0 * 0.999))
       )
       or (
         (last_rsi_14 < 36.0)
@@ -45946,10 +45999,10 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close > (last_close_max_48 * 0.85))
         and (last_close > (last_high_max_6_1h * 0.80))
         and (last_close > (last_high_max_12_1h * 0.75))
-        and (last_close < (last_candle["low_min_12_4h"] * 1.25))
+        and (last_close < (last_low_min_12_4h * 1.25))
         and (last_ema_26 > last_ema_12)
         and ((last_ema_26 - last_ema_12) > (last_open * 0.018))
-        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_open / 100.0))
+        and ((previous_ema_26 - previous_ema_12) > (last_open / 100.0))
       )
       or (
         (last_rsi_3 > 5.0)
@@ -45965,10 +46018,10 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m > 10.0)
         and (last_rsi_14 < 40.0)
         and (last_aroonu_14 < 25.0)
-        and (last_candle["AROONU_14_15m"] < 30.0)
+        and (last_aroonu_14_15m < 30.0)
         and (last_stochrsik_14_14_3_3 < 20.0)
         and (last_candle["STOCHRSIk_14_14_3_3_15m"] < 30.0)
-        and (last_candle["RSI_14_1h"] < 50.0)
+        and (last_rsi_14_1h < 50.0)
         and (last_candle["RSI_14_4h"] < 50.0)
       )
       or (
@@ -45977,7 +46030,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_1h > 10.0)
         and (last_rsi_3_4h > 10.0)
         and (last_close < (last_ema_12 * 0.999))
-        and (last_close < (last_candle["BBL_20_2.0"] * 0.996))
+        and (last_close < (last_bbl_20_2_0 * 0.996))
       )
     ):
       return True
@@ -51565,6 +51618,8 @@ class NostalgiaForInfinityX7(IStrategy):
     **kwargs,
   ) -> Optional[float]:
     # min/max stakes include leverage. The return amounts is before leverage.
+    config = self.config
+
     dp = self.dp
     is_futures_mode = self.is_futures_mode
     trade_pair = trade.pair
@@ -51614,7 +51669,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if dp.runmode.value in ("live", "dry_run"):
       ticker = dp.ticker(trade_pair)
       if ("bid" in ticker) and ("ask" in ticker):
-        exit_price_side = self.config["exit_pricing"]["price_side"]
+        exit_price_side = config["exit_pricing"]["price_side"]
         if trade.is_short:
           if exit_price_side in ["ask", "other"]:
             if ticker["ask"] is not None:
@@ -51700,7 +51755,7 @@ class NostalgiaForInfinityX7(IStrategy):
             stake_amount=buy_amount,
             profit_stake=profit_stake,
             profit_ratio=profit_ratio,
-            stake_currency=self.config["stake_currency"],
+            stake_currency=config["stake_currency"],
           )
         )
         log.info(
@@ -52835,6 +52890,9 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+    trade_leverage = trade.leverage
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -52924,10 +52982,10 @@ class NostalgiaForInfinityX7(IStrategy):
           entry_cost
           * (
             self.system_v3_2_stop_threshold_futures_rebuy
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_2_stop_threshold_spot_rebuy
           )
-          / trade.leverage
+          / trade_leverage
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
       elif is_system_v3_1:
@@ -52935,10 +52993,10 @@ class NostalgiaForInfinityX7(IStrategy):
           entry_cost
           * (
             self.system_v3_1_stop_threshold_futures_rebuy
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_1_stop_threshold_spot_rebuy
           )
-          / trade.leverage
+          / trade_leverage
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
       elif is_system_v3:
@@ -52946,10 +53004,10 @@ class NostalgiaForInfinityX7(IStrategy):
           entry_cost
           * (
             self.system_v3_stop_threshold_futures_rebuy
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_stop_threshold_spot_rebuy
           )
-          / trade.leverage
+          / trade_leverage
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
       else:
@@ -52957,8 +53015,8 @@ class NostalgiaForInfinityX7(IStrategy):
           profit_stake
           < -(
             entry_cost
-            * (self.stop_threshold_futures_rebuy if self.is_futures_mode else self.stop_threshold_spot_rebuy)
-            / trade.leverage
+            * (self.stop_threshold_futures_rebuy if is_futures_mode else self.stop_threshold_spot_rebuy)
+            / trade_leverage
           )
           # temporary
           and (is_backtest or trade.open_date_utc.replace(tzinfo=None) >= datetime(2024, 9, 13))
@@ -53367,6 +53425,9 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+    trade_leverage = trade.leverage
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -53491,10 +53552,10 @@ class NostalgiaForInfinityX7(IStrategy):
             entry_cost
             * (
               self.system_v3_2_stop_threshold_rapid_futures
-              if self.is_futures_mode
+              if is_futures_mode
               else self.system_v3_2_stop_threshold_rapid_spot
             )
-            / trade.leverage
+            / trade_leverage
           )
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
@@ -53506,10 +53567,10 @@ class NostalgiaForInfinityX7(IStrategy):
             entry_cost
             * (
               self.system_v3_1_stop_threshold_rapid_futures
-              if self.is_futures_mode
+              if is_futures_mode
               else self.system_v3_1_stop_threshold_rapid_spot
             )
-            / trade.leverage
+            / trade_leverage
           )
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
@@ -53521,10 +53582,10 @@ class NostalgiaForInfinityX7(IStrategy):
             entry_cost
             * (
               self.system_v3_stop_threshold_rapid_futures
-              if self.is_futures_mode
+              if is_futures_mode
               else self.system_v3_stop_threshold_rapid_spot
             )
-            / trade.leverage
+            / trade_leverage
           )
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
@@ -53536,8 +53597,7 @@ class NostalgiaForInfinityX7(IStrategy):
             and (
               profit_stake
               < -(
-                entry_cost
-                * (self.stop_threshold_rapid_futures if self.is_futures_mode else self.stop_threshold_rapid_spot)
+                entry_cost * (self.stop_threshold_rapid_futures if is_futures_mode else self.stop_threshold_rapid_spot)
               )
             )
           )
@@ -54014,6 +54074,9 @@ class NostalgiaForInfinityX7(IStrategy):
     current_time: "datetime",
     enter_tags,
   ) -> tuple:
+    is_futures_mode = self.is_futures_mode
+    trade_leverage = trade.leverage
+
     mark_profit_target = self.mark_profit_target
     set_profit_target = self._set_profit_target
     exit_profit_target = self.exit_profit_target
@@ -54105,10 +54168,10 @@ class NostalgiaForInfinityX7(IStrategy):
             entry_cost
             * (
               self.system_v3_2_stop_threshold_scalp_futures
-              if self.is_futures_mode
+              if is_futures_mode
               else self.system_v3_2_stop_threshold_scalp_spot
             )
-            / trade.leverage
+            / trade_leverage
           )
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
@@ -54118,10 +54181,10 @@ class NostalgiaForInfinityX7(IStrategy):
           entry_cost
           * (
             self.system_v3_1_stop_threshold_scalp_futures
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_1_stop_threshold_scalp_spot
           )
-          / trade.leverage
+          / trade_leverage
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
       elif is_system_v3:
@@ -54130,16 +54193,16 @@ class NostalgiaForInfinityX7(IStrategy):
           entry_cost
           * (
             self.system_v3_stop_threshold_scalp_futures
-            if self.is_futures_mode
+            if is_futures_mode
             else self.system_v3_stop_threshold_scalp_spot
           )
-          / trade.leverage
+          / trade_leverage
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
       else:
         # Stoplosses
         if profit_stake < -(
-          entry_cost * (self.stop_threshold_scalp_futures if self.is_futures_mode else self.stop_threshold_scalp_spot)
+          entry_cost * (self.stop_threshold_scalp_futures if is_futures_mode else self.stop_threshold_scalp_spot)
           # / (trade.leverage if self.is_futures_mode else 1.0)
         ):
           sell, signal_name = True, f"exit_{mode_name}_stoploss_doom"
@@ -71760,6 +71823,14 @@ class NostalgiaForInfinityX7(IStrategy):
   def short_buyback_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    last_rsi_3_1d = last_candle["RSI_3_1d"]
+    last_roc_9_1h = last_candle["ROC_9_1h"]
+    last_roc_9_4h = last_candle["ROC_9_4h"]
+    last_close_min_48 = last_candle["close_min_48"]
+    last_low_min_6_1h = last_candle["low_min_6_1h"]
+    last_low_min_12_1h = last_candle["low_min_12_1h"]
+    last_open = last_candle["open"]
+
     last_ema_12 = last_candle["EMA_12"]
     last_ema_26 = last_candle["EMA_26"]
     last_roc_9_1d = last_candle["ROC_9_1d"]
@@ -71792,9 +71863,9 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_candle["STOCHRSIk_14_14_3_3_15m"] > 80.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_1h"] < 30.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_4h"] < 30.0)
-        and (last_close < (last_candle["close_min_48"] * 1.10))
-        and (last_close < (last_candle["low_min_6_1h"] * 1.18))
-        and (last_close < (last_candle["low_min_12_1h"] * 1.25))
+        and (last_close < (last_close_min_48 * 1.10))
+        and (last_close < (last_low_min_6_1h * 1.18))
+        and (last_close < (last_low_min_12_1h * 1.25))
         # and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
         and (last_close > (last_candle["EMA_16"] * 1.120))
       )
@@ -71811,8 +71882,8 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_candle["ROC_9_4h"] > -10.0)
         and (last_roc_9_1d < 5.0)
         and (last_ema_12 > last_ema_26)
-        and ((last_ema_12 - last_ema_26) > (last_candle["open"] * 0.020))
-        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_candle["open"] / 100.0))
+        and ((last_ema_12 - last_ema_26) > (last_open * 0.020))
+        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 > 64.0)
@@ -71820,19 +71891,19 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m < 90.0)
         and (last_rsi_3_1h < 90.0)
         and (last_rsi_3_4h < 90.0)
-        and (last_candle["RSI_3_1d"] < 90.0)
+        and (last_rsi_3_1d < 90.0)
         and (last_roc_2_1h < 5.0)
         and (last_roc_2_4h < 5.0)
         and (last_candle["ROC_2_1d"] < 5.0)
-        and (last_candle["ROC_9_1h"] < 5.0)
-        and (last_candle["ROC_9_4h"] < 5.0)
+        and (last_roc_9_1h < 5.0)
+        and (last_roc_9_4h < 5.0)
         and (last_roc_9_1d < 10.0)
         # and (last_candle["ROC_9_4h"] < 40.0)
         # and (last_candle["ROC_9_1d"] < 50.0)
         and (last_candle["AROOND_14_15m"] < 25.0)
-        and (last_close < (last_candle["close_min_48"] * 1.10))
-        and (last_close < (last_candle["low_min_6_1h"] * 1.18))
-        and (last_close < (last_candle["low_min_12_1h"] * 1.25))
+        and (last_close < (last_close_min_48 * 1.10))
+        and (last_close < (last_low_min_6_1h * 1.18))
+        and (last_close < (last_low_min_12_1h * 1.25))
         # and (last_candle["close"] < (last_candle["low_min_24_4h"] * 1.20))
         and (last_close > (last_ema_12 * 1.020))
       )
@@ -71841,12 +71912,12 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m < 90.0)
         and (last_rsi_3_1h < 90.0)
         and (last_rsi_3_4h < 90.0)
-        and (last_candle["RSI_3_1d"] < 90.0)
+        and (last_rsi_3_1d < 90.0)
         and (last_roc_2_1h < 5.0)
         and (last_roc_2_4h < 5.0)
         # and (last_candle["ROC_2_1d"] > -5.0)
-        and (last_candle["ROC_9_1h"] < 5.0)
-        and (last_candle["ROC_9_4h"] < 5.0)
+        and (last_roc_9_1h < 5.0)
+        and (last_roc_9_4h < 5.0)
         and (last_roc_9_1d < 5.0)
         and (last_candle["STOCHRSIk_14_14_3_3_1h"] > 20.0)
         and (last_candle["STOCHRSIk_14_14_3_3_4h"] > 30.0)
@@ -71864,6 +71935,14 @@ class NostalgiaForInfinityX7(IStrategy):
   def short_grind_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    previous_ema_12 = previous_candle["EMA_12"]
+    previous_ema_26 = previous_candle["EMA_26"]
+    last_aroond_14_15m = last_candle["AROOND_14_15m"]
+    last_rsi_14_1h = last_candle["RSI_14_1h"]
+    last_high_max_24_4h = last_candle["high_max_24_4h"]
+    last_bbu_20_2_0 = last_candle["BBU_20_2.0"]
+    last_high_max_12_4h = last_candle["high_max_12_4h"]
+
     last_ema_12 = last_candle["EMA_12"]
     last_ema_26 = last_candle["EMA_26"]
     last_stochrsik_14_14_3_3 = last_candle["STOCHRSIk_14_14_3_3"]
@@ -71910,7 +71989,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close < (last_close_min_48 * 1.10))
         and (last_close < (last_low_min_6_1h * 1.18))
         and (last_close < (last_low_min_12_1h * 1.25))
-        and (last_close > (last_candle["high_max_24_4h"] * 0.85))
+        and (last_close > (last_high_max_24_4h * 0.85))
         and (last_close > (last_candle["EMA_16"] * 1.032))
       )
       or (
@@ -71929,7 +72008,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_stochrsik_14_14_3_3 > 50.0)
         and (last_ema_12 > last_ema_26)
         and ((last_ema_12 - last_ema_26) > (last_open * 0.020))
-        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_open / 100.0))
+        and ((previous_ema_12 - previous_ema_26) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 > 64.0)
@@ -71946,7 +72025,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_roc_9_1d < 10.0)
         # and (last_roc_9_4h < 40.0)
         # and (last_candle["ROC_9_1d"] < 50.0)
-        and (last_candle["AROOND_14_15m"] < 25.0)
+        and (last_aroond_14_15m < 25.0)
         and (last_close < (last_close_min_48 * 1.10))
         and (last_close < (last_low_min_6_1h * 1.18))
         and (last_close < (last_low_min_12_1h * 1.25))
@@ -71971,7 +72050,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close < (last_low_min_6_1h * 1.18))
         and (last_close < (last_low_min_12_1h * 1.25))
         and (last_close > (last_ema_26 * 1.038))
-        and (last_close > (last_candle["BBU_20_2.0"] * 1.0))
+        and (last_close > (last_bbu_20_2_0 * 1.0))
       )
       or (
         (last_rsi_14 > 65.0)
@@ -71993,7 +72072,7 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_close > (last_candle["close_max_48"] * 0.90))
         # and (last_close < (last_candle["low_min_6_1h"] * 1.18))
         # and (last_close < (last_candle["low_min_12_1h"] * 1.25))
-        and (last_close > (last_candle["high_max_12_4h"] * 0.80))
+        and (last_close > (last_high_max_12_4h * 0.80))
         and (last_close > (last_candle["EMA_9"] * 1.032))
         and (last_close > (last_candle["EMA_20"] * 1.020))
       )
@@ -72039,7 +72118,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_stochrsik_14_14_3_3 > 80.0)
         and (last_candle["WILLR_84_1h"] > -30.0)
         # and (last_candle["STOCHRSIk_14_14_3_3_1h"] < 40.0)
-        and (last_close < (last_candle["high_max_24_4h"] * 0.77))
+        and (last_close < (last_high_max_24_4h * 0.77))
         and (last_candle["BBB_20_2.0_1h"] > 12.0)
         and (last_close_min_48 <= (last_close * 0.90))
       )
@@ -72058,7 +72137,7 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_close < (last_candle["low_min_24_4h"] * 1.50))
         and (last_ema_12 > last_ema_26)
         and ((last_ema_12 - last_ema_26) > (last_open * 0.034))
-        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_open / 100.0))
+        and ((previous_ema_12 - previous_ema_26) > (last_open / 100.0))
       )
       or (
         (last_rsi_3 < 95.0)
@@ -72072,7 +72151,7 @@ class NostalgiaForInfinityX7(IStrategy):
         (last_rsi_3 < 95.0)
         and (last_rsi_3_15m < 95.0)
         and (last_stochrsik_14_14_3_3 > 80.0)
-        and (last_rsi_14 > (last_candle["RSI_14_1h"] + 45.0))
+        and (last_rsi_14 > (last_rsi_14_1h + 45.0))
       )
       or (
         (last_rsi_3 < 90.0)
@@ -72082,7 +72161,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_1d < 90.0)
         and (last_stochrsik_14_14_3_3 > 80.0)
         and (last_close > (last_candle["SMA_30"] * 1.022))
-        and (last_close > (last_candle["BBU_20_2.0"] * 1.0))
+        and (last_close > (last_bbu_20_2_0 * 1.0))
       )
       or (
         (last_rsi_14 > 64.0)
@@ -72095,10 +72174,10 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_close < (last_close_min_48 * 1.15))
         and (last_close < (last_low_min_6_1h * 1.20))
         and (last_close < (last_low_min_12_1h * 1.33))
-        and (last_close > (last_candle["high_max_12_4h"] * 0.75))
+        and (last_close > (last_high_max_12_4h * 0.75))
         and (last_ema_12 > last_ema_26)
         and ((last_ema_12 - last_ema_26) > (last_open * 0.018))
-        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_open / 100.0))
+        and ((previous_ema_12 - previous_ema_26) > (last_open / 100.0))
       )
       or (
         (last_rsi_3 < 95.0)
@@ -72114,10 +72193,10 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_rsi_3_15m < 90.0)
         and (last_rsi_14 > 60.0)
         and (last_aroond_14 < 25.0)
-        and (last_candle["AROOND_14_15m"] < 30.0)
+        and (last_aroond_14_15m < 30.0)
         and (last_stochrsik_14_14_3_3 > 80.0)
         and (last_candle["STOCHRSIk_14_14_3_3_15m"] > 70.0)
-        and (last_candle["RSI_14_1h"] > 50.0)
+        and (last_rsi_14_1h > 50.0)
         and (last_candle["RSI_14_4h"] > 50.0)
       )
       or (
@@ -77333,6 +77412,8 @@ class NostalgiaForInfinityX7(IStrategy):
     **kwargs,
   ) -> Optional[float]:
     # min/max stakes include leverage. The return amounts is before leverage.
+    config = self.config
+
     dp = self.dp
     is_futures_mode = self.is_futures_mode
     trade_pair = trade.pair
@@ -77382,7 +77463,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if dp.runmode.value in ("live", "dry_run"):
       ticker = dp.ticker(trade_pair)
       if ("bid" in ticker) and ("ask" in ticker):
-        exit_price_side = self.config["exit_pricing"]["price_side"]
+        exit_price_side = config["exit_pricing"]["price_side"]
         if trade.is_short:
           if exit_price_side in ["ask", "other"]:
             if ticker["ask"] is not None:
@@ -77458,7 +77539,7 @@ class NostalgiaForInfinityX7(IStrategy):
             stake_amount=buy_amount,
             profit_stake=profit_stake,
             profit_ratio=profit_ratio,
-            stake_currency=self.config["stake_currency"],
+            stake_currency=config["stake_currency"],
           )
         )
         log.info(
