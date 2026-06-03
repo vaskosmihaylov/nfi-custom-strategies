@@ -20,62 +20,6 @@ log = logging.getLogger(__name__)
 warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 
-def _is_entry_bool_scalar(condition) -> bool:
-  return isinstance(condition, (bool, np.bool_))
-
-
-def _entry_bool_array(condition):
-  if isinstance(condition, np.ndarray):
-    return condition.astype(bool, copy=False)
-  if isinstance(condition, (pd.Series, pd.Index)):
-    return condition.to_numpy(dtype=bool, copy=False)
-  return np.asarray(condition, dtype=bool)
-
-
-def _and_entry_conditions(conditions):
-  arrays = []
-  has_false = False
-  for condition in conditions:
-    if _is_entry_bool_scalar(condition):
-      if not condition:
-        has_false = True
-      continue
-    arrays.append(_entry_bool_array(condition))
-  if not arrays:
-    return not has_false
-  if has_false:
-    return np.zeros_like(arrays[0], dtype=bool)
-  if len(arrays) == 1:
-    return arrays[0]
-  return np.logical_and.reduce(arrays)
-
-
-def _or_entry_conditions(conditions):
-  arrays = []
-  has_true = False
-  for condition in conditions:
-    if _is_entry_bool_scalar(condition):
-      if condition:
-        has_true = True
-      continue
-    arrays.append(_entry_bool_array(condition))
-  if not arrays:
-    return has_true
-  if has_true:
-    return np.ones_like(arrays[0], dtype=bool)
-  if len(arrays) == 1:
-    return arrays[0]
-  return np.logical_or.reduce(arrays)
-
-
-def _append_entry_tag(entry_tags, mask, tag: str) -> None:
-  if _is_entry_bool_scalar(mask):
-    if mask:
-      entry_tags[:] = entry_tags + tag
-    return
-  entry_tags[mask] = entry_tags[mask] + tag
-
-
 #############################################################################################################
 ##                 NostalgiaForInfinityX7 by iterativ                                                      ##
 ##            https://github.com/iterativv/NostalgiaForInfinity                                            ##
@@ -126,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.129"
+    return "v17.4.130"
 
   stoploss = -0.99
 
@@ -14619,6 +14563,10 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 5.0) | (rsi_3_4h > 15.0) | (roc_9_1d < 70.0))
             # 15m & 4h down move, 1d high
             & ((rsi_3_15m > 5.0) | (rsi_3_4h > 30.0) | (aroonu_14_1d < 100.0))
+            # 15m down move, 1h high & overbought
+            & ((rsi_3_15m > 5.0) | (aroonu_14_1h < 70.0) | (roc_9_1h < 10.0))
+            # 15m down move, 1h & 1d high
+            & ((rsi_3_15m > 5.0) | (roc_9_1h < 10.0) | (roc_9_1d < 40.0))
             # 15m & 1h down move, 15m stil high
             & ((rsi_3_15m > 10.0) | (rsi_3_1h > 10.0) | (stochrsi_k_15m < 50.0))
             # 15m & 1h down move, 4h downtrend
@@ -17463,6 +17411,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 5.0) | (rsi_3_1d > 20.0) | (stochrsi_k_1h < 50.0))
             # 15m down move, 15m & 1h still high
             & ((rsi_3_15m > 5.0) | (aroonu_14_15m < 40.0) | (aroonu_14_1h < 50.0))
+            # 15m down move, 1h high & overbought
+            & ((rsi_3_15m > 5.0) | (aroonu_14_1h < 70.0) | (roc_9_1h < 10.0))
             # 15m down move, 1h & 4h high
             & ((rsi_3_15m > 5.0) | (aroonu_14_1h < 80.0) | (aroonu_14_4h < 100.0))
             # 15m down move, 1h high, 4h overbought
@@ -17473,6 +17423,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 5.0) | (stochrsi_k_1d < 50.0) | (roc_9_1d > -20.0))
             # 15m down move, 1d downtrend
             & ((rsi_3_15m > 5.0) | (roc_9_1d > -60.0))
+            # 15m down move, 1h & 1d high
+            & ((rsi_3_15m > 5.0) | (roc_9_1h < 10.0) | (roc_9_1d < 40.0))
             # 15m & 1h down move, 15m high
             & ((rsi_3_15m > 10.0) | (rsi_3_1h > 10.0) | (aroonu_14_15m < 70.0))
             # 15m & 1h down move, 1h still high
@@ -18763,6 +18715,10 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 5.0) | (aroonu_14_15m < 20.0) | (aroonu_14_4h < 50.0))
             # 15m down move, 15m still high
             & ((rsi_3_15m > 5.0) | (aroonu_14_15m < 50.0))
+            # 15m down move, 1h high & overbought
+            & ((rsi_3_15m > 5.0) | (aroonu_14_1h < 70.0) | (roc_9_1h < 10.0))
+            # 15m down move, 1h & 1d high
+            & ((rsi_3_15m > 5.0) | (roc_9_1h < 10.0) | (roc_9_1d < 40.0))
             # 15m & 1h down move, 1d high
             & ((rsi_3_15m > 10.0) | (rsi_3_1h > 10.0) | (stochrsi_k_1d < 70.0))
             # 15m & 1h down move, 4h downtrend
@@ -70501,6 +70457,62 @@ def top_percent_change(self, df: DataFrame, length: int) -> float:
     return (df_open - df_close) / df_close
   else:
     return (df_open.rolling(length).max() - df_close) / df_close
+
+
+def _is_entry_bool_scalar(condition) -> bool:
+  return isinstance(condition, (bool, np.bool_))
+
+
+def _entry_bool_array(condition):
+  if isinstance(condition, np.ndarray):
+    return condition.astype(bool, copy=False)
+  if isinstance(condition, (pd.Series, pd.Index)):
+    return condition.to_numpy(dtype=bool, copy=False)
+  return np.asarray(condition, dtype=bool)
+
+
+def _and_entry_conditions(conditions):
+  arrays = []
+  has_false = False
+  for condition in conditions:
+    if _is_entry_bool_scalar(condition):
+      if not condition:
+        has_false = True
+      continue
+    arrays.append(_entry_bool_array(condition))
+  if not arrays:
+    return not has_false
+  if has_false:
+    return np.zeros_like(arrays[0], dtype=bool)
+  if len(arrays) == 1:
+    return arrays[0]
+  return np.logical_and.reduce(arrays)
+
+
+def _or_entry_conditions(conditions):
+  arrays = []
+  has_true = False
+  for condition in conditions:
+    if _is_entry_bool_scalar(condition):
+      if condition:
+        has_true = True
+      continue
+    arrays.append(_entry_bool_array(condition))
+  if not arrays:
+    return has_true
+  if has_true:
+    return np.ones_like(arrays[0], dtype=bool)
+  if len(arrays) == 1:
+    return arrays[0]
+  return np.logical_or.reduce(arrays)
+
+
+def _append_entry_tag(entry_tags, mask, tag: str) -> None:
+  if _is_entry_bool_scalar(mask):
+    if mask:
+      entry_tags[:] = entry_tags + tag
+    return
+  entry_tags[mask] = entry_tags[mask] + tag
 
 
 # +---------------------------------------------------------------------------+
