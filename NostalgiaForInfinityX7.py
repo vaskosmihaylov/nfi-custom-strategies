@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.131"
+    return "v17.4.132"
 
   stoploss = -0.99
 
@@ -12668,16 +12668,29 @@ class NostalgiaForInfinityX7(IStrategy):
     stochrsi_k = df["STOCHRSIk_14_14_3_3"]
     top_wick_pct_1d = df["top_wick_pct_1d"]
     willr_14 = df["WILLR_14"]
-    aroonu_14_4h_lt_70 = aroonu_14_4h < 70.0
-    roc_9_1d_gt_neg_50 = roc_9_1d > -50.0
-    roc_9_1d_lt_50 = roc_9_1d < 50.0
+
     rsi_3_15m_gt_3 = rsi_3_15m > 3.0
-    rsi_3_1h_gt_20 = rsi_3_1h > 20.0
-    rsi_3_4h_gt_20 = rsi_3_4h > 20.0
     rsi_3_1h_gt_10 = rsi_3_1h > 10.0
     rsi_3_1h_gt_15 = rsi_3_1h > 15.0
+    rsi_3_1h_gt_20 = rsi_3_1h > 20.0
     rsi_3_4h_gt_10 = rsi_3_4h > 10.0
     rsi_3_4h_gt_15 = rsi_3_4h > 15.0
+    rsi_3_4h_gt_20 = rsi_3_4h > 20.0
+
+    aroonu_14_1h_lt_70 = aroonu_14_1h < 70.0
+    aroonu_14_1h_lt_80 = aroonu_14_1h < 80.0
+    aroonu_14_4h_lt_70 = aroonu_14_4h < 70.0
+    aroonu_14_4h_lt_80 = aroonu_14_4h < 80.0
+    aroonu_14_4h_lt_100 = aroonu_14_4h < 100.0
+    aroonu_14_1d_lt_100 = aroonu_14_1d < 100.0
+
+    roc_9_4h_gt_neg_20 = roc_9_4h > -20.0
+    roc_9_4h_lt_20 = roc_9_4h < 20.0
+    roc_9_1d_gt_neg_50 = roc_9_1d > -50.0
+    roc_9_1d_gt_neg_30 = roc_9_1d > -30.0
+    roc_9_1d_gt_neg_20 = roc_9_1d > -20.0
+    roc_9_1d_lt_50 = roc_9_1d < 50.0
+    roc_9_1d_lt_100 = roc_9_1d < 100.0
 
     is_backtest = self.dp.runmode.value in ["backtest", "hyperopt", "plot", "webserver"]
     # the number of free slots
@@ -12702,11 +12715,6 @@ class NostalgiaForInfinityX7(IStrategy):
     # if BTC/ETH stake
     is_btc_stake = config["stake_currency"] in self.btc_stakes
     allowed_empty_candles_288 = 144 if is_btc_stake else 60
-    aroonu_14_1d_lt_100 = aroonu_14_1d < 100.0
-    aroonu_14_1h_lt_70 = aroonu_14_1h < 70.0
-    aroonu_14_4h_lt_100 = aroonu_14_4h < 100.0
-    aroonu_14_1h_lt_80 = aroonu_14_1h < 80.0
-    aroonu_14_4h_lt_80 = aroonu_14_4h < 80.0
 
     ###############################################################################################
 
@@ -12724,12 +12732,6 @@ class NostalgiaForInfinityX7(IStrategy):
     # | $$$$$$$|  $$$$$$| $$ \  $|  $$$$$$/      | $$$$$$$| $$ \  $$  | $$  | $$$$$$$| $$  | $$
     # |________/\______/|__/  \__/\______/       |________|__/  \__/  |__/  |________|__/  |__/
     #
-
-    roc_9_1d_gt_neg_20 = roc_9_1d > -20.0
-    roc_9_4h_lt_20 = roc_9_4h < 20.0
-    roc_9_1d_lt_100 = roc_9_1d < 100.0
-    roc_9_1d_gt_neg_30 = roc_9_1d > -30.0
-    roc_9_4h_gt_neg_20 = roc_9_4h > -20.0
 
     for enabled_long_entry_signal in long_entry_signal_params:
       long_entry_condition_index = int(enabled_long_entry_signal.rsplit("_", 2)[1])
@@ -15479,6 +15481,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 20.0) | (stochrsi_k_4h < 70.0) | (cmf_20_15m > -0.40))
             # 15m & 1h down move, 15m high
             & ((rsi_3_15m > 25.0) | (rsi_3_1h > 25.0) | (stochrsi_k_15m < 70.0))
+            # 15m & 1h & 4h down move, 4h high
+            & ((rsi_3_15m > 25.0) | (rsi_3_1h > 30.0) | (rsi_3_4h > 50.0) | aroonu_14_4h_lt_70)
             # 15m & 1h down move, 1h still high
             & ((rsi_3_15m > 25.0) | (rsi_3_1h > 35.0) | (stochrsi_k_1h_lt_50))
             # 15m & 1h down move, 1d high
@@ -21146,6 +21150,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 20.0) | (stochrsi_k_1h < 80.0) | (roc_9_1d_gt_neg_20))
             # 15m down move, 4h high, 1d downtrend
             & ((rsi_3_15m > 20.0) | (stochrsi_k_4h < 80.0) | (roc_9_1d_gt_neg_30))
+            # 15m & 1h & 4h down move, 4h high
+            & ((rsi_3_15m > 25.0) | (rsi_3_1h > 30.0) | (rsi_3_4h > 50.0) | aroonu_14_4h_lt_70)
             # 15m & 4h down move, 15m high
             & ((rsi_3_15m > 25.0) | (rsi_3_4h > 30.0) | (stochrsi_k_15m < 70.0))
             # 15m down move, 15m & 1h high
@@ -21553,6 +21559,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m > 20.0) | (stochrsi_k_1h < 80.0) | (roc_9_1d_gt_neg_20))
             # 15m down move, 1h high & overbought
             & ((rsi_3_15m > 20.0) | (stochrsi_k_1h < 90.0) | (roc_9_1h < 10.0))
+            # 15m & 1h & 4h down move, 4h high
+            & ((rsi_3_15m > 25.0) | (rsi_3_1h > 30.0) | (rsi_3_4h > 50.0) | aroonu_14_4h_lt_70)
             # 15m down move, 15m still high, 4h high
             & ((rsi_3_15m > 25.0) | (aroonu_14_15m < 50.0) | aroonu_14_4h_lt_80)
             # 15m & 4h down mve, 1h high
