@@ -4491,7 +4491,8 @@ class NostalgiaForInfinityX7(IStrategy):
     # df["WILLR_480_1h"] = df["WILLR_480_1h"].astype(np.float64).replace(to_replace=[np.nan, None], value=(-50.0))
     # df["WILLR_480_4h"] = df["WILLR_480_4h"].astype(np.float64).replace(to_replace=[np.nan, None], value=(-50.0))
     # df["RSI_14_1d"] = df["RSI_14_1d"].astype(np.float64).replace(to_replace=[np.nan, None], value=(50.0))
-    df["RSI_14_1h"] = df["RSI_14_1h"].fillna(50.0)
+    rsi_14_1h = df["RSI_14_1h"].fillna(50.0)
+    df["RSI_14_1h"] = rsi_14_1h
 
     tok_before_protections = time.perf_counter()
 
@@ -4500,7 +4501,7 @@ class NostalgiaForInfinityX7(IStrategy):
     protection_rsi_3_1h = df["RSI_3_1h"].to_numpy(copy=False)
     protection_rsi_3_4h = df["RSI_3_4h"].to_numpy(copy=False)
     protection_rsi_3_1d = df["RSI_3_1d"].to_numpy(copy=False)
-    protection_rsi_14_1h = df["RSI_14_1h"].to_numpy(copy=False)
+    protection_rsi_14_1h = rsi_14_1h.to_numpy(copy=False)
     protection_rsi_14_4h = df["RSI_14_4h"].to_numpy(copy=False)
     protection_rsi_14_1d = df["RSI_14_1d"].to_numpy(copy=False)
     protection_cci_20_1h = df["CCI_20_1h"].to_numpy(copy=False)
@@ -12613,6 +12614,8 @@ class NostalgiaForInfinityX7(IStrategy):
     aroond_14_4h = df["AROOND_14_4h"]
     aroonu_14 = df["AROONU_14"]
     bbb_20_2_0_1h = df["BBB_20_2.0_1h"]
+    bbl_20_2_0 = df["BBL_20_2.0"]
+    bbu_20_2_0 = df["BBU_20_2.0"]
     cci_20_change_pct_1h = df["CCI_20_change_pct_1h"]
     cci_20_change_pct_4h = df["CCI_20_change_pct_4h"]
     change_pct_1d = df["change_pct_1d"]
@@ -12627,6 +12630,8 @@ class NostalgiaForInfinityX7(IStrategy):
     ema_12 = df["EMA_12"]
     ema_20 = df["EMA_20"]
     ema_26 = df["EMA_26"]
+    ema_200_1h = df["EMA_200_1h"]
+    ema_200_4h = df["EMA_200_4h"]
     ema_9 = df["EMA_9"]
     high_max_12_1d = df["high_max_12_1d"]
     high_max_12_4h = df["high_max_12_4h"]
@@ -12653,6 +12658,7 @@ class NostalgiaForInfinityX7(IStrategy):
     rsi_3_change_pct_4h = df["RSI_3_change_pct_4h"]
     rsi_4 = df["RSI_4"]
     sma_16 = df["SMA_16"]
+    sma_21 = df["SMA_21"]
     sma_200 = df["SMA_200"]
     stochrsi_k = df["STOCHRSIk_14_14_3_3"]
     top_wick_pct_1d = df["top_wick_pct_1d"]
@@ -13122,7 +13128,7 @@ class NostalgiaForInfinityX7(IStrategy):
             (ema_26 > ema_12)
             & ((ema_26 - ema_12) > (open_rate * 0.034))
             & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
-            & (close < (df["BBL_20_2.0"] * 0.999))
+            & (close < (bbl_20_2_0 * 0.999))
           )
 
         # Condition #2 - Normal mode (Long).
@@ -17801,7 +17807,7 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((ema_26 - ema_12) > (open_rate * 0.024))
             & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
             & (close < (ema_20 * 0.960))
-            & (close < (df["BBL_20_2.0"] * 0.999))
+            & (close < (bbl_20_2_0 * 0.999))
           )
 
         # Condition #44 - Quick mode (Long).
@@ -20489,7 +20495,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # Logic
           long_entry_logic.append(willr_14 < -95.0)
           long_entry_logic.append(stochrsi_k < 10.0)
-          long_entry_logic.append(close < (df["BBL_20_2.0"] * 0.999))
+          long_entry_logic.append(close < (bbl_20_2_0 * 0.999))
           long_entry_logic.append(close < (ema_20 * 0.960))
 
         # Condition #103 - Rapid mode (Long).
@@ -22727,17 +22733,15 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append(aroonu_14_15m < 90.0)
           long_entry_logic.append(stochrsi_k_15m < 90.0)
           long_entry_logic.append(
-            (df["SMA_21"].shift(1) < sma_200.shift(1).infer_objects(copy=False).fillna(value=np.nan))
+            (sma_21.shift(1) < sma_200.shift(1).infer_objects(copy=False).fillna(value=np.nan))
             & sma_200.shift(1).notna()
           )
+          long_entry_logic.append((sma_21 > sma_200.infer_objects(copy=False).fillna(value=np.nan)) & sma_200.notna())
           long_entry_logic.append(
-            (df["SMA_21"] > sma_200.infer_objects(copy=False).fillna(value=np.nan)) & sma_200.notna()
+            (close > ema_200_1h.infer_objects(copy=False).fillna(value=np.nan)) & ema_200_1h.notna()
           )
           long_entry_logic.append(
-            (close > df["EMA_200_1h"].infer_objects(copy=False).fillna(value=np.nan)) & df["EMA_200_1h"].notna()
-          )
-          long_entry_logic.append(
-            (close > df["EMA_200_4h"].infer_objects(copy=False).fillna(value=np.nan)) & df["EMA_200_4h"].notna()
+            (close > ema_200_4h.infer_objects(copy=False).fillna(value=np.nan)) & ema_200_4h.notna()
           )
           long_entry_logic.append(df["BBB_20_2.0"] > 1.5)
           long_entry_logic.append(bbb_20_2_0_1h > 6.0)
@@ -23640,7 +23644,7 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append(ema_12 > ema_26)
           short_entry_logic.append((ema_12 - ema_26) > (open_rate * 0.030))
           short_entry_logic.append((ema_12.shift() - ema_26.shift()) > (open_rate / 100.0))
-          short_entry_logic.append(close > (df["BBU_20_2.0"] * 1.004))
+          short_entry_logic.append(close > (bbu_20_2_0 * 1.004))
 
         # Condition #502 - Normal mode (Short).
         if short_entry_condition_index == 502:
@@ -23819,7 +23823,7 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append(aroond_14 < 25.0)
           short_entry_logic.append(stochrsi_k > 80.0)
           short_entry_logic.append(close > (ema_20 * 1.060))
-          short_entry_logic.append(close > (df["BBU_20_2.0"] * 0.995))
+          short_entry_logic.append(close > (bbu_20_2_0 * 0.995))
           short_entry_logic.append(aroond_14_15m < 25.0)
 
         # Condition #503 - Normal mode (Short).
@@ -24338,7 +24342,7 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append((ema_26 - ema_12) > (open_rate * 0.024))
           short_entry_logic.append((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           short_entry_logic.append(close < (ema_20 * 0.958))
-          short_entry_logic.append(close < (df["BBL_20_2.0"] * 0.992))
+          short_entry_logic.append(close < (bbl_20_2_0 * 0.992))
 
         # # Condition #620 - Grind mode (Short).
         # if short_entry_condition_index == 620:
@@ -24668,16 +24672,16 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append(aroond_14_15m < 90.0)
           short_entry_logic.append(stochrsi_k_15m > 10.0)
           if isinstance(sma_200.iloc[-1], np.float64):
-            short_entry_logic.append(df["SMA_21"].shift(1) > sma_200.shift(1))
-            short_entry_logic.append(df["SMA_21"] < sma_200)
+            short_entry_logic.append(sma_21.shift(1) > sma_200.shift(1))
+            short_entry_logic.append(sma_21 < sma_200)
           else:
             short_entry_logic.append(pd.Series([False]))
-          if isinstance(df["EMA_200_1h"].iloc[-1], np.float64):
-            short_entry_logic.append(close < df["EMA_200_1h"])
+          if isinstance(ema_200_1h.iloc[-1], np.float64):
+            short_entry_logic.append(close < ema_200_1h)
           else:
             short_entry_logic.append(pd.Series([False]))
-          if isinstance(df["EMA_200_4h"].iloc[-1], np.float64):
-            short_entry_logic.append(close < df["EMA_200_4h"])
+          if isinstance(ema_200_4h.iloc[-1], np.float64):
+            short_entry_logic.append(close < ema_200_4h)
           else:
             short_entry_logic.append(pd.Series([False]))
           short_entry_logic.append(bbb_20_2_0_1h > 4.0)
@@ -39369,10 +39373,15 @@ class NostalgiaForInfinityX7(IStrategy):
       profit_values = self.calc_total_profit(trade, filled_entries, filled_exits, exit_rate)
     profit_stake, profit_ratio, profit_current_stake_ratio, profit_init_ratio = profit_values
 
+    first_filled_order = filled_orders[0]
+    last_filled_order = filled_orders[-1]
+    first_filled_entry = filled_entries[0]
+    last_filled_entry = filled_entries[-1]
+
     current_stake_amount = trade_amount * exit_rate
-    slice_amount = filled_entries[0].cost
-    slice_profit = (exit_rate - filled_orders[-1].safe_price) / filled_orders[-1].safe_price
-    slice_profit_entry = (exit_rate - filled_entries[-1].safe_price) / filled_entries[-1].safe_price
+    slice_amount = first_filled_entry.cost
+    slice_profit = (exit_rate - last_filled_order.safe_price) / last_filled_order.safe_price
+    slice_profit_entry = (exit_rate - last_filled_entry.safe_price) / last_filled_entry.safe_price
     slice_profit_exit = (
       ((exit_rate - filled_exits[-1].safe_price) / filled_exits[-1].safe_price) if count_of_exits > 0 else 0.0
     )
@@ -39382,7 +39391,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (long_rebuy_mode_tags + long_grind_mode_tags) for c in enter_tags)
     )
 
-    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
+    has_order_tags = hasattr(first_filled_order, "ft_order_tag")
 
     fee_open_rate = trade_fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade_fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -39615,7 +39624,7 @@ class NostalgiaForInfinityX7(IStrategy):
     grind_5_exit_order = None
     grind_5_exit_distance_ratio = 0.0
     for order in reversed(filled_orders):
-      if (order.ft_order_side == "buy") and (order is not filled_orders[0]):
+      if (order.ft_order_side == "buy") and (order is not first_filled_order):
         order_tag = ""
         if has_order_tags:
           if order.ft_order_tag is not None:
@@ -39850,11 +39859,11 @@ class NostalgiaForInfinityX7(IStrategy):
     )
 
     is_long_extra_checks_entry = (
-      (current_time - timedelta(minutes=5) > filled_entries[-1].order_filled_utc)
-      and ((current_time - timedelta(hours=2) > filled_orders[-1].order_filled_utc) or (slice_profit < -0.06))
+      (current_time - timedelta(minutes=5) > last_filled_entry.order_filled_utc)
+      and ((current_time - timedelta(hours=2) > last_filled_order.order_filled_utc) or (slice_profit < -0.06))
       and (
-        (current_stake_amount < (filled_entries[0].cost * 0.50))
-        or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
+        (current_stake_amount < (first_filled_entry.cost * 0.50))
+        or (current_time - timedelta(hours=6) > last_filled_order.order_filled_utc)
         or (slice_profit < -0.06)
       )
     )
@@ -39952,7 +39961,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_1_stake_futures if is_futures else self.grinding_v2_derisk_level_1_stake_spot
           )
@@ -40039,7 +40048,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_2_stake_futures if is_futures else self.grinding_v2_derisk_level_2_stake_spot
           )
@@ -40126,7 +40135,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_3_stake_futures if is_futures else self.grinding_v2_derisk_level_3_stake_spot
           )
@@ -62515,10 +62524,15 @@ class NostalgiaForInfinityX7(IStrategy):
       profit_values = self.calc_total_profit(trade, filled_entries, filled_exits, exit_rate)
     profit_stake, profit_ratio, profit_current_stake_ratio, profit_init_ratio = profit_values
 
+    first_filled_order = filled_orders[0]
+    last_filled_order = filled_orders[-1]
+    first_filled_entry = filled_entries[0]
+    last_filled_entry = filled_entries[-1]
+
     current_stake_amount = trade_amount * exit_rate
-    slice_amount = filled_entries[0].cost
-    slice_profit = (exit_rate - filled_orders[-1].safe_price) / filled_orders[-1].safe_price
-    slice_profit_entry = (exit_rate - filled_entries[-1].safe_price) / filled_entries[-1].safe_price
+    slice_amount = first_filled_entry.cost
+    slice_profit = (exit_rate - last_filled_order.safe_price) / last_filled_order.safe_price
+    slice_profit_entry = (exit_rate - last_filled_entry.safe_price) / last_filled_entry.safe_price
     slice_profit_exit = (
       ((exit_rate - filled_exits[-1].safe_price) / filled_exits[-1].safe_price) if count_of_exits > 0 else 0.0
     )
@@ -62528,7 +62542,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and all(c in (short_rebuy_mode_tags + short_grind_mode_tags) for c in enter_tags)
     )
 
-    has_order_tags = hasattr(filled_orders[0], "ft_order_tag")
+    has_order_tags = hasattr(first_filled_order, "ft_order_tag")
 
     fee_open_rate = trade_fee_open if self.custom_fee_open_rate is None else self.custom_fee_open_rate
     fee_close_rate = trade_fee_close if self.custom_fee_close_rate is None else self.custom_fee_close_rate
@@ -62761,7 +62775,7 @@ class NostalgiaForInfinityX7(IStrategy):
     grind_5_exit_order = None
     grind_5_exit_distance_ratio = 0.0
     for order in reversed(filled_orders):
-      if (order.ft_order_side == "sell") and (order is not filled_orders[0]):
+      if (order.ft_order_side == "sell") and (order is not first_filled_order):
         order_tag = ""
         if has_order_tags:
           if order.ft_order_tag is not None:
@@ -62996,11 +63010,11 @@ class NostalgiaForInfinityX7(IStrategy):
     )
 
     is_short_extra_checks_entry = (
-      (current_time - timedelta(minutes=5) > filled_entries[-1].order_filled_utc)
-      and ((current_time - timedelta(hours=2) > filled_orders[-1].order_filled_utc) or (slice_profit > 0.06))
+      (current_time - timedelta(minutes=5) > last_filled_entry.order_filled_utc)
+      and ((current_time - timedelta(hours=2) > last_filled_order.order_filled_utc) or (slice_profit > 0.06))
       and (
-        (current_stake_amount < (filled_entries[0].cost * 0.50))
-        or (current_time - timedelta(hours=6) > filled_orders[-1].order_filled_utc)
+        (current_stake_amount < (first_filled_entry.cost * 0.50))
+        or (current_time - timedelta(hours=6) > last_filled_order.order_filled_utc)
         or (slice_profit > 0.06)
       )
     )
@@ -63098,7 +63112,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_1_stake_futures if is_futures else self.grinding_v2_derisk_level_1_stake_spot
           )
@@ -63185,7 +63199,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_2_stake_futures if is_futures else self.grinding_v2_derisk_level_2_stake_spot
           )
@@ -63272,7 +63286,7 @@ class NostalgiaForInfinityX7(IStrategy):
     ):
       sell_amount = (
         (
-          filled_entries[0].safe_filled
+          first_filled_entry.safe_filled
           * (
             self.grinding_v2_derisk_level_3_stake_futures if is_futures else self.grinding_v2_derisk_level_3_stake_spot
           )
