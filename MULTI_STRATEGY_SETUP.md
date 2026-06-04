@@ -6,7 +6,7 @@ This guide will help you set up multiple FreqTrade strategies with NGINX reverse
 
 The multi-strategy setup includes:
 
-- **30 active trading strategies** running in separate Docker containers
+- **24 active trading strategies** running in separate Docker containers
 - **NGINX reverse proxy** for unified access with proper path routing
 - **Individual environment configurations** for each strategy
 - **Single FreqUI interface** to manage all bots
@@ -19,20 +19,16 @@ The multi-strategy setup includes:
 Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── nfi-x7 (Port 8080)
                            ├── FastSupertrend_optim3_rsi_70 (Port 8098)
-                           ├── FastSupertrend_optim_quick3 (Port 8099)
                            ├── e0v1e_binance (Port 8114)
                            ├── e0v1e_binance_shorts (Port 8115)
                            ├── BinHV27_combined (Port 8092)
-                           ├── Auto_EI_t4c0s (Port 8100)
                            ├── FibonacciEMATrendStrategy (Port 8103)
                            ├── GnF_V2 (Port 8091)
                            ├── SimpleRSI (Port 8118)
-                           ├── ZaratustraDCA2_06 (Port 8119)
                            ├── BollingerBounce (Port 8124)
                            ├── BollingerBounce_Shorts (Port 8125)
                            ├── KeltnerBounce (Port 8126)
                            ├── KeltnerBounce_Shorts (Port 8127)
-                           ├── UltraSmartStrategy_NoStoploss_v2 (Port 8128)
                            ├── FenixTopProfit (Port 8129)
                            ├── SimpleRSI_Shorts (Port 8130)
                            ├── MtfScalper (Port 8131)
@@ -42,7 +38,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
                            ├── DevDsl2Approx (Port 8136)
                            ├── MomentumCCITrendStrategy (Port 8137)
                            ├── CombinedBinHAndClucV8 (Port 8139)
-                           ├── CombinedBinHAndClucV8XH (Port 8140)
                            ├── newstrategy4_dca (Port 8141)
                            ├── OsirisXRSI (Port 8142)
                            └── AdvancedFuturesSwingStrategy (Port 8143)
@@ -65,20 +60,16 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 
 - `nfi-x7.env` - NostalgiaForInfinityX7 strategy
 - `e0v1e.env` - FastSupertrend_optim3_rsi_70 runtime env file
-- `e0v1e_shorts.env` - FastSupertrend_optim_quick3 runtime env file
 - `e0v1e_binance.env` - E0V1E Binance-tuned isolated variant
 - `e0v1e_binance_shorts.env` - E0V1E Binance-tuned shorts isolated dry-run variant
 - `binhv27.env` - BinHV27 combined strategy
-- `auto_ei_t4c0s.env` - Auto_EI_t4c0s strategy (longs, weighted EWO scoring)
 - `fibonacciematrend.env` - FibonacciEMATrendStrategy (1h/4h EMA trend strategy, longs + shorts, no FreqAI)
 - `gnf_v2.env` - GnF_V2 strategy (1h longs + shorts)
 - `simplersi.env` - SimpleRSI strategy (1d long-only RSI breakout)
-- `zaratustra.env` - ZaratustraDCA2_06 strategy (longs + shorts with DCA and protection logic)
 - `bollingerbounce.env` - BollingerBounce strategy (longs with 3x leverage)
 - `bollingerbounce_shorts.env` - BollingerBounce_Shorts strategy (shorts-only with 3x leverage)
 - `keltnerbounce.env` - KeltnerBounce strategy (longs with 3x leverage)
 - `keltnerbounce_shorts.env` - KeltnerBounce_Shorts strategy (shorts-only with 3x leverage)
-- `ultrasmart_nostop_v2.env` - UltraSmartStrategy_NoStoploss_v2 strategy (long-only Lmao family strategy)
 - `fenix.env` - FenixTopProfit strategy (longs + shorts 1h trend-following strategy)
 - `simplersi_shorts.env` - SimpleRSI_Shorts strategy (1d shorts-only RSI breakdown, 3x leverage)
 - `mtfscalper.env` - MtfScalper strategy (multi-timeframe futures scalper)
@@ -88,7 +79,6 @@ Internet → NGINX (Port 80) → FreqTrade Strategies
 - `devdsl2approx.env` - DevDsl2Approx strategy (5m Bybit futures dry-run strategy, longs + shorts)
 - `momentumccitrendstrategy.env` - MomentumCCITrendStrategy (1d CCI momentum trend strategy, longs + shorts, max_open_trades=3)
 - `combinedbinhandclucv8.env` - CombinedBinHAndClucV8 strategy (5m Cluc/BinHV hybrid futures strategy)
-- `combinedbinhandclucv8xh.env` - CombinedBinHAndClucV8XH strategy (5m Cluc/BinHV hybrid futures strategy, XH variant)
 - `newstrategy4_dca.env` - newstrategy4 dry-run evaluation strategy (5m long-only Bybit futures strategy)
 - `osirisxrsi.env` - OsirisXRSI (5m Bybit futures dry-run strategy, max_open_trades=2)
 - `advancedfuturesswingstrategy.env` - AdvancedFuturesSwingStrategy (15m Bybit futures swing strategy, longs + shorts)
@@ -117,7 +107,7 @@ Before starting, update the API credentials in each environment file:
 
 # Or start individual strategies
 ./deploy-multi-strategies.sh start nfi-x7
-./deploy-multi-strategies.sh start auto_ei_t4c0s
+./deploy-multi-strategies.sh start fibonacciematrend
 ```
 
 ### Step 3: Setup NGINX (requires sudo)
@@ -166,20 +156,16 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | ------------------------------------ | ------------------------------ | -------------------------------------------------- | ----------------------------- | ---------------------------------------- |
 | **nfi-x7**                           | `Vasko_NFI_X7`                 | `http://freq.gaiaderma.com/nfi-x7`                 | `nfi_x6_user`                 | `nfi_x6_secure_password`                 |
 | **FastSupertrend_optim3_rsi_70**     | `Vasko_FastSupertrend_rsi_70`  | `http://freq.gaiaderma.com/fastsupertrend_rsi_70`  | `e0v1e_user`                  | `e0v1e_secure_password`                  |
-| **FastSupertrend_optim_quick3**      | `Vasko_FastSupertrend_quick3`  | `http://freq.gaiaderma.com/fastsupertrend_quick3`  | `e0v1e_shorts_user`           | `e0v1e_shorts_secure_password`           |
 | **e0v1e_binance**                    | `Vasko_E0V1E_Binance`          | `http://freq.gaiaderma.com/e0v1e_binance`          | `e0v1e_binance_user`          | `e0v1e_binance_secure_password`          |
 | **e0v1e_binance_shorts**             | `Vasko_E0V1E_Binance_Shorts`   | `http://freq.gaiaderma.com/e0v1e_binance_shorts`   | `e0v1e_binance_shorts_user`   | `e0v1e_binance_shorts_secure_password`   |
 | **BinHV27_combined**                 | `Vasko_BinHV27`                | `http://freq.gaiaderma.com/binhv27`                | `binhv27_user`                | `binhv27_secure_password`                |
-| **Auto_EI_t4c0s**                    | `Vasko_Auto_EI_t4c0s`          | `http://freq.gaiaderma.com/auto_ei_t4c0s`          | `auto_ei_t4c0s_user`          | `auto_ei_t4c0s_secure_password`          |
 | **FibonacciEMATrendStrategy**        | `Vasko_FibonacciEMATrend`      | `http://freq.gaiaderma.com/fibonacciematrend`      | `fibonacciematrend_user`      | `fibonacciematrend_secure_password`      |
 | **GnF_V2**                           | `Vasko_GnF_V2`                 | `http://freq.gaiaderma.com/gnf_v2`                 | `gnf_v2_user`                 | `gnf_v2_secure_password`                 |
 | **SimpleRSI**                        | `Vasko_SimpleRSI`              | `http://freq.gaiaderma.com/simplersi`              | `simplersi_user`              | `simplersi_secure_password`              |
-| **ZaratustraDCA2_06**                | `Vasko_ZaratustraDCA2_06`      | `http://freq.gaiaderma.com/zaratustra`             | `zaratustra_user`             | `zaratustra_secure_password`             |
 | **BollingerBounce**                  | `Vasko_BollingerBounce`        | `http://freq.gaiaderma.com/bollingerbounce`        | `bollingerbounce_user`        | `bollingerbounce_secure_password`        |
 | **BollingerBounce_Shorts**           | `Vasko_BollingerBounce_Shorts` | `http://freq.gaiaderma.com/bollingerbounce_shorts` | `bollingerbounce_shorts_user` | `bollingerbounce_shorts_secure_password` |
 | **KeltnerBounce**                    | `Vasko_KeltnerBounce`          | `http://freq.gaiaderma.com/keltnerbounce`          | `keltnerbounce_user`          | `keltnerbounce_secure_password`          |
 | **KeltnerBounce_Shorts**             | `Vasko_KeltnerBounce_Shorts`   | `http://freq.gaiaderma.com/keltnerbounce_shorts`   | `keltnerbounce_shorts_user`   | `keltnerbounce_shorts_secure_password`   |
-| **UltraSmartStrategy_NoStoploss_v2** | `Vasko_UltraSmart_NoStop_v2`   | `http://freq.gaiaderma.com/ultrasmart_nostop_v2`   | `ultrasmart_nostop_v2_user`   | `ultrasmart_nostop_v2_secure_password`   |
 | **FenixTopProfit**                   | `Vasko_FenixTopProfit`         | `http://freq.gaiaderma.com/fenix`                  | `fenix_user`                  | `fenix_secure_password`                  |
 | **SimpleRSI_Shorts**                 | `Vasko_SimpleRSI_Shorts`       | `http://freq.gaiaderma.com/simplersi_shorts`       | `simplersi_shorts_user`       | `simplersi_shorts_secure_password`       |
 | **MtfScalper**                       | `Vasko_MtfScalper`             | `http://freq.gaiaderma.com/mtfscalper`             | `mtfscalper_user`             | `mtfscalper_secure_password`             |
@@ -189,17 +175,16 @@ FreqUI expects **base URLs** and automatically appends API paths. Do **NOT** inc
 | **DevDsl2Approx**                    | `Vasko_DevDsl2Approx`          | `http://freq.gaiaderma.com/devdsl2approx`          | `devdsl2approx_user`          | `devdsl2approx_secure_password`          |
 | **MomentumCCITrendStrategy**         | `Vasko_MomentumCCITrendStrategy` | `http://freq.gaiaderma.com/momentumccitrendstrategy` | `momentumccitrendstrategy_user` | `momentumccitrendstrategy_secure_password` |
 | **CombinedBinHAndClucV8**            | `Vasko_CombinedBinHAndClucV8`  | `http://freq.gaiaderma.com/combinedbinhandclucv8`  | `combinedbinhandclucv8_user`  | `combinedbinhandclucv8_secure_password`  |
-| **CombinedBinHAndClucV8XH**          | `Vasko_CombinedBinHAndClucV8XH` | `http://freq.gaiaderma.com/combinedbinhandclucv8xh` | `combinedbinhandclucv8xh_user` | `combinedbinhandclucv8xh_secure_password` |
 | **newstrategy4**                     | `Vasko_newstrategy4_dca`       | `http://freq.gaiaderma.com/newstrategy4_dca`       | `newstrategy4_dca_user`       | `newstrategy4_dca_secure_password`       |
 | **OsirisXRSI**                       | `Vasko_OsirisXRSI`             | `http://freq.gaiaderma.com/osirisxrsi`             | `osirisxrsi_user`             | `osirisxrsi_secure_password`             |
 | **AdvancedFuturesSwingStrategy**     | `Vasko_AdvancedFuturesSwingStrategy` | `http://freq.gaiaderma.com/advancedfuturesswingstrategy` | `advancedfuturesswingstrategy_user` | `advancedfuturesswingstrategy_secure_password` |
 
 ### URL Flow Example:
 
-1. **FreqUI configured with**: `http://freq.gaiaderma.com/auto_ei_t4c0s`
+1. **FreqUI configured with**: `http://freq.gaiaderma.com/fibonacciematrend`
 2. **FreqUI automatically appends**: `/api/v1/token/login`
-3. **Final request**: `http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/token/login`
-4. **NGINX proxies to**: `http://127.0.0.1:8100/api/v1/token/login`
+3. **Final request**: `http://freq.gaiaderma.com/fibonacciematrend/api/v1/token/login`
+4. **NGINX proxies to**: `http://127.0.0.1:8103/api/v1/token/login`
 
 ## Security Considerations
 
@@ -240,20 +225,16 @@ FREQTRADE__API_SERVER__FORWARDED_ALLOW_IPS="*"
 # Individual health checks (direct to containers)
 curl http://127.0.0.1:8080/api/v1/ping  # nfi-x7
 curl http://127.0.0.1:8098/api/v1/ping  # FastSupertrend_optim3_rsi_70
-curl http://127.0.0.1:8099/api/v1/ping  # FastSupertrend_optim_quick3
 curl http://127.0.0.1:8114/api/v1/ping  # e0v1e_binance
 curl http://127.0.0.1:8115/api/v1/ping  # e0v1e_binance_shorts
 curl http://127.0.0.1:8092/api/v1/ping  # BinHV27_combined
-curl http://127.0.0.1:8100/api/v1/ping  # Auto_EI_t4c0s
 curl http://127.0.0.1:8103/api/v1/ping  # FibonacciEMATrendStrategy
 curl http://127.0.0.1:8091/api/v1/ping  # GnF_V2
 curl http://127.0.0.1:8118/api/v1/ping  # SimpleRSI
-curl http://127.0.0.1:8119/api/v1/ping  # ZaratustraDCA2_06
 curl http://127.0.0.1:8124/api/v1/ping  # BollingerBounce
 curl http://127.0.0.1:8125/api/v1/ping  # BollingerBounce_Shorts
 curl http://127.0.0.1:8126/api/v1/ping  # KeltnerBounce
 curl http://127.0.0.1:8127/api/v1/ping  # KeltnerBounce_Shorts
-curl http://127.0.0.1:8128/api/v1/ping  # UltraSmartStrategy_NoStoploss_v2
 curl http://127.0.0.1:8129/api/v1/ping  # FenixTopProfit
 curl http://127.0.0.1:8130/api/v1/ping  # SimpleRSI_Shorts
 curl http://127.0.0.1:8131/api/v1/ping  # MtfScalper
@@ -263,27 +244,22 @@ curl http://127.0.0.1:8135/api/v1/ping  # Best5m
 curl http://127.0.0.1:8136/api/v1/ping  # DevDsl2Approx
 curl http://127.0.0.1:8137/api/v1/ping  # MomentumCCITrendStrategy
 curl http://127.0.0.1:8139/api/v1/ping  # CombinedBinHAndClucV8
-curl http://127.0.0.1:8140/api/v1/ping  # CombinedBinHAndClucV8XH
 curl http://127.0.0.1:8141/api/v1/ping  # newstrategy4_dca
 curl http://127.0.0.1:8142/api/v1/ping  # OsirisXRSI
 curl http://127.0.0.1:8143/api/v1/ping  # AdvancedFuturesSwingStrategy
 # Test through NGINX
 curl http://freq.gaiaderma.com/nfi-x7/api/v1/ping
 curl http://freq.gaiaderma.com/fastsupertrend_rsi_70/api/v1/ping
-curl http://freq.gaiaderma.com/fastsupertrend_quick3/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance/api/v1/ping
 curl http://freq.gaiaderma.com/e0v1e_binance_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/binhv27/api/v1/ping
-curl http://freq.gaiaderma.com/auto_ei_t4c0s/api/v1/ping
 curl http://freq.gaiaderma.com/fibonacciematrend/api/v1/ping
 curl http://freq.gaiaderma.com/gnf_v2/api/v1/ping
 curl http://freq.gaiaderma.com/simplersi/api/v1/ping
-curl http://freq.gaiaderma.com/zaratustra/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/bollingerbounce_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce/api/v1/ping
 curl http://freq.gaiaderma.com/keltnerbounce_shorts/api/v1/ping
-curl http://freq.gaiaderma.com/ultrasmart_nostop_v2/api/v1/ping
 curl http://freq.gaiaderma.com/fenix/api/v1/ping
 curl http://freq.gaiaderma.com/simplersi_shorts/api/v1/ping
 curl http://freq.gaiaderma.com/mtfscalper/api/v1/ping
@@ -293,7 +269,6 @@ curl http://freq.gaiaderma.com/best5m/api/v1/ping
 curl http://freq.gaiaderma.com/devdsl2approx/api/v1/ping
 curl http://freq.gaiaderma.com/momentumccitrendstrategy/api/v1/ping
 curl http://freq.gaiaderma.com/combinedbinhandclucv8/api/v1/ping
-curl http://freq.gaiaderma.com/combinedbinhandclucv8xh/api/v1/ping
 curl http://freq.gaiaderma.com/newstrategy4_dca/api/v1/ping
 curl http://freq.gaiaderma.com/advancedfuturesswingstrategy/api/v1/ping
 ```
@@ -316,8 +291,7 @@ docker compose -f docker-compose-multi-strategies.yml logs -f freqtrade-nfi-x7
 Each strategy logs to separate files in `user_data/logs/`:
 
 - `nfi-x7.log`
-- `fastsupertrend_rsi_70.log`, `fastsupertrend_quick3.log`
-- `auto_ei_t4c0s.log`
+- `fastsupertrend_rsi_70.log`
 - `fibonacciematrend.log`
 - `gnf_v2.log`
 - `simplersi.log`
@@ -325,7 +299,6 @@ Each strategy logs to separate files in `user_data/logs/`:
 - `devdsl2approx.log`
 - `momentumccitrendstrategy.log`
 - `combinedbinhandclucv8.log`
-- `combinedbinhandclucv8xh.log`
 - `newstrategy4_dca.log`
 - `advancedfuturesswingstrategy.log`
 - etc.
@@ -342,20 +315,16 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | ---- | -------------------------------- | -------------- | ---------------- |
 | 8080 | nfi-x7                           | Longs          | -                |
 | 8098 | FastSupertrend_optim3_rsi_70     | Longs + Shorts | Strategy-defined |
-| 8099 | FastSupertrend_optim_quick3      | Longs + Shorts | Strategy-defined |
 | 8114 | e0v1e_binance                    | Longs          | Strategy-defined |
 | 8115 | e0v1e_binance_shorts             | Shorts         | Strategy-defined |
 | 8092 | BinHV27_combined                 | Longs + Shorts | Strategy-defined |
-| 8100 | Auto_EI_t4c0s                    | Longs          | -                |
 | 8103 | FibonacciEMATrendStrategy        | Longs + Shorts | Strategy-defined |
 | 8091 | GnF_V2                           | Longs + Shorts | Strategy-defined |
 | 8118 | SimpleRSI                        | Longs          | 1x               |
-| 8119 | ZaratustraDCA2_06                | Longs + Shorts | Config-defined   |
 | 8124 | BollingerBounce                  | Longs          | 3x               |
 | 8125 | BollingerBounce_Shorts           | Shorts         | 3x               |
 | 8126 | KeltnerBounce                    | Longs          | 3x               |
 | 8127 | KeltnerBounce_Shorts             | Shorts         | 3x               |
-| 8128 | UltraSmartStrategy_NoStoploss_v2 | Longs          | Config-defined   |
 | 8129 | FenixTopProfit                   | Longs + Shorts | Config-defined   |
 | 8130 | SimpleRSI_Shorts                 | Shorts         | 3x               |
 | 8131 | MtfScalper                       | Longs + Shorts | Strategy-defined |
@@ -365,12 +334,11 @@ All strategies use the same base configuration (`user_data/strategies/config.jso
 | 8136 | DevDsl2Approx                    | Longs + Shorts | Config-defined   |
 | 8137 | MomentumCCITrendStrategy         | Longs + Shorts | Strategy-defined |
 | 8139 | CombinedBinHAndClucV8            | Longs + Shorts | Strategy-defined |
-| 8140 | CombinedBinHAndClucV8XH          | Longs + Shorts | Strategy-defined |
 | 8141 | newstrategy4_dca                | Longs          | Config-defined   |
 | 8142 | OsirisXRSI                       | Longs + Shorts | Config-defined   |
 | 8143 | AdvancedFuturesSwingStrategy     | Longs + Shorts | Strategy-defined |
 
-**Freed ports** (available for future strategies): 8097, 8104, 8112, 8133, 8144+
+**Freed ports** (available for future strategies): 8097, 8099, 8100, 8104, 8112, 8119, 8128, 8133, 8140, 8144+
 
 ### Database Separation
 
@@ -378,20 +346,16 @@ Each strategy uses its own SQLite database:
 
 - `nfi-x7-tradesv3.sqlite`
 - `fastsupertrend_rsi_70-tradesv3.sqlite`
-- `fastsupertrend_quick3-tradesv3.sqlite`
 - `e0v1e_binance-tradesv3.sqlite`
 - `e0v1e_binance_shorts-tradesv3.sqlite`
 - `binhv27-tradesv3.sqlite`
-- `auto_ei_t4c0s-tradesv3.sqlite`
 - `fibonacciematrend-tradesv3.sqlite`
 - `gnf_v2-tradesv3.sqlite`
 - `simplersi-tradesv3.sqlite`
-- `zaratustra-tradesv3.sqlite`
 - `bollingerbounce-tradesv3.sqlite`
 - `bollingerbounce_shorts-tradesv3.sqlite`
 - `keltnerbounce-tradesv3.sqlite`
 - `keltnerbounce_shorts-tradesv3.sqlite`
-- `ultrasmart_nostop_v2-tradesv3.sqlite`
 - `fenix-tradesv3.sqlite`
 - `simplersi_shorts-tradesv3.sqlite`
 - `mtfscalper-tradesv3.sqlite`
@@ -400,7 +364,6 @@ Each strategy uses its own SQLite database:
 - `momentumccitrendstrategy-tradesv3.sqlite`
 - `devdsl2approx-tradesv3.sqlite`
 - `combinedbinhandclucv8-tradesv3.sqlite`
-- `combinedbinhandclucv8xh-tradesv3.sqlite`
 - `newstrategy4_dca-tradesv3.sqlite`
 - `advancedfuturesswingstrategy-tradesv3.sqlite`
 
@@ -410,8 +373,8 @@ The NGINX configuration uses simple base paths without complex rewrites:
 
 ```nginx
 # Strategy-specific paths (FreqUI appends /api/v1/* to these)
-location /auto_ei_t4c0s/ {
-    proxy_pass http://127.0.0.1:8100/;
+location /fibonacciematrend/ {
+    proxy_pass http://127.0.0.1:8103/;
 }
 ```
 
@@ -423,7 +386,7 @@ location /auto_ei_t4c0s/ {
 
    **Problem**: Browser console shows `POST http://freq.gaiaderma.com/api/v1/strategy/api/v1/token/login 405`
 
-   **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`
+   **Solution**: Remove `/api/v1/` from FreqUI bot URLs. Use `http://freq.gaiaderma.com/fibonacciematrend` instead of `http://freq.gaiaderma.com/api/v1/fibonacciematrend`
 
 2. **Port Conflicts**
 
@@ -509,9 +472,13 @@ All endpoints should return `{"status":"pong"}`.
 
 For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stable/
 
-**Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/auto_ei_t4c0s` instead of `http://freq.gaiaderma.com/api/v1/auto_ei_t4c0s`.
+**Key Insight**: The most common issue is including `/api/v1/` in FreqUI bot URLs. FreqUI automatically appends API paths, so use base URLs like `http://freq.gaiaderma.com/fibonacciematrend` instead of `http://freq.gaiaderma.com/api/v1/fibonacciematrend`.
 
-**Last Updated**: May 7, 2026
+**Last Updated**: June 4, 2026
+
+## Recent Changes (June 4, 2026)
+
+- **Removed**: Five retired multistrategy dry-run slots from compose, NGINX, deployment helper checks, and operator documentation
 
 ## Recent Changes (May 7, 2026)
 
@@ -551,10 +518,6 @@ For support, check the FreqTrade documentation: https://www.freqtrade.io/en/stab
 - **Removed**: SimpleRSI (port 8124) and SimpleRSI_Shorts (port 8125)
 - **Added**: BollingerBounce (longs, port 8124) and BollingerBounce_Shorts (shorts, port 8125), both 3x leverage
 - **Added**: KeltnerBounce (longs, port 8126) and KeltnerBounce_Shorts (shorts, port 8127), both 3x leverage
-
-## Recent Changes (March 11, 2026)
-
-- **Added**: ZaratustraDCA2_06 (mixed long/short, port 8119) with `/zaratustra` reverse-proxy routing
 
 ## Recent Changes (February 9, 2026)
 
