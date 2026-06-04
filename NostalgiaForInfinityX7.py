@@ -12598,8 +12598,13 @@ class NostalgiaForInfinityX7(IStrategy):
     stochrsi_k_4h_lt_90 = stochrsi_k_4h < 90.0
     rsi_3 = df["RSI_3"]
     close = df["close"]
+    open_rate = df["open"]
     roc_9_15m = df["ROC_9_15m"]
     rsi_14_4h = df["RSI_14_4h"]
+    roc_2_1d = df["ROC_2_1d"]
+    uo_7_14_28_4h = df["UO_7_14_28_4h"]
+    willr_84_1h = df["WILLR_84_1h"]
+    mfi_14 = df["MFI_14"]
 
     # Reused entry Series and comparison masks
     aroond_14 = df["AROOND_14"]
@@ -13115,8 +13120,8 @@ class NostalgiaForInfinityX7(IStrategy):
           # Logic
           long_entry_logic.append(
             (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.034))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.034))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
             & (close < (df["BBL_20_2.0"] * 0.999))
           )
 
@@ -15136,8 +15141,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (aroonu_14 < 25.0)
             & (stochrsi_k < 30.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.020))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.020))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           )
 
         # Condition #6 - Normal mode (Long).
@@ -17278,7 +17283,7 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append(
             (willr_14 < -50.0)
             & (stochrsi_k < 20.0)
-            & (df["WILLR_84_1h"] < -70.0)
+            & (willr_84_1h < -70.0)
             & (stochrsi_k_1h < 20.0)
             & (bbb_20_2_0_1h > 16.0)
             & (close_max_48 >= (close * 1.10))
@@ -17790,11 +17795,11 @@ class NostalgiaForInfinityX7(IStrategy):
           # Logic
           long_entry_logic.append(
             (rsi_14 < 40.0)
-            & (df["MFI_14"] < 40.0)
+            & (mfi_14 < 40.0)
             & (aroonu_14 < 25.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.024))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.024))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
             & (close < (ema_20 * 0.960))
             & (close < (df["BBL_20_2.0"] * 0.999))
           )
@@ -18633,7 +18638,7 @@ class NostalgiaForInfinityX7(IStrategy):
           long_entry_logic.append(df["WILLR_14_15m"] < -50.0)
           long_entry_logic.append(aroonu_14_15m < 25.0)
           long_entry_logic.append(stochrsi_k_15m < 20.0)
-          long_entry_logic.append(df["WILLR_84_1h"] < -70.0)
+          long_entry_logic.append(willr_84_1h < -70.0)
           long_entry_logic.append(stochrsi_k_1h < 20.0)
           long_entry_logic.append(bbb_20_2_0_1h > 12.0)
           long_entry_logic.append(close_max_48 >= (close * 1.10))
@@ -18975,8 +18980,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (aroonu_14 < 25.0)
             & (stochrsi_k < 30.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.030))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.030))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           )
 
         # Condition #62 - Rebuy mode (Long).
@@ -19324,7 +19329,7 @@ class NostalgiaForInfinityX7(IStrategy):
             & (aroonu_14 < 30.0)
             & (stochrsi_k < 20.0)
             & (stochrsi_k_15m < 70.0)
-            & (df["WILLR_84_1h"] < -70.0)
+            & (willr_84_1h < -70.0)
             & (stochrsi_k_1h < 30.0)
             & (bbb_20_2_0_1h > 12.0)
             & (close_max_48 >= (close * 1.10))
@@ -19826,8 +19831,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_3 < 50.0)
             & (aroonu_14 < 25.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.022))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.022))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           )
 
         # Condition #101 - Rapid mode (Long).
@@ -22001,8 +22006,8 @@ class NostalgiaForInfinityX7(IStrategy):
             (rsi_3 < 40.0)
             & (stochrsi_k < 20.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.020))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.020))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           )
 
         # Condition #144 - Top Coins mode (Long).
@@ -22922,8 +22927,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (aroond_14 > 75.0)
             & (stochrsi_k < 30.0)
             & (ema_26 > ema_12)
-            & ((ema_26 - ema_12) > (df["open"] * 0.030))
-            & ((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+            & ((ema_26 - ema_12) > (open_rate * 0.030))
+            & ((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
             & (close < df["SMA_9"])
           )
 
@@ -23519,7 +23524,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # 1h up move, 4h low
           short_entry_logic.append((rsi_3_1h_lt_95) | (stochrsi_k_4h_gt_30))
           # 1h & 4h up move, 4h still not high enough
-          short_entry_logic.append((rsi_3_1h_lt_95) | (rsi_3_4h_lt_95) | (df["UO_7_14_28_4h"] > 60.0))
+          short_entry_logic.append((rsi_3_1h_lt_95) | (rsi_3_4h_lt_95) | (uo_7_14_28_4h > 60.0))
           # 1h & 4h up move, 4h still low
           short_entry_logic.append((rsi_3_1h_lt_95) | (rsi_3_4h_lt_85) | (stochrsi_k_4h_gt_50))
           # 1h & 4h up move, 4h uptrend
@@ -23633,8 +23638,8 @@ class NostalgiaForInfinityX7(IStrategy):
 
           # Logic
           short_entry_logic.append(ema_12 > ema_26)
-          short_entry_logic.append((ema_12 - ema_26) > (df["open"] * 0.030))
-          short_entry_logic.append((ema_12.shift() - ema_26.shift()) > (df["open"] / 100.0))
+          short_entry_logic.append((ema_12 - ema_26) > (open_rate * 0.030))
+          short_entry_logic.append((ema_12.shift() - ema_26.shift()) > (open_rate / 100.0))
           short_entry_logic.append(close > (df["BBU_20_2.0"] * 1.004))
 
         # Condition #502 - Normal mode (Short).
@@ -23831,7 +23836,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # 5m strong down move
           short_entry_logic.append((rsi_3 < 98.0) | (roc_9 < 50.0))
           # 5m down move, 4h still high
-          short_entry_logic.append((rsi_3_lt_90) | (df["MFI_14"] > 10.0) | (stochrsi_k_4h_gt_30))
+          short_entry_logic.append((rsi_3_lt_90) | (mfi_14 > 10.0) | (stochrsi_k_4h_gt_30))
           # 5m & 1h down move, 1h still high
           short_entry_logic.append((rsi_3_lt_90) | (rsi_3_1h_lt_90) | (stochrsi_k_1h_gt_70))
           # 5m down move, 4h downtrend, 1h still high
@@ -23895,7 +23900,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # 15m strong down move
           short_entry_logic.append((rsi_3_15m_lt_90) | (mfi_14_15m < 85.0) | (aroond_14_15m < 25.0))
           # 14m down move, 4h still high
-          short_entry_logic.append((rsi_3_15m < 80.0) | (aroond_14_15m < 50.0) | (df["UO_7_14_28_4h"] > 50.0))
+          short_entry_logic.append((rsi_3_15m < 80.0) | (aroond_14_15m < 50.0) | (uo_7_14_28_4h > 50.0))
           # 15m down move, 1h stil high, 1d overbought
           short_entry_logic.append((rsi_3_15m_lt_85) | (aroond_14_1h < 25.0) | (roc_9_1d > -80.0))
           # 15m down move, 1h high, 1d overbought
@@ -23915,7 +23920,7 @@ class NostalgiaForInfinityX7(IStrategy):
           # 1h down move, 4h still high, 1d downtrend
           short_entry_logic.append((rsi_3_change_pct_1h > -65.0) | (stochrsi_k_4h_gt_30) | roc_9_1d_lt_50)
           # 4h & 1d down move, 1h still high
-          short_entry_logic.append((rsi_3_4h_lt_90) | (df["ROC_2_1d"] < 20.0) | (stochrsi_k_1h_gt_50))
+          short_entry_logic.append((rsi_3_4h_lt_90) | (roc_2_1d < 20.0) | (stochrsi_k_1h_gt_50))
           # 15m still high, 1h down move, 4h high
           short_entry_logic.append((aroond_14_15m < 50.0) | (rsi_3_change_pct_1h < 50.0) | (stochrsi_k_4h_gt_30))
           # 15m still high, 1h & 4h down move, 4h still high
@@ -23927,15 +23932,15 @@ class NostalgiaForInfinityX7(IStrategy):
           # 15m still high, 1h down move, 1d downtrend
           short_entry_logic.append((stochrsi_k_15m > 30.0) | (rsi_3_4h_lt_90) | roc_9_1d_lt_50)
           # 1h & 4h still high, 1d strong down move
-          short_entry_logic.append((stochrsi_k_1h_gt_50) | (df["UO_7_14_28_4h"] > 55.0) | (rsi_3_1d < 90.0))
+          short_entry_logic.append((stochrsi_k_1h_gt_50) | (uo_7_14_28_4h > 55.0) | (rsi_3_1d < 90.0))
           # 1h still high, 4h & 1d downtrend
           short_entry_logic.append((aroond_14_1h < 25.0) | (roc_9_4h_lt_20) | roc_9_1d_lt_50)
           # 4h moving down, 1d P&D
           short_entry_logic.append((roc_9_4h < 30.0) | (df["RSI_3_change_pct_1d"] < 50.0) | roc_9_1d_gt_neg_50)
           # 1d strong downtrend, 4h still high
-          short_entry_logic.append((df["ROC_2_1d"] < 20.0) | roc_9_1d_lt_50 | (stochrsi_k_4h_gt_70))
+          short_entry_logic.append((roc_2_1d < 20.0) | roc_9_1d_lt_50 | (stochrsi_k_4h_gt_70))
           # 1d P&D, 1d overbought
-          short_entry_logic.append((df["ROC_2_1d"] < 10.0) | roc_9_1d_gt_neg_50 | (stochrsi_k_1h > 5.0))
+          short_entry_logic.append((roc_2_1d < 10.0) | roc_9_1d_gt_neg_50 | (stochrsi_k_1h > 5.0))
           # 1h red, previous 1h green, 1h overbought
           short_entry_logic.append(
             (change_pct_1h < 1.0) | (change_pct_1h.shift(12) > -5.0) | (rsi_14_1h.shift(12) < 80.0)
@@ -24066,7 +24071,7 @@ class NostalgiaForInfinityX7(IStrategy):
             (rsi_3_1h_lt_90) | (rsi_3_change_pct_4h < 50.0) | (aroond_14_4h < 25.0) | (stochrsi_k_1d > 60.0)
           )
           # 1h down move, 1h still high, 1d going down
-          short_entry_logic.append((rsi_3_1h_lt_85) | (stochrsi_k_1h_gt_50) | (df["ROC_2_1d"] > -50.0))
+          short_entry_logic.append((rsi_3_1h_lt_85) | (stochrsi_k_1h_gt_50) | (roc_2_1d > -50.0))
           # 4h downtrend, 4h still high, 1d strong downtrend
           short_entry_logic.append((rsi_3_4h_lt_85) | (stochrsi_k_4h_gt_70) | (roc_9_1d < 60.0))
           # 15m down move, 1h strong down move, 1d overbought
@@ -24087,7 +24092,7 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append((roc_9_1h < 40.0) | (rsi_3_4h_lt_90) | roc_9_1d_lt_50)
           short_entry_logic.append((roc_9_4h > -200.0) | (rsi_14_4h > 20.0))
           # 4h down move, 1d P&D
-          short_entry_logic.append((roc_9_4h_lt_20) | (df["ROC_2_1d"] < 20.0) | roc_9_1d_gt_neg_50)
+          short_entry_logic.append((roc_9_4h_lt_20) | (roc_2_1d < 20.0) | roc_9_1d_gt_neg_50)
           # 1h P&D, 4h overbought
           short_entry_logic.append((change_pct_1h < 2.0) | (change_pct_1h.shift(12) > 2.0) | (rsi_14_4h > 20.0))
           # 1h P&D, 1d overbought
@@ -24251,7 +24256,7 @@ class NostalgiaForInfinityX7(IStrategy):
           short_entry_logic.append(aroonu_14 > 75.0)
           short_entry_logic.append(aroond_14 < 25.0)
           short_entry_logic.append(stochrsi_k > 80.0)
-          short_entry_logic.append(df["WILLR_84_1h"] > -30.0)
+          short_entry_logic.append(willr_84_1h > -30.0)
           short_entry_logic.append(stochrsi_k_1h > 80.0)
           short_entry_logic.append(bbb_20_2_0_1h > 20.0)
           short_entry_logic.append(df["close_min_48"] <= (close * 0.90))
@@ -24285,9 +24290,7 @@ class NostalgiaForInfinityX7(IStrategy):
             (rsi_3_15m_lt_95) | (rsi_3_1h_lt_80) | (stochrsi_k_4h_gt_70) | (aroond_14_4h < 50.0)
           )
           # 15m & 1h down move, 4h still high, 4h downtrend
-          short_entry_logic.append(
-            (rsi_3_15m_lt_95) | (rsi_3_1h_lt_90) | (df["UO_7_14_28_4h"] > 60.0) | (roc_9_4h_lt_20)
-          )
+          short_entry_logic.append((rsi_3_15m_lt_95) | (rsi_3_1h_lt_90) | (uo_7_14_28_4h > 60.0) | (roc_9_4h_lt_20))
           # 15m & 1h down move, 1d strong downtrend
           short_entry_logic.append((rsi_3_15m_lt_95) | (rsi_3_1h_lt_90) | roc_9_1d_lt_50)
           # 15m & 4h down move, 4h still not low enough
@@ -24329,11 +24332,11 @@ class NostalgiaForInfinityX7(IStrategy):
 
           # Logic
           short_entry_logic.append(rsi_14 > 60.0)
-          short_entry_logic.append(df["MFI_14"] > 60.0)
+          short_entry_logic.append(mfi_14 > 60.0)
           short_entry_logic.append(aroond_14 < 25.0)
           short_entry_logic.append(ema_26 < ema_12)
-          short_entry_logic.append((ema_26 - ema_12) > (df["open"] * 0.024))
-          short_entry_logic.append((ema_26.shift() - ema_12.shift()) > (df["open"] / 100.0))
+          short_entry_logic.append((ema_26 - ema_12) > (open_rate * 0.024))
+          short_entry_logic.append((ema_26.shift() - ema_12.shift()) > (open_rate / 100.0))
           short_entry_logic.append(close < (ema_20 * 0.958))
           short_entry_logic.append(close < (df["BBL_20_2.0"] * 0.992))
 
@@ -26955,11 +26958,18 @@ class NostalgiaForInfinityX7(IStrategy):
     last_rsi_14 = last_candle["RSI_14"]
     last_close = last_candle["close"]
     last_ema_200 = last_candle["EMA_200"]
+    last_ema_50 = last_candle["EMA_50"]
+    last_rsi_14_1h = last_candle["RSI_14_1h"]
     last_bbu_20 = last_candle["BBU_20_2.0"]
+    last_bbu_20_1h = last_candle["BBU_20_2.0_1h"]
     previous_1_close = previous_candle_1["close"]
     previous_1_bbu_20 = previous_candle_1["BBU_20_2.0"]
     previous_2_close = previous_candle_2["close"]
     previous_2_bbu_20 = previous_candle_2["BBU_20_2.0"]
+    previous_3_close = previous_candle_3["close"]
+    previous_3_bbu_20 = previous_candle_3["BBU_20_2.0"]
+    previous_4_close = previous_candle_4["close"]
+    previous_4_bbu_20 = previous_candle_4["BBU_20_2.0"]
 
     # Sell signal 1
     if (
@@ -26967,8 +26977,8 @@ class NostalgiaForInfinityX7(IStrategy):
       and (last_close > last_bbu_20)
       and (previous_1_close > previous_1_bbu_20)
       and (previous_2_close > previous_2_bbu_20)
-      and (previous_candle_3["close"] > previous_candle_3["BBU_20_2.0"])
-      and (previous_candle_4["close"] > previous_candle_4["BBU_20_2.0"])
+      and (previous_3_close > previous_3_bbu_20)
+      and (previous_4_close > previous_4_bbu_20)
     ):
       if last_close > last_ema_200:
         if current_profit > 0.01:
@@ -27001,7 +27011,7 @@ class NostalgiaForInfinityX7(IStrategy):
           return True, f"exit_{mode_name}_3_2_1"
 
     # Sell signal 4
-    elif (last_rsi_14 > 84.0) and (last_candle["RSI_14_1h"] > 80.0):
+    elif (last_rsi_14 > 84.0) and (last_rsi_14_1h > 80.0):
       if last_close > last_ema_200:
         if current_profit > 0.01:
           return True, f"exit_{mode_name}_4_1_1"
@@ -27010,7 +27020,7 @@ class NostalgiaForInfinityX7(IStrategy):
           return True, f"exit_{mode_name}_4_2_1"
 
     # Sell signal 6
-    elif (last_close < last_ema_200) and (last_close > last_candle["EMA_50"]) and (last_rsi_14 > 79.0):
+    elif (last_close < last_ema_200) and (last_close > last_ema_50) and (last_rsi_14 > 79.0):
       if current_profit > 0.01:
         return True, f"exit_{mode_name}_6_1"
 
@@ -27024,7 +27034,7 @@ class NostalgiaForInfinityX7(IStrategy):
     #       return True, f"exit_{mode_name}_7_2_1"
 
     # Sell signal 8
-    elif last_close > last_candle["BBU_20_2.0_1h"] * 1.14:
+    elif last_close > last_bbu_20_1h * 1.14:
       if last_close > last_ema_200:
         if current_profit > 0.01:
           return True, f"exit_{mode_name}_8_1_1"
@@ -41304,6 +41314,9 @@ class NostalgiaForInfinityX7(IStrategy):
   def long_buyback_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    previous_ema_26 = previous_candle["EMA_26"]
+    previous_ema_12 = previous_candle["EMA_12"]
+
     last_rsi_3_1d = last_candle["RSI_3_1d"]
     last_roc_9_1h = last_candle["ROC_9_1h"]
     last_roc_9_4h = last_candle["ROC_9_4h"]
@@ -41334,6 +41347,7 @@ class NostalgiaForInfinityX7(IStrategy):
     last_stochrsi_k_4h = last_candle["STOCHRSIk_14_14_3_3_4h"]
     last_roc_2_1d = last_candle["ROC_2_1d"]
     last_ema_16 = last_candle["EMA_16"]
+    last_bbl_20 = last_candle["BBL_20_2.0"]
 
     if (last_protections_long_global == True) and (
       (last_enter_long == True)
@@ -41374,7 +41388,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_roc_9_1d > -5.0)
         and (last_ema_26 > last_ema_12)
         and ((last_ema_26 - last_ema_12) > (last_open * 0.020))
-        and ((previous_candle["EMA_26"] - previous_candle["EMA_12"]) > (last_open / 100.0))
+        and ((previous_ema_26 - previous_ema_12) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 < 36.0)
@@ -41416,7 +41430,7 @@ class NostalgiaForInfinityX7(IStrategy):
         # and (last_candle["close"] > (last_candle["high_max_6_1h"] * 0.85))
         # and (last_candle["close"] > (last_candle["high_max_12_1h"] * 0.80))
         and (last_close < (last_ema_26 * 0.960))
-        and (last_close < (last_candle["BBL_20_2.0"] * 0.999))
+        and (last_close < (last_bbl_20 * 0.999))
       )
     ):
       return True
@@ -41716,13 +41730,16 @@ class NostalgiaForInfinityX7(IStrategy):
     last_rsi_3 = last_candle["RSI_3"]
     last_rsi_14 = last_candle["RSI_14"]
     last_willr_14 = last_candle["WILLR_14"]
+    last_stochrsi_k = last_candle["STOCHRSIk_14_14_3_3"]
+    last_close = last_candle["close"]
+    last_bbu_20 = last_candle["BBU_20_2.0"]
 
     if (
       (last_rsi_3 > 99.0)
       or (last_rsi_14 > 70.0)
       or (last_willr_14 > -0.1)
-      or (last_candle["STOCHRSIk_14_14_3_3"] > 95.0)
-      or (last_candle["close"] > (last_candle["BBU_20_2.0"] * 1.01))
+      or (last_stochrsi_k > 95.0)
+      or (last_close > (last_bbu_20 * 1.01))
       or ((last_rsi_3 > 90.0) and (last_rsi_14 < 50.0))
     ):
       return True
@@ -41735,13 +41752,16 @@ class NostalgiaForInfinityX7(IStrategy):
     last_rsi_3 = last_candle["RSI_3"]
     last_rsi_14 = last_candle["RSI_14"]
     last_willr_14 = last_candle["WILLR_14"]
+    last_stochrsi_k = last_candle["STOCHRSIk_14_14_3_3"]
+    last_close = last_candle["close"]
+    last_bbu_20 = last_candle["BBU_20_2.0"]
 
     if (
       (last_rsi_3 > 99.0)
       or (last_rsi_14 > 70.0)
       or (last_willr_14 > -0.1)
-      or (last_candle["STOCHRSIk_14_14_3_3"] > 95.0)
-      or (last_candle["close"] > (last_candle["BBU_20_2.0"] * 1.01))
+      or (last_stochrsi_k > 95.0)
+      or (last_close > (last_bbu_20 * 1.01))
       or ((last_rsi_3 > 90.0) and (last_rsi_14 < 50.0))
     ):
       return True
@@ -50091,11 +50111,18 @@ class NostalgiaForInfinityX7(IStrategy):
     last_rsi_14 = last_candle["RSI_14"]
     last_close = last_candle["close"]
     last_ema_200 = last_candle["EMA_200"]
+    last_ema_50 = last_candle["EMA_50"]
+    last_rsi_14_1h = last_candle["RSI_14_1h"]
     last_bbl_20 = last_candle["BBL_20_2.0"]
+    last_bbl_20_1h = last_candle["BBL_20_2.0_1h"]
     previous_1_close = previous_candle_1["close"]
     previous_1_bbl_20 = previous_candle_1["BBL_20_2.0"]
     previous_2_close = previous_candle_2["close"]
     previous_2_bbl_20 = previous_candle_2["BBL_20_2.0"]
+    previous_3_close = previous_candle_3["close"]
+    previous_3_bbl_20 = previous_candle_3["BBL_20_2.0"]
+    previous_4_close = previous_candle_4["close"]
+    previous_4_bbl_20 = previous_candle_4["BBL_20_2.0"]
 
     # Sell signal 1
     if (
@@ -50103,8 +50130,8 @@ class NostalgiaForInfinityX7(IStrategy):
       and (last_close < last_bbl_20)
       and (previous_1_close < previous_1_bbl_20)
       and (previous_2_close < previous_2_bbl_20)
-      and (previous_candle_3["close"] < previous_candle_3["BBL_20_2.0"])
-      and (previous_candle_4["close"] < previous_candle_4["BBL_20_2.0"])
+      and (previous_3_close < previous_3_bbl_20)
+      and (previous_4_close < previous_4_bbl_20)
     ):
       if last_close < last_ema_200:
         if current_profit > 0.01:
@@ -50137,7 +50164,7 @@ class NostalgiaForInfinityX7(IStrategy):
           return True, f"exit_{mode_name}_3_2_1"
 
     # Sell signal 4
-    elif (last_rsi_14 < 16.0) and (last_candle["RSI_14_1h"] < 20.0):
+    elif (last_rsi_14 < 16.0) and (last_rsi_14_1h < 20.0):
       if last_close < last_ema_200:
         if current_profit > 0.01:
           return True, f"exit_{mode_name}_4_1_1"
@@ -50146,7 +50173,7 @@ class NostalgiaForInfinityX7(IStrategy):
           return True, f"exit_{mode_name}_4_2_1"
 
     # Sell signal 6
-    elif (last_close > last_ema_200) and (last_close < last_candle["EMA_50"]) and (last_rsi_14 < 21.0):
+    elif (last_close > last_ema_200) and (last_close < last_ema_50) and (last_rsi_14 < 21.0):
       if current_profit > 0.01:
         return True, f"exit_{mode_name}_6_1"
 
@@ -50160,7 +50187,7 @@ class NostalgiaForInfinityX7(IStrategy):
     #       return True, f"exit_{mode_name}_7_2_1"
 
     # Sell signal 8
-    elif last_close < last_candle["BBL_20_2.0_1h"] * 0.86:
+    elif last_close < last_bbl_20_1h * 0.86:
       if last_close < last_ema_200:
         if current_profit > 0.01:
           return True, f"exit_{mode_name}_8_1_1"
@@ -64415,6 +64442,9 @@ class NostalgiaForInfinityX7(IStrategy):
   def short_buyback_entry_v2(
     self, last_candle: Series, previous_candle: Series, slice_profit: float, is_derisk: bool
   ) -> float:
+    previous_ema_12 = previous_candle["EMA_12"]
+    previous_ema_26 = previous_candle["EMA_26"]
+
     last_rsi_3_1d = last_candle["RSI_3_1d"]
     last_roc_9_1h = last_candle["ROC_9_1h"]
     last_roc_9_4h = last_candle["ROC_9_4h"]
@@ -64441,8 +64471,11 @@ class NostalgiaForInfinityX7(IStrategy):
     last_aroond_14_15m = last_candle["AROOND_14_15m"]
     last_stochrsi_k = last_candle["STOCHRSIk_14_14_3_3"]
     last_stochrsi_k_15m = last_candle["STOCHRSIk_14_14_3_3_15m"]
+    last_stochrsi_k_1h = last_candle["STOCHRSIk_14_14_3_3_1h"]
+    last_stochrsi_k_4h = last_candle["STOCHRSIk_14_14_3_3_4h"]
     last_roc_2_1d = last_candle["ROC_2_1d"]
     last_ema_16 = last_candle["EMA_16"]
+    last_bbu_20 = last_candle["BBU_20_2.0"]
 
     if (last_protections_short_global == True) and (
       (last_enter_short == True)
@@ -64483,7 +64516,7 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_roc_9_1d < 5.0)
         and (last_ema_12 > last_ema_26)
         and ((last_ema_12 - last_ema_26) > (last_open * 0.020))
-        and ((previous_candle["EMA_12"] - previous_candle["EMA_26"]) > (last_open / 100.0))
+        and ((previous_ema_12 - previous_ema_26) > (last_open / 100.0))
       )
       or (
         (last_rsi_14 > 64.0)
@@ -64519,13 +64552,13 @@ class NostalgiaForInfinityX7(IStrategy):
         and (last_roc_9_1h < 5.0)
         and (last_roc_9_4h < 5.0)
         and (last_roc_9_1d < 5.0)
-        and (last_candle["STOCHRSIk_14_14_3_3_1h"] > 20.0)
-        and (last_candle["STOCHRSIk_14_14_3_3_4h"] > 30.0)
+        and (last_stochrsi_k_1h > 20.0)
+        and (last_stochrsi_k_4h > 30.0)
         # and (last_candle["close"] > (last_candle["close_max_48"] * 0.90))
         # and (last_candle["close"] < (last_candle["low_min_6_1h"] * 1.18))
         # and (last_candle["close"] < (last_candle["low_min_12_1h"] * 1.25))
         and (last_close > (last_ema_26 * 1.040))
-        and (last_close > (last_candle["BBU_20_2.0"] * 1.001))
+        and (last_close > (last_bbu_20 * 1.001))
       )
     ):
       return True
@@ -64824,13 +64857,17 @@ class NostalgiaForInfinityX7(IStrategy):
   ) -> float:
     last_rsi_3 = last_candle["RSI_3"]
     last_rsi_14 = last_candle["RSI_14"]
+    last_willr_14 = last_candle["WILLR_14"]
+    last_stochrsi_k = last_candle["STOCHRSIk_14_14_3_3"]
+    last_close = last_candle["close"]
+    last_bbl_20 = last_candle["BBL_20_2.0"]
 
     if (
       (last_rsi_3 < 1.0)
       or (last_rsi_14 < 30.0)
-      or (last_candle["WILLR_14"] < -99.9)
-      or (last_candle["STOCHRSIk_14_14_3_3"] > 5.0)
-      or (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.99))
+      or (last_willr_14 < -99.9)
+      or (last_stochrsi_k > 5.0)
+      or (last_close < (last_bbl_20 * 0.99))
       or ((last_rsi_3 < 10.0) and (last_rsi_14 > 50.0))
     ):
       return True
@@ -64842,13 +64879,17 @@ class NostalgiaForInfinityX7(IStrategy):
   ) -> float:
     last_rsi_3 = last_candle["RSI_3"]
     last_rsi_14 = last_candle["RSI_14"]
+    last_willr_14 = last_candle["WILLR_14"]
+    last_stochrsi_k = last_candle["STOCHRSIk_14_14_3_3"]
+    last_close = last_candle["close"]
+    last_bbl_20 = last_candle["BBL_20_2.0"]
 
     if (
       (last_rsi_3 < 1.0)
       or (last_rsi_14 < 30.0)
-      or (last_candle["WILLR_14"] < -99.9)
-      or (last_candle["STOCHRSIk_14_14_3_3"] < 5.0)
-      or (last_candle["close"] < (last_candle["BBL_20_2.0"] * 0.99))
+      or (last_willr_14 < -99.9)
+      or (last_stochrsi_k < 5.0)
+      or (last_close < (last_bbl_20 * 0.99))
       or ((last_rsi_3 < 10.0) and (last_rsi_14 > 50.0))
     ):
       return True
