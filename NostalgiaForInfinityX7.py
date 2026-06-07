@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.157"
+    return "v17.4.158"
 
   stoploss = -0.99
 
@@ -13021,6 +13021,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (aroonu_14_15m < 30.0))
             # 1h & 4h down move, 1h still high
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (stochrsi_k_1h < 50.0))
+            # 1h & 4h & 1d down move, 4h downtrend, 1d still high
+            & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_15) | (rsi_3_1d_gt_25) | (rsi_14_4h > 30.0) | (aroonu_14_1d < 40.0))
             # 1h & 1d down move, 4h high
             & ((rsi_3_1h_gt_10) | (rsi_3_1d_gt_20) | (aroonu_14_4h < 80.0))
             # 1h down move, 4h high
@@ -13612,6 +13614,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (stochrsi_k_1h < 20.0))
             # 1h & 4h down move, 1d downtrend
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (roc_9_1d > -20.0))
+            # 1h & 4h & 1d down move, 4h downtrend, 1d still high
+            & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_15) | (rsi_3_1d_gt_25) | (rsi_14_4h > 30.0) | (aroonu_14_1d < 40.0))
             # 1h & 4h down move, 15m high
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_15) | (stochrsi_k_15m < 70.0))
             # 1h & 4h down move, 1d downtrend
@@ -21267,6 +21271,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_15) | (aroonu_14_1h_lt_100) | aroonu_14_4h_lt_100)
             # 15m down move, 4h & 1d overbought
             & ((rsi_3_15m_gt_15) | (roc_9_4h_lt_20) | (roc_9_1d_lt_80))
+            # 15m & 1h & 1d down move, 4h still high, 4h downtrend
+            & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_25) | (rsi_3_1d_gt_25) | (aroonu_14_4h_lt_40) | (roc_9_4h_gt_neg_20))
             # 15m & 1h down move, 4h high & overbought
             & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_30) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_10))
             # 15m down move, 1h high, 1d overbought
@@ -21681,13 +21687,15 @@ class NostalgiaForInfinityX7(IStrategy):
             # 15m down move, 1h & 4h high
             & ((rsi_3_15m_gt_15) | (aroonu_14_1h_lt_100) | aroonu_14_4h_lt_100)
             # 15m down move, 1d high & overbought
-            & ((rsi_3_15m_gt_15) | aroonu_14_1d_lt_100 | (roc_9_1d_lt_80))
+            & ((rsi_3_15m_gt_15) | (aroonu_14_1d_lt_100) | (roc_9_1d_lt_80))
             # 15m & 1h down move, 1h high
-            & ((rsi_3_15m_gt_20) | rsi_3_1h_gt_20 | (stochrsi_k_1h < 60.0))
+            & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_20) | (stochrsi_k_1h < 60.0))
+            # 15m & 1h & 1d down move, 4h still high, 4h downtrend
+            & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_25) | (rsi_3_1d_gt_25) | (aroonu_14_4h_lt_40) | (roc_9_4h_gt_neg_20))
             # 15m & 4h down move, 15m high
-            & ((rsi_3_15m_gt_20) | rsi_3_4h_gt_20 | (aroonu_14_15m_lt_70))
+            & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_20) | (aroonu_14_15m_lt_70))
             # 15m & 4h down move, 15m still high
-            & ((rsi_3_15m_gt_20) | rsi_3_4h_gt_20 | (stochrsi_k_15m < 50.0))
+            & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_20) | (stochrsi_k_15m < 50.0))
             # 15m down move, 15m & 1h high
             & ((rsi_3_15m_gt_20) | (aroonu_14_15m_lt_70) | (aroonu_14_1h_lt_100))
             # 15m down move, 15m high, 1d high
@@ -21772,6 +21780,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_3_1h_gt_20 | (rsi_3_4h_gt_50) | aroonu_14_4h_lt_100)
             # 1h down move, 1d high, 4h & 1d overbought
             & ((rsi_3_1h_gt_20) | (aroonu_14_1d_lt_80) | (roc_9_4h < 10.0) | (roc_9_1d < 40.0))
+            # 1h down move, 4h high & overbought, 1d downtrend
+            & ((rsi_3_1h_gt_20) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_10) | (roc_9_1d_gt_neg_20))
             # 1h & 4h down move, 15m high
             & ((rsi_3_1h_gt_25) | (rsi_3_4h_gt_25) | (stochrsi_k_15m < 70.0))
             # 1h & 4h down move, 4h high
@@ -22059,6 +22069,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_10) | (stochrsi_k_1h < 50.0) | (roc_9_1d_gt_neg_20))
             # 15m & 4h down move, 1h high
             & ((rsi_3_15m_gt_15) | (rsi_3_4h_gt_35) | (aroonu_14_1h_lt_90))
+            # 15m & 1h & 1d down move, 4h still high, 4h downtrend
+            & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_25) | (rsi_3_1d_gt_25) | (aroonu_14_4h_lt_40) | (roc_9_4h_gt_neg_20))
             # 1h & 1d down move, 1d still high
             & ((rsi_3_1h_gt_3) | (rsi_3_1d_gt_25) | (stochrsi_k_1d < 40.0))
             # 1h & 4h down move, 1d downtrend
@@ -22097,8 +22109,10 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_3_1h_gt_20 | (aroonu_14_1d_lt_70) | (roc_9_1d_gt_neg_20))
             # 1h down move, 1d high, 4h & 1d overbought
             & ((rsi_3_1h_gt_20) | (aroonu_14_1d_lt_80) | (roc_9_4h < 10.0) | (roc_9_1d < 40.0))
+            # 1h down move, 4h high & overbought, 1d downtrend
+            & ((rsi_3_1h_gt_20) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_10) | (roc_9_1d_gt_neg_20))
             # 1h down move, 1h & 4h high
-            & ((rsi_3_1h_gt_25) | aroonu_14_1h_lt_80 | aroonu_14_4h_lt_100)
+            & ((rsi_3_1h_gt_25) | (aroonu_14_1h_lt_80) | (aroonu_14_4h_lt_100))
             # 1h down move, 4h & 1d overbought
             & ((rsi_3_1h_gt_25) | (roc_9_4h_lt_20) | (roc_9_1d_lt_30))
             # 1h & 4h down move, 1h high
@@ -22202,6 +22216,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_3_15m_gt_3 | (rsi_3_1h_gt_3) | (aroonu_14_1h < 25.0))
             # 15m & 1h & 4h down move, 15m still not low enough, 4h still not low enough
             & ((rsi_3_15m_gt_3) | (rsi_3_1h_gt_10) | (rsi_3_4h_gt_20) | (aroonu_14_15m < 20.0) | (aroonu_14_4h < 20.0))
+            # 15m & 1h & 1d down move, 4h still high, 4h downtrend
+            & ((rsi_3_15m_gt_3) | (rsi_3_1h_gt_15) | (rsi_3_1d_gt_25) | (aroonu_14_4h_lt_40) | (roc_9_4h_gt_neg_20))
             # 15m & 1h down move, 1d high
             & ((rsi_3_15m_gt_5) | (rsi_3_1h_gt_5) | (aroonu_14_1d_lt_70))
             # 15m & 1h & 4h & 1d down move, 1h still not low enough
@@ -22284,6 +22300,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_5) | (rsi_3_1d > 5.0) | (aroonu_14_1h < 40.0))
             # 1h down move, 1d high & overbought
             & ((rsi_3_1h_gt_5) | (aroonu_14_1d_lt_90) | (roc_9_1d_lt_20))
+            # 1h & 4h & 1d down move, 4h downtrend, 1d still high
+            & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_15) | (rsi_3_1d_gt_25) | (rsi_14_4h > 30.0) | (aroonu_14_1d < 40.0))
             # 1h & 4h down move, 4h still not low enough
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_15) | (stochrsi_k_4h < 30.0))
             # 1h & 4h down move, 15m still high
@@ -22338,6 +22356,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_3_1h_gt_20 | (aroonu_14_1d_lt_100) | (roc_9_1d_lt_20))
             # 1h down move, 4h still high, 1d downtrend
             & (rsi_3_1h_gt_20 | (stochrsi_k_4h < 40.0) | (roc_9_1d_gt_neg_40))
+            # 1h down move, 4h high & overbought, 1d downtrend
+            & ((rsi_3_1h_gt_20) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_10) | (roc_9_1d_gt_neg_20))
             # 1h & 4h down move, 15m high
             & ((rsi_3_1h_gt_25) | (rsi_3_4h_gt_25) | (stochrsi_k_15m < 70.0))
             # 1h & 4h down move, 4h still not low enough
@@ -64160,35 +64180,35 @@ class NostalgiaForInfinityX7(IStrategy):
     if buyback_1_sub_grind_count > 0:
       buyback_1_current_open_rate = buyback_1_total_cost / buyback_1_total_amount
       buyback_1_current_grind_stake = buyback_1_total_amount * exit_rate * (1 - trade_fee_close)
-      buyback_1_current_grind_stake_profit = buyback_1_current_grind_stake - buyback_1_total_cost
+      buyback_1_current_grind_stake_profit = buyback_1_total_cost - buyback_1_current_grind_stake
     if buyback_2_sub_grind_count > 0:
       buyback_2_current_open_rate = buyback_2_total_cost / buyback_2_total_amount
       buyback_2_current_grind_stake = buyback_2_total_amount * exit_rate * (1 - trade_fee_close)
-      buyback_2_current_grind_stake_profit = buyback_2_current_grind_stake - buyback_2_total_cost
+      buyback_2_current_grind_stake_profit = buyback_2_total_cost - buyback_2_current_grind_stake
     if buyback_3_sub_grind_count > 0:
       buyback_3_current_open_rate = buyback_3_total_cost / buyback_3_total_amount
       buyback_3_current_grind_stake = buyback_3_total_amount * exit_rate * (1 - trade_fee_close)
-      buyback_3_current_grind_stake_profit = buyback_3_current_grind_stake - buyback_3_total_cost
+      buyback_3_current_grind_stake_profit = buyback_3_total_cost - buyback_3_current_grind_stake
     if grind_1_sub_grind_count > 0:
       grind_1_current_open_rate = grind_1_total_cost / grind_1_total_amount
       grind_1_current_grind_stake = grind_1_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_1_current_grind_stake_profit = grind_1_current_grind_stake - grind_1_total_cost
+      grind_1_current_grind_stake_profit = grind_1_total_cost - grind_1_current_grind_stake
     if grind_2_sub_grind_count > 0:
       grind_2_current_open_rate = grind_2_total_cost / grind_2_total_amount
       grind_2_current_grind_stake = grind_2_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_2_current_grind_stake_profit = grind_2_current_grind_stake - grind_2_total_cost
+      grind_2_current_grind_stake_profit = grind_2_total_cost - grind_2_current_grind_stake
     if grind_3_sub_grind_count > 0:
       grind_3_current_open_rate = grind_3_total_cost / grind_3_total_amount
       grind_3_current_grind_stake = grind_3_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_3_current_grind_stake_profit = grind_3_current_grind_stake - grind_3_total_cost
+      grind_3_current_grind_stake_profit = grind_3_total_cost - grind_3_current_grind_stake
     if grind_4_sub_grind_count > 0:
       grind_4_current_open_rate = grind_4_total_cost / grind_4_total_amount
       grind_4_current_grind_stake = grind_4_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_4_current_grind_stake_profit = grind_4_current_grind_stake - grind_4_total_cost
+      grind_4_current_grind_stake_profit = grind_4_total_cost - grind_4_current_grind_stake
     if grind_5_sub_grind_count > 0:
       grind_5_current_open_rate = grind_5_total_cost / grind_5_total_amount
       grind_5_current_grind_stake = grind_5_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_5_current_grind_stake_profit = grind_5_current_grind_stake - grind_5_total_cost
+      grind_5_current_grind_stake_profit = grind_5_total_cost - grind_5_current_grind_stake
 
     if grind_1_is_exit_found:
       grind_1_exit_distance_ratio = (exit_rate - grind_1_exit_order.safe_price) / grind_1_exit_order.safe_price
@@ -66590,27 +66610,27 @@ class NostalgiaForInfinityX7(IStrategy):
     if grind_1_sub_grind_count > 0:
       grind_1_current_open_rate = grind_1_total_cost / grind_1_total_amount
       grind_1_current_grind_stake = grind_1_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_1_current_grind_stake_profit = grind_1_current_grind_stake - grind_1_total_cost
+      grind_1_current_grind_stake_profit = grind_1_total_cost - grind_1_current_grind_stake
     if grind_2_sub_grind_count > 0:
       grind_2_current_open_rate = grind_2_total_cost / grind_2_total_amount
       grind_2_current_grind_stake = grind_2_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_2_current_grind_stake_profit = grind_2_current_grind_stake - grind_2_total_cost
+      grind_2_current_grind_stake_profit = grind_2_total_cost - grind_2_current_grind_stake
     if grind_3_sub_grind_count > 0:
       grind_3_current_open_rate = grind_3_total_cost / grind_3_total_amount
       grind_3_current_grind_stake = grind_3_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_3_current_grind_stake_profit = grind_3_current_grind_stake - grind_3_total_cost
+      grind_3_current_grind_stake_profit = grind_3_total_cost - grind_3_current_grind_stake
     if grind_4_sub_grind_count > 0:
       grind_4_current_open_rate = grind_4_total_cost / grind_4_total_amount
       grind_4_current_grind_stake = grind_4_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_4_current_grind_stake_profit = grind_4_current_grind_stake - grind_4_total_cost
+      grind_4_current_grind_stake_profit = grind_4_total_cost - grind_4_current_grind_stake
     if grind_5_sub_grind_count > 0:
       grind_5_current_open_rate = grind_5_total_cost / grind_5_total_amount
       grind_5_current_grind_stake = grind_5_total_amount * exit_rate * (1 - trade_fee_close)
-      grind_5_current_grind_stake_profit = grind_5_current_grind_stake - grind_5_total_cost
+      grind_5_current_grind_stake_profit = grind_5_total_cost - grind_5_current_grind_stake
     if rebuy_sub_grind_count > 0:
       rebuy_current_open_rate = rebuy_total_cost / rebuy_total_amount
       rebuy_current_grind_stake = rebuy_total_amount * exit_rate * (1 - trade_fee_close)
-      rebuy_current_grind_stake_profit = rebuy_current_grind_stake - rebuy_total_cost
+      rebuy_current_grind_stake_profit = rebuy_total_cost - rebuy_current_grind_stake
 
     if grind_1_is_exit_found:
       grind_1_exit_distance_ratio = (exit_rate - grind_1_exit_order.safe_price) / grind_1_exit_order.safe_price
