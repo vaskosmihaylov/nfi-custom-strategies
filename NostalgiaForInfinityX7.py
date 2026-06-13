@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.224"
+    return "v17.4.226"
 
   stoploss = -0.99
 
@@ -43543,6 +43543,9 @@ class NostalgiaForInfinityX7(IStrategy):
       any(c in self.long_rebuy_mode_tags for c in enter_tags)
       and all(c in (self.long_rebuy_mode_tags + self.long_grind_mode_tags) for c in enter_tags)
     )
+    # Rebuy mode, the first entry is lower than normal slot stake
+    if is_rebuy_mode:
+      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
 
     is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
@@ -43985,9 +43988,6 @@ class NostalgiaForInfinityX7(IStrategy):
       + rebuy_sub_grind_count
     )
 
-    # Rebuy mode, the first entry is lower than normal slot stake
-    if is_rebuy_mode:
-      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
     # not reached the max allowed stake for all grinds
     is_not_trade_max_stake_v3 = current_stake_amount < (slice_amount * self.system_v3_max_stake)
     is_not_trade_max_stake_v3_1 = current_stake_amount < (slice_amount * self.system_v3_1_max_stake)
@@ -45484,7 +45484,7 @@ class NostalgiaForInfinityX7(IStrategy):
     grind_open_orders,
     trade: Trade,
   ) -> tuple:
-    if grind_profit_rate < grind_exit_profit_threshold:
+    if grind_profit_rate < (grind_exit_profit_threshold + fee_open_rate + fee_close_rate):
       return None, None
 
     last_rsi_3 = last_candle["RSI_3"]
@@ -45529,6 +45529,7 @@ class NostalgiaForInfinityX7(IStrategy):
     #   if grind_profit_rate < (max_profit_rate - 0.055):
     #     is_trailing_exit = True
     # is_trailing_exit = grind_profit_rate > 0.04
+
     if is_normal_exit or is_trailing_exit:
       exit_amount = grind_total_amount * exit_rate / trade.leverage
       if ((current_stake_amount / trade.leverage) - exit_amount) < (min_stake * 1.55):
@@ -67221,6 +67222,9 @@ class NostalgiaForInfinityX7(IStrategy):
       any(c in self.short_rebuy_mode_tags for c in enter_tags)
       and all(c in (self.short_rebuy_mode_tags + self.short_grind_mode_tags) for c in enter_tags)
     )
+    # Rebuy mode, the first entry is lower than normal slot stake
+    if is_rebuy_mode:
+      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
 
     is_system_v3, is_system_v3_1, is_system_v3_2 = self.get_system_version_flags(trade)
 
@@ -67607,9 +67611,6 @@ class NostalgiaForInfinityX7(IStrategy):
       + rebuy_sub_grind_count
     )
 
-    # Rebuy mode, the first entry is lower than normal slot stake
-    if is_rebuy_mode:
-      slice_amount /= self.system_v3_rebuy_mode_stake_multiplier
     # not reached the max allowed stake for all grinds
     is_not_trade_max_stake_v3 = current_stake_amount < (slice_amount * self.system_v3_max_stake)
     is_not_trade_max_stake_v3_1 = current_stake_amount < (slice_amount * self.system_v3_1_max_stake)
