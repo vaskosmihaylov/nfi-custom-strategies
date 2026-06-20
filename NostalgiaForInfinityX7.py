@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.260"
+    return "v17.4.261"
 
   stoploss = -0.99
 
@@ -12752,15 +12752,11 @@ class NostalgiaForInfinityX7(IStrategy):
 
   # Correct Min Stake
   # ---------------------------------------------------------------------------------------------
-  def correct_min_stake(self, min_stake: float) -> float:
-    if self.config["exchange"]["name"] == "bybit":
-      if self.is_futures_mode:
-        if (min_stake is None) or (min_stake < 5.0 / self.futures_mode_leverage):
-          min_stake = 5.0 / self.futures_mode_leverage
-    elif self.config["exchange"]["name"] == "krakenfutures":
-      if self.is_futures_mode:
-        if (min_stake is None) or (min_stake < 5.0 / self.futures_mode_leverage):
-          min_stake = 5.0 / self.futures_mode_leverage
+  def correct_min_stake(self, min_stake: Optional[float], trade_leverage: Optional[float] = None) -> Optional[float]:
+    if self.is_futures_mode and self.config["exchange"]["name"] in ("binance", "bybit", "krakenfutures"):
+      min_futures_stake = 5.0 / (trade_leverage if trade_leverage is not None else self.futures_mode_leverage)
+      if (min_stake is None) or (min_stake < min_futures_stake):
+        min_stake = min_futures_stake
     return min_stake
 
   def is_backtest_mode(self) -> bool:
@@ -14324,6 +14320,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_5) | (rsi_3_4h_gt_5) | (roc_9_1d_gt_neg_30))
             # 1h % 4h down move, 4h downtrend
             & ((rsi_3_1h_gt_5) | (rsi_3_4h_gt_10) | (cmf_20_4h_gt_neg_0_30))
+            # 1h & 4h & 1d down move, 1d still high, 1h downtrend
+            & ((rsi_3_1h_gt_5) | (rsi_3_4h_gt_15) | (rsi_3_1d_gt_25) | (aroonu_14_1d_lt_50) | (roc_9_1h_gt_neg_20))
             # 1h & 4h & 1d down move, 1d still high, 1d overbought
             & ((rsi_3_1h_gt_5) | (rsi_3_4h_gt_45) | (rsi_3_1d_gt_45) | (aroonu_14_1d_lt_50) | (roc_9_1d_lt_10))
             # 1h & 4h down move, 4h still high
@@ -14335,7 +14333,7 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h & 4h down move, 4h downtrend
             & ((rsi_3_1h_gt_5) | (rsi_3_4h_gt_15) | (roc_9_4h_gt_neg_30))
             # 1h down move, 4h still high, 1d downtrend
-            & ((rsi_3_1h_gt_5) | (stochrsi_k_4h_lt_50) | roc_9_1d_gt_neg_50)
+            & ((rsi_3_1h_gt_5) | (stochrsi_k_4h_lt_50) | (roc_9_1d_gt_neg_50))
             # 1h & 4h & 1d down move
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (rsi_3_1d_gt_15))
             # 1h & 4h down move, 1d still high
@@ -15782,7 +15780,9 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h & 4h down move, 1h still not low enough
             & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_15) | (stochrsi_k_1h_lt_30))
             # 1h & 4h down move, 1d downtrend
-            & ((rsi_3_1h_gt_15) | rsi_3_4h_gt_20 | (roc_9_1d_gt_neg_40))
+            & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_20) | (roc_9_1d_gt_neg_40))
+            # 1h & 4h down move, 1h still high, 1d downtrend
+            & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_35) | (aroonu_14_1h_lt_40) | (roc_9_1d_gt_neg_40))
             # 1h & 4h down move, 4h high
             & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_50) | (aroonu_14_4h_lt_100))
             # 1h & 1d down move, 4h high
@@ -22664,6 +22664,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_30) | (rsi_3_4h_gt_30) | (stochrsi_k_1h_lt_80))
             # 15m & 4h down move, 4h high
             & ((rsi_3_15m_gt_30) | (rsi_3_4h_gt_45) | (stochrsi_k_4h_lt_80))
+            # 15m & 1d down move, 15m & 1h high
+            & ((rsi_3_15m_gt_30) | (rsi_3_1d_gt_30) | (aroonu_14_15m_lt_70) | (aroonu_14_1h_lt_100))
             # 15m down move, 1h high, 1d downtrend
             & ((rsi_3_15m_gt_30) | (aroonu_14_1h_lt_90) | (roc_9_1d_gt_neg_10))
             # 15m down move, 15m high, 4h high
@@ -23484,6 +23486,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_15) | (rsi_3_1h_gt_40) | (aroonu_14_1h_lt_90))
             # 15m & 4h down move, 1d high
             & ((rsi_3_15m_gt_15) | (rsi_3_4h_gt_15) | (aroonu_14_1d_lt_90))
+            # 15m & 4h & 1d down move, 15m high
+            & ((rsi_3_15m_gt_15) | (rsi_3_4h_gt_25) | (rsi_3_1d_gt_55) | (aroonu_14_15m_lt_90))
             # 15m & 4h down move, 1h high
             & ((rsi_3_15m_gt_15) | (rsi_3_4h_gt_35) | (aroonu_14_1h_lt_90))
             # 15m down move, 15m downtrend, 1h high
@@ -23513,7 +23517,7 @@ class NostalgiaForInfinityX7(IStrategy):
             # 15m down move, 15m high, 4h high
             & ((rsi_3_15m_gt_30) | (aroonu_14_15m_lt_70) | (stochrsi_k_4h_lt_80))
             # 15m down move, 1h high, 1d overbought
-            & ((rsi_3_15m_gt_30) | aroonu_14_1h_lt_80 | (roc_9_1d_lt_20))
+            & ((rsi_3_15m_gt_30) | (aroonu_14_1h_lt_80) | (roc_9_1d_lt_20))
             # 15m down move, 4h & 1d overbought
             & ((rsi_3_15m_gt_35) | (roc_9_4h_lt_30) | (roc_9_1d_lt_80))
             # 1h & 4h down move, 4h still high
@@ -41172,7 +41176,7 @@ class NostalgiaForInfinityX7(IStrategy):
     long_rebuy_mode_tags = self.long_rebuy_mode_tags
     long_grind_mode_tags = self.long_grind_mode_tags
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
@@ -43684,7 +43688,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if trade.has_open_orders:
       return None
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
@@ -45797,7 +45801,7 @@ class NostalgiaForInfinityX7(IStrategy):
     long_grind_mode_tags = self.long_grind_mode_tags
     trade_leverage = trade.leverage
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
@@ -64886,7 +64890,7 @@ class NostalgiaForInfinityX7(IStrategy):
     short_rebuy_mode_tags = self.short_rebuy_mode_tags
     short_grind_mode_tags = self.short_grind_mode_tags
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
@@ -67480,7 +67484,7 @@ class NostalgiaForInfinityX7(IStrategy):
     if trade.has_open_orders:
       return None
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
@@ -69123,7 +69127,7 @@ class NostalgiaForInfinityX7(IStrategy):
     short_grind_mode_tags = self.short_grind_mode_tags
     trade_leverage = trade.leverage
 
-    min_stake = self.correct_min_stake(min_stake)
+    min_stake = self.correct_min_stake(min_stake, trade_leverage)
     df, _ = dp.get_analyzed_dataframe(trade_pair, self.timeframe)
     if len(df) < 2:
       return None
