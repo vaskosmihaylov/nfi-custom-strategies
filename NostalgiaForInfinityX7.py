@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.279"
+    return "v17.4.281"
 
   stoploss = -0.99
 
@@ -14200,6 +14200,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_15) | (rsi_3_1h_gt_15) | (roc_9_4h_gt_neg_20))
             # 15m & 1h & 4h & 1d down move, 4h still not low enough
             & ((rsi_3_15m_gt_15) | (rsi_3_1h_gt_20) | (rsi_3_4h_gt_30) | (rsi_3_1d_gt_30) | (stochrsi_k_4h_lt_30))
+            # 15m & 1h down move, 1h still high, 1d downtrend
+            & ((rsi_3_15m_gt_15) | (rsi_3_1h_gt_20) | (aroonu_14_1h_lt_50) | (roc_9_1d_gt_neg_50))
             # 15m & 1h down move, 1h downtrend
             & ((rsi_3_15m_gt_15) | (rsi_3_1h_gt_20) | (cmf_20_1h_gt_neg_0_30))
             # 15m & 1h down move, 1d overbought
@@ -20506,13 +20508,13 @@ class NostalgiaForInfinityX7(IStrategy):
             # 15m down move, 4h high, 4h downtrend
             & ((rsi_3_15m_gt_15) | (aroonu_14_4h_lt_60) | (roc_9_4h_gt_neg_20))
             # 15m down move, 4h & 1d high
-            & ((rsi_3_15m_gt_15) | (aroonu_14_4h_lt_75) | aroonu_14_1d_lt_100)
+            & ((rsi_3_15m_gt_15) | (aroonu_14_4h_lt_75) | (aroonu_14_1d_lt_100))
             # 15m down move, 15m still not low enough, 1h still high
             & ((rsi_3_15m_gt_15) | (stochrsi_k_15m_lt_30) | (stochrsi_k_1h_lt_50))
             # 15m down move, 4h & 1d overbought
             & ((rsi_3_15m_gt_15) | (roc_9_4h_lt_20) | (roc_9_1d_lt_60))
             # 15m & 1h down move, 1h high
-            & ((rsi_3_15m_gt_20) | rsi_3_1h_gt_20 | (stochrsi_k_1h_lt_70))
+            & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_20) | (stochrsi_k_1h_lt_70))
             # 15m & 4h down move, 4h high
             & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_50) | (aroonu_14_4h_lt_85))
             # 15m down move, 1h high
@@ -20743,6 +20745,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_35) | (aroonu_14_1h_lt_70) | (roc_9_4h_lt_40))
             # 1h down move, 1h high, 1d downtrend
             & ((rsi_3_1h_gt_35) | (aroonu_14_1h_lt_70) | (roc_9_1d_gt_neg_25))
+            # 1h down move, 1h still high, 4h & 1d downtrend
+            & ((rsi_3_1h_gt_35) | (stochrsi_k_1h_lt_50) | (roc_9_4h_gt_neg_30) | (roc_9_1d_gt_neg_70))
             # 1h down move, 4h high & overbought
             & ((rsi_3_1h_gt_35) | (aroonu_14_4h_lt_85) | (roc_9_4h_lt_100))
             # 1h down move, 4h high & overbought
@@ -20970,6 +20974,10 @@ class NostalgiaForInfinityX7(IStrategy):
             # Daily positive
             & (roc_9_1d > 0.0)
             & (rsi_14_1d > 45.0)
+            # 4h extreme overbought, 1d big rally, 4h money outflow = blow-off top
+            & ((stochrsi_k_4h_lt_90) | (roc_9_1d_lt_20) | (cmf_20_4h_gt_neg_0_0))
+            # 15m euphoria spike without 4h confirmation = spike top fake breakout
+            & ((rsi_3_15m < 90.0) | (stochrsi_k_4h > 30.0))
           )
 
           # Logic — Breakout above BB upper with momentum
@@ -24224,6 +24232,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_15) | (roc_9_4h_gt_neg_10) | (roc_9_1d_gt_neg_40))
             # 15m & 1h down move, 1h high
             & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_25) | (aroonu_14_1h_lt_70))
+            # 15m & 4h down move, 4h & 1d downtrend
+            & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_20) | (roc_9_4h_gt_neg_40) | (roc_9_1d_gt_neg_50))
             # 15m down move, 4h high & overbought
             & ((rsi_3_15m_gt_20) | (aroonu_14_4h_lt_70) | (roc_9_4h_lt_20))
             # 15m & 1h down move, 4h high
@@ -24256,8 +24266,6 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_15) | rsi_3_4h_gt_20 | aroonu_14_4h_lt_70)
             # 1h down move, 1h downtrend, 1d overbought
             & ((rsi_3_1h_gt_15) | (roc_9_1h_gt_neg_30) | (roc_9_1d_lt_80))
-            # 1h & 4h down move, 4h high
-            & (rsi_3_1h_gt_20 | (rsi_3_4h_gt_35) | aroonu_14_4h_lt_70)
             # 1h & 4h down move, 1d downtrend
             & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_25) | (roc_9_1d > -30.0))
             # 1h down move, 1h & 1d high
@@ -24266,6 +24274,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_15) | (aroonu_14_1h_lt_60) | roc_9_1d_lt_50)
             # 1h down move, 1d high & overbought
             & ((rsi_3_1h_gt_15) | (stochrsi_k_1d_lt_90) | (roc_9_1d_lt_40))
+            # 1h & 4h down move, 4h high
+            & ((rsi_3_1h_gt_20) | (rsi_3_4h_gt_35) | aroonu_14_4h_lt_70)
             # 1h down move, 1h high, 1d overbought
             & ((rsi_3_1h_gt_25) | (aroonu_14_1h_lt_60) | (roc_9_1d_lt_100))
             # 1h down move, 1h high
@@ -24538,6 +24548,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_45) | (rsi_14_4h_lt_70) | (roc_9_4h_lt_50))
             # 15m & 1h down move, 1h high, 1d overbought
             & ((rsi_3_15m_gt_20) | (rsi_3_1h_gt_45) | (aroonu_14_1h_lt_90) | (roc_9_1d_lt_40))
+            # 15m & 4h down move, 4h & 1d downtrend
+            & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_20) | (roc_9_4h_gt_neg_30) | (roc_9_1d_gt_neg_50))
             # 15m & 4h down move, 15m high
             & ((rsi_3_15m_gt_20) | (rsi_3_4h_gt_25) | (aroonu_14_15m_lt_60))
             # 15m & 4h down move, 1h high
@@ -25855,6 +25867,16 @@ class NostalgiaForInfinityX7(IStrategy):
             & (aroonu_14_1h < 40.0)
             # Daily momentum negative
             & (roc_9_1d < 0.0)
+            # 1h + 4h capitulation oversold = double-exhaustion bottom
+            & ((rsi_3_4h_gt_5) | (rsi_3_1h_gt_5) | (stochrsi_k_1h_gt_10))
+            # 4h still in oversold zone post first leg + 1d sustained drop = continuation V-trap
+            & ((rsi_3_4h_gt_20) | (stochrsi_k_4h > 10.0) | (rsi_3_1d_gt_40))
+            # 1d capitulation but 4h mid = bottom formation, skip shorts
+            & ((rsi_3_1d_gt_20) | (stochrsi_k_4h_lt_50) | (rsi_3_4h_gt_60))
+            # 4h crash already extreme (>50% drop) = oversold bottom, dead cat
+            & ((roc_9_4h_gt_neg_50) | (rsi_3_4h_gt_15) | (stochrsi_k_4h_gt_10))
+            # 1d ultra-capitulation (STOCHRSIk = 0, RSI_3 < 10) = absolute bottom
+            & ((rsi_3_1d_gt_10) | (stochrsi_k_1d > 5.0) | (rsi_3_4h_gt_40))
           )
 
           # Logic — Breakdown below BB lower in downtrend
@@ -25885,6 +25907,14 @@ class NostalgiaForInfinityX7(IStrategy):
             & (rsi_14_1h < 45.0)
             & (willr_14_1h < -50.0)
             & (aroonu_14_4h < 35.0)
+            # 4h capitulation oversold + 15m strong rally start = V-reversal trap
+            & ((rsi_3_4h_gt_5) | (stochrsi_k_15m < 90.0) | (aroonu_14_15m_lt_100))
+            # 4h capitulation, 15m sustained overbought rally = V-reversal late stage
+            & ((rsi_3_4h_gt_5) | (stochrsi_k_15m_lt_80) | (aroonu_14_15m_lt_80))
+            # 4h oversold + 15m maxed out (STOCHRSIk = 100) = V-reversal already topped
+            & ((rsi_3_4h_gt_15) | (stochrsi_k_15m < 90.0) | (aroonu_14_15m_lt_90))
+            # 4h still oversold + 15m STOCHRSIk peaked = top distribution near recent levels
+            & ((rsi_3_4h_gt_15) | (stochrsi_k_15m < 90.0))
           )
 
           # Logic — Bounce that fails to reclaim resistance
