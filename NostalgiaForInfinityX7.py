@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.283"
+    return "v17.4.285"
 
   stoploss = -0.99
 
@@ -18638,6 +18638,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_3) | (stochrsi_k_1h_lt_70))
             # 15m down move, 4h high, 15m downtrend
             & ((rsi_3_15m_gt_3) | (stochrsi_k_4h_lt_70) | (roc_9_15m > -30.0))
+            # 15m & 1h & 4h down move, 4h still not low enough
+            & ((rsi_3_15m_gt_5) | (rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (aroonu_14_4h_lt_30))
             # 15m & 1h down move, 1h high
             & ((rsi_3_15m_gt_5) | (rsi_3_1h_gt_15) | (aroonu_14_1h_lt_70))
             # 15m & 1h down move, 1h downtrend
@@ -21142,6 +21144,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_25) | (rsi_3_4h_gt_25) | (stochrsi_k_1d_lt_70))
             # 15m & 1h down move, 1h still not low enough
             & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_25) | (aroonu_14_1h_lt_30))
+            # 15m & 1h & 4h & 1d down move, 4h still high
+            & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_30) | (rsi_3_4h_gt_35) | (rsi_3_1d_gt_35) | (stochrsi_k_4h_lt_40))
             # 15m & 1h down move, 1h still high
             & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_35) | (aroonu_14_1h_lt_50))
             # 15m & 1h down move, 1h still high
@@ -25640,6 +25644,18 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((roc_9_4h_gt_neg_50) | (rsi_3_4h_gt_15) | (stochrsi_k_4h_gt_10))
             # 1d ultra-capitulation (STOCHRSIk = 0, RSI_3 < 10) = absolute bottom
             & ((rsi_3_1d_gt_10) | (stochrsi_k_1d > 5.0) | (rsi_3_4h_gt_40))
+            # 4h drop ended (STOCHRSIk recovered) + 1h rallied = bull pullback over
+            & ((stochrsi_k_4h_lt_50) | (stochrsi_k_1h < 60.0))
+            # 1d AROONU high = recent 1d high made = bull pullback, not bear
+            & ((aroonu_14_1d_lt_60) | (rsi_3_4h_gt_25))
+            # 15m + 1h ultra-cap + 4h CMF positive = institutional buying, V-bottom
+            & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_20) | (cmf_20_4h < -0.05))
+            # 4h CMF nearly neutral + 1h rallied = money outflow stopping, bounce starting
+            & ((cmf_20_4h < -0.05) | (stochrsi_k_1h < 70.0))
+            # 1d massive crash already + 1h rallied = capitulation done, bounce starting
+            & ((roc_9_1d > -25.0) | (stochrsi_k_1h < 60.0))
+            # 15m + 1h ultra-capitulation = V-bottom forming regardless of CMF
+            & ((rsi_3_15m_gt_10) | (rsi_3_1h_gt_15))
           )
 
           # Logic — Breakdown below BB lower in downtrend
@@ -25678,6 +25694,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_4h_gt_15) | (stochrsi_k_15m < 90.0) | (aroonu_14_15m_lt_90))
             # 4h still oversold + 15m STOCHRSIk peaked = top distribution near recent levels
             & ((rsi_3_4h_gt_15) | (stochrsi_k_15m < 90.0))
+            # 1d ultra-capitulation (STOCHRSIk = 0, RSI_3 < 10) = absolute bottom
+            & ((rsi_3_1d_gt_10) | (stochrsi_k_1d > 5.0) | (rsi_3_4h_gt_40))
           )
 
           # Logic — Bounce that fails to reclaim resistance
