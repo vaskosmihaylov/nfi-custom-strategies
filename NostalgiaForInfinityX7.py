@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.418"
+    return "v17.4.421"
 
   stoploss = -0.99
 
@@ -15941,6 +15941,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_4h_gt_15) | (aroonu_14_1h_lt_90) | (roc_9_1d_gt_neg_10))
             # 4h down move, 4h still high, 1d downtrend
             & ((rsi_3_4h_gt_15) | (stochrsi_k_4h_lt_50) | (roc_9_1d_gt_neg_20))
+            # 4h down move, 1h & 4h downtrend, 1d overbought
+            & ((rsi_3_4h_gt_15) | (roc_9_1h_gt_neg_20) | (roc_9_4h_gt_neg_30) | (roc_9_1d_lt_20))
             # 4h down move, 1h & 4h downtrend
             & ((rsi_3_4h_gt_15) | (roc_9_1h_gt_neg_30) | (roc_9_4h_gt_neg_30))
             # 4h & 1ddown move, 1d high
@@ -18737,9 +18739,9 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h & 1d down move, 1h high
             & ((rsi_3_1h_gt_40) | (rsi_3_1d_gt_40) | (aroonu_14_1h_lt_90))
             # 1h down move, 1h high, 1d downtrend
-            & ((rsi_3_1h_gt_40) | aroonu_14_1h_lt_80 | (roc_9_1d > -30.0))
+            & ((rsi_3_1h_gt_40) | (aroonu_14_1h_lt_80) | (roc_9_1d_gt_neg_30))
             # 1h down move, 4h high, 1d overbought
-            & ((rsi_3_1h_gt_40) | aroonu_14_4h_lt_80 | (roc_9_1d_lt_40))
+            & ((rsi_3_1h_gt_40) | (aroonu_14_4h_lt_80) | (roc_9_1d_lt_40))
             # 1h down move, 4h high & overbought
             & ((rsi_3_1h_gt_40) | (aroonu_14_4h_lt_90) | (roc_9_4h_lt_20))
             # 1h down move, 1h high, 4h overbought
@@ -18747,11 +18749,11 @@ class NostalgiaForInfinityX7(IStrategy):
             # 1h down move, 4h high & overbought
             & ((rsi_3_1h_gt_40) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_20))
             # 1h down move, 1d high, 4h overbought
-            & ((rsi_3_1h_gt_45) | aroonu_14_1d_lt_100 | (roc_9_4h_lt_40))
+            & ((rsi_3_1h_gt_45) | (aroonu_14_1d_lt_100) | (roc_9_4h_lt_40))
             # 1h down move, 1h high, 1d downtrend
             & ((rsi_3_1h_gt_50) | (aroonu_14_1h_lt_60) | (roc_9_1d_gt_neg_70))
             # 1h down move, 1h & 1d high
-            & ((rsi_3_1h_gt_50) | aroonu_14_1h_lt_80 | aroonu_14_1d_lt_100)
+            & ((rsi_3_1h_gt_50) | (aroonu_14_1h_lt_80) | (aroonu_14_1d_lt_100))
             # 4h & 1d down move, 15m still high
             & ((rsi_3_4h_gt_3) | (rsi_3_1d_gt_15) | (stochrsi_k_15m_lt_40))
             # 4h & 1d down move, 1h still not low enough
@@ -18767,15 +18769,15 @@ class NostalgiaForInfinityX7(IStrategy):
             # 4h & 1d down move, 4h downtrend
             & ((rsi_3_4h_gt_10) | (rsi_3_1d_gt_10) | (roc_9_4h_gt_neg_20))
             # 4h & 1d down move, 1d downtrend
-            & ((rsi_3_4h_gt_10) | (rsi_3_1d_gt_10) | (roc_9_1d > -30.0))
+            & ((rsi_3_4h_gt_10) | (rsi_3_1d_gt_10) | (roc_9_1d_gt_neg_30))
             # 4h down move, 4h still high
             & ((rsi_3_4h_gt_10) | (aroonu_14_4h_lt_50))
             # 4h down move, 1d still high, 1d downtrend
-            & ((rsi_3_4h_gt_10) | (aroonu_14_1d_lt_50) | (roc_9_1d > -30.0))
+            & ((rsi_3_4h_gt_10) | (aroonu_14_1d_lt_50) | (roc_9_1d_gt_neg_30))
             # 4h down move, 4h still not low enough, 1d downtrend
             & ((rsi_3_4h_gt_10) | (stochrsi_k_4h_lt_30) | (roc_9_1d_gt_neg_20))
             # 4h down move, 4h & 1d  downtrend
-            & ((rsi_3_4h_gt_10) | (roc_9_4h_gt_neg_20) | (roc_9_1d > -30.0))
+            & ((rsi_3_4h_gt_10) | (roc_9_4h_gt_neg_20) | (roc_9_1d_gt_neg_30))
             # 4h & 1d down move, 1d still high, 1d downtrend
             & ((rsi_3_4h_gt_15) | (rsi_3_1d_gt_25) | (aroonu_14_1d_lt_50) | (roc_9_1d_gt_neg_10))
             # 4h down move, 1h still high
@@ -18784,6 +18786,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_4h_gt_15) | (stochrsi_k_1h_lt_50) | (roc_9_1d_gt_neg_30))
             # 4h down move, 4h still high, 1d downtrend
             & ((rsi_3_4h_gt_15) | (stochrsi_k_4h_lt_50) | (roc_9_1d_gt_neg_20))
+            # 4h down move, 1h & 4h downtrend, 1d overbought
+            & ((rsi_3_4h_gt_15) | (roc_9_1h_gt_neg_20) | (roc_9_4h_gt_neg_30) | (roc_9_1d_lt_20))
             # 4h & 1d down move, 1d high, 4h downtrend
             & ((rsi_3_4h_gt_20) | (rsi_3_1d_gt_50) | (aroonu_14_1d_lt_80) | (roc_9_4h_gt_neg_30))
             # 4h down move, 4h still high, 1d downtrend
@@ -20316,8 +20320,10 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (roc_9_1d_gt_neg_20))
             # 1h & 4h down move, 1d overbought
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_10) | (roc_9_1d_lt_10))
+            # 1h & 4h & 1d down move, 4h still high, 1d still high
+            & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_20) | (rsi_3_1d_gt_30) | (rsi_14_4h_lt_40) | (stochrsi_k_1d_lt_50))
             # 1h & 4h down move, 4h still high
-            & ((rsi_3_1h_gt_10) | rsi_3_4h_gt_20 | (aroonu_14_4h_lt_40))
+            & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_20) | (aroonu_14_4h_lt_40))
             # 1h & 4h down move, 4h high
             & ((rsi_3_1h_gt_10) | (rsi_3_4h_gt_25) | (aroonu_14_4h_lt_60))
             # 1h & 4h down move, 4h still high
@@ -21255,6 +21261,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_50) | (aroonu_14_15m_lt_75) | (aroonu_14_4h_lt_80) | (aroonu_14_1d_lt_100))
             # 15m down move, 15m still high, 4h high, 1d overbought
             & ((rsi_3_15m_gt_50) | (stochrsi_k_15m_lt_50) | (stochrsi_k_4h_lt_90) | (roc_9_1d_lt_30))
+            # 15m down move, 15m still high, 4h & 1d overbought
+            & ((rsi_3_15m_gt_50) | (stochrsi_k_15m_lt_50) | (roc_9_4h_lt_20) | (roc_9_1d_lt_80))
             # 15m down move, 1h & 4h high, 1d overbought
             & ((rsi_3_15m_gt_50) | (stochrsi_k_1h_lt_80) | (stochrsi_k_4h_lt_80) | (roc_9_1d_lt_20))
             # 15m & 1h down move, 1h still high, 4h high
@@ -42753,7 +42761,15 @@ class NostalgiaForInfinityX7(IStrategy):
     last_aroonu_14 = last_candle["AROONU_14"]
     last_aroonu_14_15m = last_candle["AROONU_14_15m"]
     is_long_grind_entry = (
-      self.long_grind_entry_v2(last_candle, previous_candle, slice_profit, True)
+      self.long_grind_entry_v3(
+        last_candle,
+        previous_candle,
+        num_open_grinds_and_buybacks,
+        slice_profit,
+        slice_profit_entry,
+        slice_profit_exit,
+        True,
+      )
       or (
         (is_derisk_1_found or is_derisk_2_found or is_derisk_3_found)
         and (num_open_grinds_and_buybacks == 0)
