@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.428"
+    return "v17.4.429"
 
   stoploss = -0.99
 
@@ -12549,35 +12549,35 @@ class NostalgiaForInfinityX7(IStrategy):
     self._remove_profit_target(pair)
     return True
 
-    # Check Entry Timeout
-    # ---------------------------------------------------------------------------------------------
-    def check_entry_timeout(self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs) -> bool:
-      ob = self.dp.orderbook(pair, 1)
-      bids = ob["bids"][0][0]
-      asks = ob["asks"][0][0]
-      # Cancel order if price is more than 3% difference.
-      if trade.is_short:
-        if asks < order.price * 0.97:
-          return True
-      else:
-        if bids > order.price * 1.03:
-          return True
-      return False
+  # Check Entry Timeout
+  # ---------------------------------------------------------------------------------------------
+  def check_entry_timeout(self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs) -> bool:
+    ob = self.dp.orderbook(pair, 1)
+    bids = ob["bids"][0][0]
+    asks = ob["asks"][0][0]
+    # Cancel order if price is more than 3% difference.
+    if trade.is_short:
+      if asks < order.price * 0.97:
+        return True
+    else:
+      if bids > order.price * 1.03:
+        return True
+    return False
 
-    # Check Exit Timeout
-    # ---------------------------------------------------------------------------------------------
-    def check_exit_timeout(self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs) -> bool:
-      ob = self.dp.orderbook(pair, 1)
-      bids = ob["bids"][0][0]
-      asks = ob["asks"][0][0]
-      # Cancel order if price is more than 3% difference.
-      if trade.is_short:
-        if bids > order.price * 1.03:
-          return True
-      else:
-        if asks < order.price * 0.97:
-          return True
-      return False
+  # Check Exit Timeout
+  # ---------------------------------------------------------------------------------------------
+  def check_exit_timeout(self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs) -> bool:
+    ob = self.dp.orderbook(pair, 1)
+    bids = ob["bids"][0][0]
+    asks = ob["asks"][0][0]
+    # Cancel order if price is more than 3% difference.
+    if trade.is_short:
+      if bids > order.price * 1.03:
+        return True
+    else:
+      if asks < order.price * 0.97:
+        return True
+    return False
 
   # Bot Loop Start
   # ---------------------------------------------------------------------------------------------
@@ -17178,6 +17178,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_3) | (stochrsi_k_1h_lt_90) | (roc_9_4h_lt_10))
             # 15m down move, 4h high & overbought
             & ((rsi_3_15m_gt_3) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_10))
+            # 15m down move, 1d high & overbought
+            & ((rsi_3_15m_gt_3) | (stochrsi_k_1d_lt_80) | (roc_9_1d_lt_10))
             # 15m down move, 4h & 1d downtrend
             & ((rsi_3_15m_gt_3) | (roc_9_4h_gt_neg_20) | (roc_9_1d_gt_neg_20))
             # 15m & 1h down move, 1d downtrend
@@ -18431,6 +18433,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_3) | (stochrsi_k_4h_lt_80) | (roc_9_4h_lt_40))
             # 15m down move, 4h high, 1d overbought
             & ((rsi_3_15m_gt_3) | (stochrsi_k_4h_lt_80) | (roc_9_1d_lt_10))
+            # 15m down move, 1d high & overbought
+            & ((rsi_3_15m_gt_3) | (stochrsi_k_1d_lt_80) | (roc_9_1d_lt_10))
             # 15m down move, 1h downtrend, 4h overbought
             & ((rsi_3_15m_gt_3) | (roc_9_1h_gt_neg_30) | (roc_9_4h_lt_100))
             # 15m down move, 4h & 1d downtrend
@@ -19628,6 +19632,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_10) | (aroonu_14_4h_lt_60) | (aroonu_14_1d_lt_90))
             # 1h down move, 1d high & overbought
             & ((rsi_3_1h_gt_10) | (aroonu_14_1d_lt_80) | (roc_9_1d_lt_30))
+            # 1h down move, 1d high & overbought
+            & ((rsi_3_1h_gt_10) | (stochrsi_k_1d_lt_80) | (roc_9_1d_lt_10))
             # 1h & 4h down move, 1d stll high
             & ((rsi_3_1h_gt_15) | (rsi_3_4h_gt_15) | (rsi_14_1d_lt_40))
             # 1h & 4h & 1d down move
