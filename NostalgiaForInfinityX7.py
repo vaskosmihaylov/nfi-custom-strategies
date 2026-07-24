@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.434"
+    return "v17.4.435"
 
   stoploss = -0.99
 
@@ -18986,6 +18986,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_1h_gt_3) | (rsi_3_4h_gt_20) | (aroonu_14_1d_lt_60))
             # 1h & 4h down move, 4h high
             & ((rsi_3_1h_gt_3) | (rsi_3_4h_gt_20) | (stochrsi_k_4h_lt_60))
+            # 1h & 4h & 1d down move, 1d still high
+            & ((rsi_3_1h_gt_3) | (rsi_3_4h_gt_25) | (rsi_3_1d_gt_25) | (rsi_14_1d_lt_40))
             # 1h & 4h down move, 1h & 4h still high
             & ((rsi_3_1h_gt_3) | (rsi_3_4h_gt_35) | (aroonu_14_1h_lt_40) | (aroonu_14_4h_lt_40))
             # 1h down move, 1h & 4h still high
@@ -46139,7 +46141,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and (
         is_long_grind_entry
         or (
-          (slice_profit_entry < -0.04)
+          (slice_profit_entry < -0.06)
           and (last_candle["RSI_3"] > 5.0)
           and (last_candle["RSI_3_15m"] > 10.0)
           and (last_candle["RSI_14"] < 35.0)
@@ -47033,13 +47035,16 @@ class NostalgiaForInfinityX7(IStrategy):
       and ((last_aroonu_14_15m < 100.0) or (last_aroonu_14_1d < 100.0))
       and ((last_aroonu_14_15m < 100.0) or (last_stochrsi_k_15m < 90.0) or (last_stochrsi_k_1d < 80.0))
       and ((last_aroonu_14_15m < 100.0) or (last_stochrsi_k_1h < 80.0))
+      and ((last_aroonu_14_15m < 100.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_aroonu_14_1h < 100.0) or (last_aroonu_14_4h < 100.0))
-      and ((last_aroonu_14_4h < 100.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_aroonu_14_4h < 70.0) or (last_roc_9_1d < 50.0))
+      and ((last_aroonu_14_4h < 100.0) or (last_stochrsi_k_1h < 90.0))
+      and ((last_aroonu_14_4h < 100.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_aroonu_14_1d < 100.0) or (last_stochrsi_k_15m < 90.0))
       and ((last_stochrsi_k_15m < 80.0) or (last_stochrsi_k_1h < 90.0))
       and ((last_stochrsi_k_15m < 90.0) or (last_aroonu_14_1h < 100.0))
       and ((last_stochrsi_k_15m < 90.0) or (last_stochrsi_k_4h < 90.0))
+      and ((last_stochrsi_k_1h < 90.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_stochrsi_k_1h < 90.0) or (last_stochrsi_k_4h < 90.0))
     ):
       self._grind_entry_tag = "g23"
