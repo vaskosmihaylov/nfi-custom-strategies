@@ -70,7 +70,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.450"
+    return "v17.4.456"
 
   stoploss = -0.99
 
@@ -19612,6 +19612,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_15m_gt_25) | (rsi_3_1h_gt_25) | (rsi_3_4h_gt_25) | (rsi_3_1d_gt_40) | (aroonu_14_4h_lt_40))
             # 15m & 1h & 4h down move, 1d high
             & ((rsi_3_15m_gt_25) | (rsi_3_1h_gt_25) | (rsi_3_4h_gt_25) | (roc_9_1d_lt_70))
+            # 15m & 1h & 4h down move, 4h & 1d overbought
+            & ((rsi_3_15m_gt_25) | (rsi_3_1h_gt_25) | (rsi_3_4h_gt_50) | (roc_9_4h_lt_10) | (roc_9_1d_lt_20))
             # 15m & 4h down move, 4h high
             & ((rsi_3_15m_gt_25) | (rsi_3_4h_gt_45) | (aroonu_14_4h_lt_85))
             # 15m & 1h down move, 15m still not low enough
@@ -26780,6 +26782,8 @@ class NostalgiaForInfinityX7(IStrategy):
             & ((rsi_3_4h_gt_20) | (aroonu_14_1h_gt_20) | (aroonu_14_4h_gt_10) | (aroonu_14_1d_lt_50))
             # 4h & 1d down move, 4h & 1d low
             & ((rsi_3_4h_gt_25) | (rsi_3_1d_gt_25) | (aroonu_14_4h_gt_0) | (aroonu_14_1d_gt_0))
+            # 4h & 1d down move, 1d low, 4h low
+            & ((rsi_3_4h_gt_25) | (rsi_3_1d_gt_40) | (aroonu_14_1d_gt_0) | (stochrsi_k_4h_gt_10))
             # 4h & 1d down move, 1h & 4h & 1d low
             & ((rsi_3_4h_gt_30) | (rsi_3_1d_gt_30) | (aroonu_14_1h_gt_0) | (aroonu_14_4h_gt_20) | (aroonu_14_1d_gt_20))
             # 4h & 1d down move, 4h & 1d low
@@ -46720,6 +46724,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and (last_close > (last_close_max_48 * 0.90))
       and (last_close < (last_low_min_24_4h * 1.60))
       and (last_close < (last_ema_16 * 0.975))
+      and ((last_rsi_3_1h > 35.0) or (last_aroonu_14_1h < 100.0))
     ):
       self._grind_entry_tag = "g1"
       return True
@@ -46997,9 +47002,11 @@ class NostalgiaForInfinityX7(IStrategy):
       and (last_roc_9_1d > -15.0)
       and (last_ema_50_4h > last_ema_100_4h)
       and (last_close < (last_close_max_48 * 0.95))
+      and ((last_rsi_3_15m > 20.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_rsi_3_1h > 50.0) or (last_roc_9_1d < 60.0))
       and ((last_rsi_3_4h > 40.0) or (last_aroonu_14_4h < 90.0))
       and ((last_rsi_3_4h > 45.0) or (last_aroonu_14_4h < 100.0))
+      and ((last_rsi_3_4h > 60.0) or (last_roc_9_4h < 40.0))
       and ((last_stochrsi_k_4h < 90.0) or (last_roc_9_4h < 30.0))
     ):
       self._grind_entry_tag = "g20"
@@ -47081,6 +47088,7 @@ class NostalgiaForInfinityX7(IStrategy):
       and ((last_rsi_3_1d > 30.0) or (last_aroonu_14_1h < 100.0))
       and ((last_rsi_3_1d > 30.0) or (last_aroonu_14_4h < 100.0))
       and ((last_rsi_3_1d > 50.0) or (last_stochrsi_k_1h < 80.0) or (last_stochrsi_k_4h < 90.0))
+      and ((last_rsi_3_1d > 55.0) or (last_aroonu_14_15m < 100.0) or (last_stochrsi_k_15m < 90.0))
       and ((last_aroonu_14_15m < 100.0) or (last_aroonu_14_1h < 100.0))
       and ((last_aroonu_14_15m < 100.0) or (last_aroonu_14_4h < 100.0))
       and ((last_aroonu_14_15m < 100.0) or (last_aroonu_14_1d < 100.0))
@@ -47117,7 +47125,9 @@ class NostalgiaForInfinityX7(IStrategy):
       and (last_close < (last_ema_20 * 1.01))
       and (last_close > (last_ema_20 * 0.94))
       and ((last_rsi_3_15m > 40.0) or (last_stochrsi_k_15m < 70.0))
+      and ((last_rsi_3_1h > 15.0) or (last_aroonu_14_4h < 70.0))
       and ((last_rsi_3_1h > 25.0) or (last_aroonu_14_1h < 80.0))
+      and ((last_rsi_3_4h > 25.0) or (last_roc_9_1d < 30.0))
       and ((last_rsi_3_4h > 50.0) or (last_stochrsi_k_4h < 80.0))
       and ((last_rsi_14_1h < 70.0) or (last_stochrsi_k_4h < 90.0))
       and ((last_aroonu_14_15m < 100.0) or (last_aroonu_14_1h < 100.0))
