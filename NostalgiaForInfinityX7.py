@@ -71,7 +71,7 @@ class NostalgiaForInfinityX7(IStrategy):
   INTERFACE_VERSION = 3
 
   def version(self) -> str:
-    return "v17.4.500"
+    return "v17.4.503"
 
   stoploss = -0.99
 
@@ -881,7 +881,7 @@ class NostalgiaForInfinityX7(IStrategy):
     "long_entry_condition_44_enable": True,
     "long_entry_condition_45_enable": True,
     "long_entry_condition_46_enable": True,
-    "long_entry_condition_47_enable": False,
+    "long_entry_condition_47_enable": True,
     "long_entry_condition_61_enable": True,
     "long_entry_condition_62_enable": True,
     "long_entry_condition_63_enable": True,
@@ -46723,6 +46723,15 @@ class NostalgiaForInfinityX7(IStrategy):
           and (last_candle["RSI_3"] > 10.0)
           and (last_candle["RSI_3_15m"] > 20.0)
           and (last_candle["AROONU_14"] < 50.0)
+        )
+        or (
+          (self.is_futures_mode)
+          and (slice_profit_entry < -0.15)
+          and (trade.liquidation_price is not None)
+          and (
+            (trade.is_short and current_rate > trade.liquidation_price * 0.80)
+            or (not trade.is_short and current_rate < trade.liquidation_price * 1.20)
+          )
         )
       )
       and is_long_extra_checks_entry
